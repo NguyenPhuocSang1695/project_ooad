@@ -1,0 +1,53 @@
+/* Định dạng chung cho biểu mẫu cập nhật */
+.update-form {
+  display: flex;
+  align-items: center;
+}
+
+/* Định dạng cho các nút tăng/giảm số lượng */
+.update-form .quantity-btn {
+  width: 35px;
+  height: 35px;
+  background-color: rgb(43, 160, 71);
+  /* Màu xanh lá cây đậm */
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 5px;
+  margin: 0;
+}
+
+.update-form .quantity-btn:hover {
+  background-color: rgb(34, 128, 57);
+  /* Màu xanh lá cây đậm hơn khi hover */
+}
+
+/* Định dạng cho ô nhập số lượng */
+.update-form .quantity-input {
+  width: 50px;
+  height: 35px;
+  text-align: center;
+  border: none;
+  -moz-appearance: textfield;
+  /* Ẩn nút tăng/giảm trên Firefox */
+  ;
+}
+
+.update-form .quantity-input input {
+  height: 35px;
+}
+
+
+/* Ẩn nút tăng/giảm mặc định trên Chrome, Safari và Edge */
+.update-form .quantity-input::-webkit-inner-spin-button,
+.update-form .quantity-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Ẩn nút tăng/giảm mặc định trên Firefox */
+.update-form .quantity-input[type="number"] {
+  -moz-appearance: textfield;
+}

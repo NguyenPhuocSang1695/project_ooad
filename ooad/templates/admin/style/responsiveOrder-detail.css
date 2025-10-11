@@ -1,0 +1,311 @@
+
+  .backToHome {
+  margin-top: 5px;
+}
+.container-function-selection {
+  left: -1px;
+}
+ 
+/* -----------------Phan reponsive--------------- */
+
+/* Smartphones (min >= 320px) (max <480px) ----------- */
+@media only screen and (min-device-width: 20em) and (max-device-width: 29.9375em) {
+  /* Phan header */
+  .header {
+    width: 90%;
+    border-right:10px; 
+    justify-content: end;
+    z-index: 1;
+   }
+   .header-right-section {
+    position: relative;
+    top: 15px;
+    z-index: 1;
+    left: -3rem;
+  }
+  .header-middle-section {
+    margin-left: -5px;
+}
+  .header-left-section {
+    top: 30px;
+    left: 0;
+}
+.header-left-section 
+ {
+        font-size: 18px;
+        font-weight: bold;
+        position: relative;
+
+    }
+  .logo-store {
+    width: 60px;
+    height :auto;
+  }
+  .header-left-title {
+    font-size: 25px;
+    width: 113px;
+  }
+  .fa-bars {
+    font-size: 50px;
+    position: relative;
+    top: 50px;
+    left: 10px;
+        
+   }
+   .offcanvas.hiding, .offcanvas.show, .offcanvas.showing {
+    max-width: 100%;
+    }
+    .avatar {
+      width: 58px;
+      height: 58px;
+     }  
+     .offcanvas.offcanvas-start {
+      background-color: #35635A;
+      max-width: 25%;
+     }
+     .offcanvas-header{ 
+      display: flex;
+      flex-direction: row;
+     }
+     .index-menu {
+      display: inline-block;
+      position: absolute;
+      height: 98px;
+      top: 0px;
+      left: -73px;
+      background-color: white;
+      width: 115px;
+      border-bottom-width: 1px;
+      border-bottom-style: solid;
+      border-bottom-color: rgb(176, 176, 176);
+     }
+  /* ------------------- */
+  /* Phan sidebar */
+  .side-bar {
+    display:none;
+  }
+  .container-function-selection{
+    margin-left: 0px;
+  }
+  .offcanvas-body {
+    margin-left: -2px;
+  }
+  .backToHome {
+    margin-left: 2px;
+  }
+  /* -------------------- */
+  /* Phan body */
+  .container-search {
+    margin-left: 15px;
+  }
+  
+  .container-bar-operation {
+  margin-left: 15px;
+  }
+ 
+  .main-content {
+  display: flex;
+  padding: 5px;
+  gap: 20px;
+  flex-direction: column;
+  }
+
+  .statistic-table {
+    max-width: 100%;
+    font-size: 10px;
+    margin-left: 9px;
+   }
+   .fa-circle-info  {
+   font-size: 20px;
+   }
+  .main-container {
+    margin-left: -50px;
+  }
+  .hide-index-smartphone {
+    display: none;
+       }
+  h2 {
+    font-size: 13px;
+  }
+  .par-style {
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+  /* Button adjustments for smallest screens */
+  .Button {
+    gap: 15px;
+    margin: 20px auto;
+    width: 95%;
+  }
+
+  .top-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .btn1, .btn_1, .btn2 {
+    min-width: 100px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .hide-on-mobile {
+    display: none;
+  }
+
+  /* Make icons smaller */
+  .fa-trash-can, .fa-rotate-left, .fa-pen-to-square {
+    font-size: 14px;
+  }
+  .content-wrapper {
+    width: 95%;
+    margin-left: 10px;
+  }
+  .hide-display {
+    display:none;
+  }
+  }
+  @media only screen and (min-device-width: 426px) and (max-device-width: 767px) {
+    .index-menu {
+      display: none;
+    }
+  }
+
+  /* smartphone & mobile < 768px */
+  @media only screen and (max-width: 47.9375em)  {
+    .filter-section ,
+    .name-employee p,
+    .position-employee ,
+    .bell-notification {
+      display: none;
+    }
+    .detail-info span,
+    .hide-index-tablet,
+    .hide-index-mobile {
+      display:none;
+    }
+ 
+    .hide-text {
+     display:-webkit-box;
+     -webkit-line-clamp: 1;
+     -webkit-box-orient: vertical;
+     overflow: hidden;
+     text-overflow: ellipsis;
+    }
+
+    .btn1, .btn_1, .btn2 {
+      min-width: 120px;
+      padding: 10px 15px;
+      font-size: 13px;
+    }
+  }
+  
+    /* Mobile : width < 768px */
+    @media only screen and (max-width: 47.9375em)  {
+     /* Phan header */
+      .header {
+        width: 90%;
+       }
+    
+      .header-left-section p {
+        font-size: 30px;
+        font-weight: bold;
+        position: relative;
+        left: -40px;
+      }
+      
+      /* ------------------- */
+      /* Phan body */
+    
+  
+    .container-bar-operation {
+      margin-left: 15px;
+    }
+    
+  
+  }
+    /* Tablet: width >= 740px and width <1024px */
+    @media only screen and (min-width: 46.25em) and (max-width:63.9375em ) {
+      /* Phan header */
+     .header {
+      width: 100%;
+      left: 70px;
+     }
+     .header-left-section {
+      width:25%;
+    }
+  .header-left-title {
+    transition: 1s;
+    font-size: 35px;
+  }
+  .header-right-section {
+    margin-right: 65px;
+  }
+  .name-employee p {
+    font-size: 16px;
+  }
+  
+  .header-middle-section {
+      margin-left:-33px;
+    }
+  .offcanvas.offcanvas-start,.offcanvas-backdrop {
+      display: none;
+    }
+    
+
+  /* Phan body */
+ 
+    .detail-info span,
+    .hide-index-tablet, 
+    .filter-option {
+      display:none;
+    }
+     .container-bar-operation {
+      margin-left: 15px;
+    }
+    .index-menu {
+      display: none;
+    }
+  
+  } 
+    /* PC : width >= 1024px */
+    @media only screen and (min-width: 64em) {
+      /* Phan Header */
+      .header-left-section p {
+        font-size: 30px;
+        font-weight: bold;
+        position: relative;
+      
+      }
+     .header-middle-section {
+      margin-right: 60px;
+     }
+     .header-left-section {
+      width: 157px;
+     }
+      .header-left-title {
+        transition: 1s;
+      }
+      /* ------------ */
+      /* Phan Body */
+      .filter-option {
+        display:none;
+      }
+
+     .fa-circle-info {
+      display: none;
+     }
+     .offcanvas.offcanvas-start,.offcanvas-backdrop {
+   display: none;
+     }
+     
+     .index-menu {
+      display: none;
+     }
+   
+     
+    }
