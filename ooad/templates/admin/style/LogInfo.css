@@ -1,0 +1,77 @@
+.navbar_user,.navbar_logout{
+  text-decoration:none;
+   color:black;
+   font-size:20px; 
+  margin-right:10px;
+   
+}
+.navbar_logout,.fa-right-from-bracket{
+ color: red;
+
+}
+
+.offcanvas-body {
+  display:flex; flex-direction: column; gap: 10px;
+}
+
+.navbar_logout i {
+  margin-right: 8px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal:target {
+  display: flex;
+}
+
+.modal_content {
+  background-color: #fff;
+  padding: 20px;
+  width: 400px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.modal_actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.modal_actions .btn_2 {
+  padding: 10px 20px;
+  margin: 0 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.btn_2.confirm {
+  background-color: #d9534f;
+  color: #fff;
+}
+.btn_2.confirm:hover {
+  background-color: #f82821;
+}
+.btn_2.cancel {
+  background-color: #6c757d;
+  color: #fff;
+}
+.btn_2.cancel:hover {
+  background-color: rgb(108, 108, 255);
+}
+
