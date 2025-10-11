@@ -1,0 +1,358 @@
+<?php
+include '../php/connect.php';
+include '../php/check_session.php';
+?>
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý bán hàng - Tổng quan trang Admin</title>
+
+  <link rel="stylesheet" href="../style/header.css">
+  <link rel="stylesheet" href="../style/sidebar.css">
+  <link href="../icon/css/all.css" rel="stylesheet">
+  <link href="../style/generall.css" rel="stylesheet">
+  <link href="../style/main1.css" rel="stylesheet">
+  <link href="../style/LogInfo.css" rel="stylesheet">
+  <link href="asset/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../style/responsiveHomePage.css">
+
+</head>
+
+<body>
+  <div class="header">
+    <div class="index-menu">
+      <i class="fa-solid fa-bars" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button"
+        aria-controls="offcanvasExample"></i>
+      <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasExample"
+        aria-labelledby="offcanvasExampleLabel">
+        <div style="border-bottom: 1px solid rgb(176, 176, 176);" class="offcanvas-header">
+          <h5 class="offcanvas-title" id="offcanvasExampleLabel">Mục lục</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+          <a href="homePage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection" style="background-color: #6aa173;">
+                <i class="fa-solid fa-house" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Tổng quan</p>
+            </div>
+          </a>
+          <a href="wareHouse.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-warehouse" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Kho hàng</p>
+            </div>
+          </a>
+          <a href="customer.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-users" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p style="color: black; text-align: center; font-size: 10x;">Người dùng</p>
+            </div>
+          </a>
+          <a href="orderPage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-list-check" style="font-size: 18px; color: #FAD4AE;"></i>
+              </button>
+              <p style="color:black">Đơn hàng</p>
+            </div>
+          </a>
+          <a href="analyzePage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Thống kê</p>
+            </div>
+          </a>
+          <a href="accountPage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-circle-user" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p style="color:black">Tài khoản</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="header-left-section">
+      <p class="header-left-title">Tổng quan</p>
+    </div>
+    <div class="header-middle-section">
+      <img class="logo-store" src="../../assets/images/LOGO-2.jpg">
+    </div>
+    <div class="header-right-section">
+      <div class="bell-notification">
+        <i class="fa-regular fa-bell" style="color: #64792c; font-size: 45px; width:100%;"></i>
+      </div>
+      <div>
+        <div class="position-employee">
+          <p id="employee-role">Chức vụ</p>
+        </div>
+        <div class="name-employee">
+          <p id="employee-name">Ẩn danh</p>
+        </div>
+      </div>
+      <div>
+        <img class="avatar" src="../../assets/images/admin.jpg" alt="" data-bs-toggle="offcanvas"
+          data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">
+      </div>
+      <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="offcanvasWithBothOptions"
+        aria-labelledby="offcanvasWithBothOptionsLabel">
+        <div style="border-bottom: 1px solid rgb(176, 176, 176);" class="offcanvas-header">
+          <img class="avatar" src="../../assets/images/admin.jpg" alt="">
+          <div class="admin">
+            <h4 class="offcanvas-title" id="offcanvasWithBothOptionsLabel">Username</h4>
+            <h5 id="employee-displayname">Họ tên</h5>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+          <a href="accountPage.php" class="navbar_user">
+            <i class="fa-solid fa-user"></i>
+            <p>Thông tin cá nhân</p>
+          </a>
+          <a href="#logoutModal" class="navbar_logout">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <p>Đăng xuất</p>
+          </a>
+          <div id="logoutModal" class="modal">
+            <div class="modal_content">
+              <h2>Xác nhận đăng xuất</h2>
+              <p>Bạn có chắc chắn muốn đăng xuất không?</p>
+              <div class="modal_actions">
+                <a href="../php/logout.php" class="btn_2 confirm">Đăng xuất</a>
+                <a href="#" class="btn_2 cancel">Hủy</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="side-bar">
+    <div class="backToHome">
+      <a href="homePage.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection" style="background-color: #6aa173; margin-top: 35px;">
+            <i class="fa-solid fa-house" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Tổng quan</p>
+        </div>
+      </a>
+    </div>
+    <a href="wareHouse.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-warehouse" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Kho hàng</p>
+      </div>
+    </a>
+    <a href="customer.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-users" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Người dùng</p>
+      </div>
+    </a>
+    <a href="orderPage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-list-check" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Đơn hàng</p>
+      </div>
+    </a>
+    <a href="analyzePage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Thống kê</p>
+      </div>
+    </a>
+    <a href="accountPage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-circle-user" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Tài khoản</p>
+      </div>
+    </a>
+  </div>
+  <div class="container-main">
+    <div class="dashboard-overview">
+      <?php
+      $sql = "SELECT COUNT(*) AS totalExOder
+            FROM orders o
+            Where Status = 'execute';
+    ";
+      $result = $myconn->query($sql);
+
+      if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+          echo "<a href='./orderPage.php?order_status=execute' style='text-decoration: none; color: inherit;'>";
+          echo "<div class='overview-card'>";
+          echo "<h3>" . $row['totalExOder'] . " " . "</h3>";
+          echo "<p> Đơn hàng chờ xác nhận</p>";
+          echo "</div>";
+          echo "</a>";
+        }
+      }
+      ?>
+      <?php
+      $sql = "SELECT COUNT(*) AS QuantityProduct
+            FROM products
+    ";
+      $result = $myconn->query($sql);
+
+      if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+          echo "<a href='./wareHouse.php' style='text-decoration: none; color: inherit;'>";
+          echo "<div class='overview-card'>";
+          echo "<h3>" . $row['QuantityProduct'] . "</h3>";
+          echo "<p>Sản phẩm trong kho</p> </div>";
+          echo "</a>";
+        }
+      }
+      ?>
+      <?php
+      $sql = "SELECT COUNT(*) AS QuantityUser
+            FROM users
+            where Role='customer'
+    ";
+      $result = $myconn->query($sql);
+
+      if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+          echo "<a href='./customer.php?from=home' style='text-decoration: none; color: inherit;'>";
+          echo "<div class='overview-card'>";
+          echo "<h3>" . $row['QuantityUser'] . "</h3>";
+          echo "<p>Khách hàng</p> </div>";
+          echo "</a>";
+        }
+      }
+      ?>
+
+    </div>
+
+    <!-- Phần đơn hàng chưa xử lý -->
+    <div class="order-section">
+      <p class="section-title">Đơn hàng chờ xác nhận</p>
+      <a href="orderPage.php?order_status=execute"><button class="button-handle" style="white-space:nowrap;">Xem thêm</button></a>
+      <?php
+      // Database connection
+      $conn = new mysqli("localhost", "root", "", "c01db");
+      if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+      }
+
+      // Query to get pending orders
+      $sql = "SELECT o.*, u.FullName, u.Address, 
+              pr.name as province_name, dr.name as district_name
+              FROM orders o
+              LEFT JOIN users u ON o.Username = u.Username
+              LEFT JOIN province pr ON o.Province = pr.province_id
+              LEFT JOIN district dr ON o.District = dr.district_id
+              WHERE o.Status = 'execute'
+              ORDER BY o.DateGeneration DESC
+              LIMIT 5";
+
+      $result = $conn->query($sql);
+
+      if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+          echo "<div class='overview-order'>";
+          echo "<div class='info-overview-order'>";
+          echo "<p>" . $row['FullName'] . " <span class='label customer'>Customer</span></p>";
+          echo "<p>Ngày đặt hàng: " . date('d/m/Y', strtotime($row['DateGeneration'])) . "</p>";
+          echo "<p>Địa chỉ: " . $row['Address'] . ", " . $row['district_name'] . ", " . $row['province_name'] . "</p>";
+          echo "</div>";
+          echo "<div><a href='orderDetail2.php?code_Product=" . $row['OrderID'] . "' style='text-decoration: none; color: black;'><button class='button-handle'>Xử lý</button></a></div>";
+          echo "</div>";
+        }
+      } else {
+        echo "<div class='overview-order'>";
+        echo "<p>Không có đơn hàng chưa xử lý</p>";
+        echo "</div>";
+      }
+
+      $conn->close();
+      ?>
+    </div>
+
+    <!-- Phần hàng cần chú ý -->
+    <div class="inventory-section">
+      <p class="section-title">Sản phẩm mới</p>
+      <a href="wareHouse.php"><button class="button-handle" style="white-space:nowrap;">Xem thêm</button></a>
+      <?php
+      // Database connection
+      $conn = new mysqli("localhost", "root", "", "c01db");
+      if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+      }
+
+      // Query to get newest products
+      $sql = "SELECT p.*, c.CategoryName as CategoryName 
+              FROM products p 
+              LEFT JOIN categories c ON p.CategoryID = c.CategoryID 
+              WHERE p.Status = 'appear'
+              ORDER BY p.ProductID DESC
+              LIMIT 5";
+
+      $result = $conn->query($sql);
+
+      if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+          echo "<div class='overview-order'>";
+          echo "<div><img class='avatar-customer' src='../.." . $row['ImageURL'] . "' alt='Product'></div>";
+          echo "<div class='info-overview-order'>";
+          echo "<p>" . $row['ProductName'] . " <span class='label product'>Product</span></p>";
+          echo "<p>Danh mục: " . $row['CategoryName'] . "</p>";
+          echo "<p>Giá: " . number_format($row['Price'], 0, ',', '.') . " VNĐ</p>";
+          echo "</div>";
+          echo "<div><a href='wareHouse.php' style='text-decoration: none; color: black;'><button class='button-handle'><p>Chi tiết</p></button></a></div>";
+          echo "</div>";
+        }
+      } else {
+        echo "<div class='overview-order'>";
+        echo "<p>Không có sản phẩm mới</p>";
+        echo "</div>";
+      }
+
+      $conn->close();
+      ?>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="./asset/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../js/checklog.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cachedUserInfo = localStorage.getItem('userInfo');
+      if (cachedUserInfo) {
+        const userInfo = JSON.parse(cachedUserInfo);
+        document.querySelector('.name-employee p').textContent = userInfo.fullname;
+        document.querySelector('.position-employee p').textContent = userInfo.role;
+        document.querySelectorAll('.avatar').forEach(img => img.src = userInfo.avatar);
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,11 @@
+.frame-2 {
+  color: red;
+  font-size: clamp(15px, 26px, 33px);
+  display: flex;
+  /* background-color: #1c8e2e; */
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  margin-left: 0.7rem;
+  height: 7rem;
+}

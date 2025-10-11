@@ -1,0 +1,89 @@
+.container-order {
+  display: flex;
+    flex-direction: row;
+    margin-top: 100px;
+    margin-left: 50px;
+    margin-right: 100px;
+    width:200px;
+    height: 300px;
+    justify-content: space-around;
+    
+}
+
+.searching {
+  display:flex;
+  flex-direction: row;
+  justify-content: space-around;
+  width: 300px;
+  
+}
+.Search-bar {
+  
+  padding-right: 500px;
+  margin-left:500px;
+margin-left: 70px;
+ height: 30px;
+ margin-top: 50px;
+ border-radius: 12px;
+ font-size: 15px;
+ margin-right: 10px ;
+border-width: 2px;
+text-align: start;
+}
+.BOX {
+  font-size: 50px;
+  margin-left: 150px;
+  margin-bottom: 500px;
+  border-color: gray;
+  border-style: solid ;
+
+}
+.notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px 40px;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    opacity: 0;
+    z-index: 9999;
+    transition: opacity 0.3s ease;
+    text-align: center;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.notification.success {
+    background-color: #4CAF50;
+}
+
+.notification.error {
+    background-color: #f44336;
+}
+
+.notification.info {
+    background-color: #2196F3;
+}
+
+.notification.show {
+    opacity: 1;
+}
+
+/* Thêm animation cho popup */
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.7);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.notification {
+    animation: fadeInScale 0.3s ease forwards;
+}
