@@ -4,7 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="25e481ad-8563-4a49-b1f3-7ff667f73311" name="Changes" comment="" />
+    <list default="true" id="25e481ad-8563-4a49-b1f3-7ff667f73311" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ooad/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ooad/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ooad/templates/ok.html" beforeDir="false" afterPath="$PROJECT_DIR$/ooad/templates/ok.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ooad/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ooad/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ooad/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ooad/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project_ooad/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/project_ooad/urls.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -14,16 +21,20 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="33txgusYOZ2uuYgZQ8UC0Cnwg4z" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -31,12 +42,14 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "DefaultHtmlFileTemplate": "HTML File",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "addfolder",
+    "git-widget-placeholder": "draft",
+    "ignore.virus.scanning.warn.message": "true",
     "last_opened_file_path": "D:/Practice/Python/project_ooad"
   }
 }]]></component>
