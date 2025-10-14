@@ -2,12 +2,13 @@ from django.db import models
 
 # --- Địa lý ---
 class Province(models.Model):
-    province_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255, null=True, blank=True)
+    province_id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=255)
 
     class Meta:
         db_table = 'province'
         managed = False
+
 
 class District(models.Model):
     district_id = models.AutoField(primary_key=True)
@@ -129,7 +130,6 @@ class Order(models.Model):
     Phone = models.CharField(max_length=100, null=True, blank=True)
     DateGeneration = models.DateTimeField(auto_now_add=True)
     TotalAmount = models.DecimalField(max_digits=10, decimal_places=2)
-    Address = models.CharField(max_length=255, null=True, blank=True)
     Ward_id = models.IntegerField()
     address = models.ForeignKey(Address, on_delete=models.SET_NULL, null=True, related_name='orders')
 
