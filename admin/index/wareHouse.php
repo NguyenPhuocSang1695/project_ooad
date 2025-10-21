@@ -91,6 +91,7 @@ global $mysqli;
   <link href="../style/LogInfo.css" rel="stylesheet">
   <link href="asset/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../style/responsiveWareHouse.css">
+  <link rel="stylesheet" href="../style/warehouse-pagination.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     /* Popup overlay cho thêm sản phẩm */
@@ -988,17 +989,89 @@ global $mysqli;
           if (targetPagination) targetPagination.innerHTML = '';
 
           if (data && data.pagination && data.pagination.totalPages > 1) {
-            for (let i = 1; i <= data.pagination.totalPages; i++) {
-              const btn = document.createElement('button');
+            // Previous button
+            const prevBtn = document.createElement('a');
+            prevBtn.href = '#';
+            prevBtn.className = `pagination-item ${data.pagination.currentPage === 1 ? 'disabled' : ''}`;
+            prevBtn.innerHTML = '&laquo;';
+            prevBtn.onclick = (e) => {
+              e.preventDefault();
+              if (data.pagination.currentPage > 1) {
+                currentPage = data.pagination.currentPage - 1;
+                loadProducts(currentPage);
+              }
+            };
+            targetPagination.appendChild(prevBtn);
+
+            // First page
+            if (data.pagination.currentPage > 2) {
+              const firstBtn = document.createElement('a');
+              firstBtn.href = '#';
+              firstBtn.className = 'pagination-item';
+              firstBtn.textContent = '1';
+              firstBtn.onclick = (e) => {
+                e.preventDefault();
+                currentPage = 1;
+                loadProducts(1);
+              };
+              targetPagination.appendChild(firstBtn);
+
+              if (data.pagination.currentPage > 3) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'pagination-ellipsis';
+                ellipsis.textContent = '...';
+                targetPagination.appendChild(ellipsis);
+              }
+            }
+
+            // Page numbers
+            for (let i = Math.max(1, data.pagination.currentPage - 1); i <= Math.min(data.pagination.totalPages, data.pagination.currentPage + 1); i++) {
+              const btn = document.createElement('a');
+              btn.href = '#';
+              btn.className = `pagination-item ${i === data.pagination.currentPage ? 'active' : ''}`;
               btn.textContent = i;
-              btn.style.margin = '0 3px';
-              btn.className = (i === data.pagination.currentPage) ? 'active' : '';
-              btn.onclick = () => {
+              btn.onclick = (e) => {
+                e.preventDefault();
                 currentPage = i;
                 loadProducts(i);
               };
-              if (targetPagination) targetPagination.appendChild(btn);
+              targetPagination.appendChild(btn);
             }
+
+            // Last page
+            if (data.pagination.currentPage < data.pagination.totalPages - 1) {
+              if (data.pagination.currentPage < data.pagination.totalPages - 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'pagination-ellipsis';
+                ellipsis.textContent = '...';
+                targetPagination.appendChild(ellipsis);
+              }
+
+              const lastBtn = document.createElement('a');
+              lastBtn.href = '#';
+              lastBtn.className = 'pagination-item';
+              lastBtn.textContent = data.pagination.totalPages;
+              lastBtn.onclick = (e) => {
+                e.preventDefault();
+                currentPage = data.pagination.totalPages;
+                loadProducts(data.pagination.totalPages);
+              };
+              targetPagination.appendChild(lastBtn);
+            }
+
+            // Next button
+            const nextBtn = document.createElement('a');
+            nextBtn.href = '#';
+            nextBtn.className = `pagination-item ${data.pagination.currentPage === data.pagination.totalPages ? 'disabled' : ''}`;
+            nextBtn.innerHTML = '&raquo;';
+            nextBtn.onclick = (e) => {
+              e.preventDefault();
+              if (data.pagination.currentPage < data.pagination.totalPages) {
+                currentPage = data.pagination.currentPage + 1;
+                loadProducts(currentPage);
+              }
+            };
+            targetPagination.appendChild(nextBtn);
           }
         })
         .catch(err => console.error(err));
