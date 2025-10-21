@@ -1,0 +1,44 @@
+<!-- Phân trang
+            <?php if ($total_pages > 1): ?>
+              <div class="pagination-container" style="text-align:center; margin-top: 20px;">
+                <ul class="pagination justify-content-center">
+                  <!-- Nút Previous -->
+                  <?php if ($page > 1): ?>
+                    <li class="page-item">
+                      <a class="page-link" href="?page=<?php echo $page - 1; ?>">&lt;</a>
+                    </li>
+                  <?php endif; ?>
+
+                  <?php
+                  $range = 2; // số trang hiển thị quanh trang hiện tại
+
+                  // Hiển thị trang đầu và dấu "..."
+                  if ($page > $range + 2) {
+                    echo '<li class="page-item"><a class="page-link" href="?page=1">1</a></li>';
+                    echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                  }
+
+                  // Các trang xung quanh trang hiện tại
+                  for ($i = max(1, $page - $range); $i <= min($total_pages, $page + $range); $i++) {
+                    $activeClass = ($i == $page) ? 'active' : '';
+                    echo '<li class="page-item ' . $activeClass . '">
+                  <a class="page-link" href="?page=' . $i . '">' . $i . '</a>
+                </li>';
+                  }
+
+                  // Hiển thị trang cuối và dấu "..."
+                  if ($page < $total_pages - $range - 1) {
+                    echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                    echo '<li class="page-item"><a class="page-link" href="?page=' . $total_pages . '">' . $total_pages . '</a></li>';
+                  }
+                  ?>
+
+                  <!-- Nút Next -->
+                  <?php if ($page < $total_pages): ?>
+                    <li class="page-item">
+                      <a class="page-link" href="?page=<?php echo $page + 1; ?>">&gt;</a>
+                    </li>
+                  <?php endif; ?>
+                </ul>
+              </div>
+            <?php endif; ?>
