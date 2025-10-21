@@ -11,14 +11,14 @@ $myconn = $db->getConnection();
 
 // Kiểm tra session đăng nhập
 if (isset($_SESSION['Username'])) {
-    // Chuẩn bị truy vấn
-    $stmt = $myconn->prepare("SELECT Status FROM users WHERE Username = ? AND Role = 'admin'");
-    $stmt->bind_param("s", $_SESSION['Username']);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $username = $_SESSION['Username'];
 
-    // Kiểm tra trạng thái tài khoản
-    if ($result->num_rows > 0) {
+    $result = $db->queryPrepared(
+        "SELECT Status FROM users WHERE Username = ? AND Role = 'admin'",
+        [$username]
+    );
+
+    if ($result && $result->num_rows > 0) {
         $user = $result->fetch_assoc();
         if ($user['Status'] === 'Block') {
             session_unset();
@@ -29,9 +29,4 @@ if (isset($_SESSION['Username'])) {
             exit();
         }
     }
-    $stmt->close();
-} else {
-    // Nếu chưa đăng nhập → chuyển về trang đăng nhập
-    header("Location: ../index.php");
-    exit();
 }

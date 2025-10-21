@@ -51,5 +51,42 @@ if (!class_exists('DatabaseConnection')) {
         $this->connection->close();
       }
     }
+
+
+    // ✅ Hàm query có prepare
+    public function queryPrepared($sql, $params = [], $types = "")
+    {
+      if (!$this->connection) {
+        $this->connect();
+      }
+
+      $stmt = $this->connection->prepare($sql);
+      if (!$stmt) {
+        die("Lỗi prepare: " . $this->connection->error);
+      }
+
+      if (!empty($params)) {
+        if ($types == "") {
+          // Tự động đoán loại dữ liệu (i, d, s)
+          foreach ($params as $param) {
+            if (is_int($param)) $types .= "i";
+            elseif (is_double($param)) $types .= "d";
+            else $types .= "s";
+          }
+        }
+        $stmt->bind_param($types, ...$params);
+      }
+
+      $stmt->execute();
+      $result = $stmt->get_result();
+
+      // Nếu là SELECT thì trả về result set
+      if ($result !== false) {
+        return $result;
+      }
+
+      // Nếu là UPDATE/DELETE/INSERT thì trả về true/false
+      return $stmt->affected_rows > 0;
+    }
   }
 }
