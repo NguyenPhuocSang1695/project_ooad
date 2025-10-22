@@ -280,12 +280,9 @@ global $mysqli;
               <label for="categoryID">Danh mục(*)</label>
               <select id="categoryID" name="categoryID" required>
                 <?php
-                require_once '../../php-api/connectdb.php'; // Kết nối tới CSDL
-                $conn = connect_db();
-
                 // Truy vấn lấy danh mục
                 $sql = "SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryID ASC";
-                $result = $conn->query($sql);
+                $result = $mysqli->query($sql);
 
                 if ($result && $result->num_rows > 0) {
                   // Lặp qua từng danh mục và hiển thị
@@ -298,10 +295,35 @@ global $mysqli;
                   // Nếu không có danh mục
                   echo "<option value=''>Không có danh mục</option>";
                 }
-
-                $conn->close();
                 ?>
               </select>
+            </div>
+
+            <!-- Nhà cung cấp  -->
+            <div class="form-group">
+              <label for="SupplierAddProduct" class="form-label">Nhà cung cấp(*)</label>
+              <select class="form-control" id="SupplierAddProduct" name="SupplierAddProduct" required>
+                <option value="" disabled>-- Chọn nhà cung cấp --</option>
+                <?php
+                $sql = "select supplier_id, supplier_name from suppliers";
+                $result = $mysqli->query($sql);
+                $suppliers = [];
+                while ($row = $result->fetch_assoc()) {
+                  $suppliers[] = $row;
+                }
+                ?>
+                <?php foreach ($suppliers as $supplier): ?>
+                  <option value="<?= $supplier['supplier_id'] ?>">
+                    <?= htmlspecialchars($supplier['supplier_name']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <!-- Số Lượng  -->
+            <div class="form-group">
+              <label for="priceAddProduct">Số lượng(*)</label>
+              <input type="number" id="priceAddProduct" name="priceAddProduct" required placeholder="Nhập giá sản phẩm" min="0">
             </div>
 
             <div class="form-group">
@@ -320,10 +342,6 @@ global $mysqli;
               <p class="category-note">Chọn ảnh sản phẩm (PNG, JPG, JPEG, GIF)</p> <br>
               <p class="category-note">Kích thước tối đa: 2MB</p><br>
               <p class="category-note">Kích thước tối thiểu: 300x300px</p><br>
-              <!-- <p class="category-note"></p><br> -->
-              <!-- <p class="category-note">Chọn ảnh sản phẩm (PNG, JPG, JPEG)</p><br>
-              <p class="category-note">Kích thước tối đa: 2MB</p><br>
-              <p class="category-note">Kích thước tối thiểu: 300x300px</p><br> -->
               <img id="imagePreview" class="image-preview" src="#" alt="Preview image" style="display:none;">
             </div>
 
@@ -331,6 +349,7 @@ global $mysqli;
           </form>
 
 
+          <!-- Hiển thị ảnh trước khi upload   -->
           <script>
             document.getElementById('imageURL').addEventListener('change', function(event) {
               const file = event.target.files[0];
@@ -469,7 +488,7 @@ global $mysqli;
                   <!-- Số lượng sản phẩm -->
                   <div class="col-md-6 mb-3">
                     <label for="editQuantity" class="form-label">Số lượng</label>
-                    <input type="number" class="form-control" id="editQuantity" name="quantity" value="<?= htmlspecialchars($product['Quantity']) ?>">
+                    <input type="number" class="form-control" id="editQuantity" name="quantity" value="<?= htmlspecialchars($product['Quantity']) ?>" min="0">
                   </div>
                 </div>
 
