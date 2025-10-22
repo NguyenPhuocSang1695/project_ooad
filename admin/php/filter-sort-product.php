@@ -81,7 +81,7 @@ switch ($sortBy) {
 
 // Count total
 $countSql = "SELECT COUNT(*) as total 
-             FROM products p 
+             FROM Products p 
              WHERE $whereClause";
 
 $countStmt = $mysqli->prepare($countSql);

@@ -907,7 +907,7 @@ global $mysqli;
       document.getElementById('statusFilter').value = 'all';
       document.getElementById('priceMin').value = '';
       document.getElementById('priceMax').value = '';
-      document.getElementById('sortBy').value = 'name_asc';
+      document.getElementById('sortBy').value = 'newest';
       currentPage = 1;
       loadProducts(1);
     });
