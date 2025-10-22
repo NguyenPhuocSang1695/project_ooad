@@ -1,10 +1,10 @@
-
 body {
   font-family: Arial, sans-serif;
   margin: auto;
-  width:auto;
-  
+  width: auto;
+
 }
+
 .header {
   display: flex;
   flex-direction: row;
@@ -18,10 +18,12 @@ body {
   z-index: 100;
   background-color: white;
 }
+
 .main-content {
   display: flex;
 
 }
+
 .sidebar {
   width: 30%;
   padding: 30px;
@@ -40,10 +42,12 @@ body {
 .sidebar h1 {
   font-size: 39px;
 }
+
 .sidebar button {
-  display:block;
+  display: block;
   margin: 0 auto;
 }
+
 .add-employee-btn {
   background-color: #007bff;
   color: white;
@@ -193,15 +197,17 @@ td {
 .email-icon {
   color: #4CAF50;
 }
-.fa-plus{
-  border:1px solid white;
+
+.fa-plus {
+  border: 1px solid white;
   border-radius: 100%;
   border-width: 2px;
 }
+
 .personal-info {
   padding: 20px;
-width: 85%;
-margin: auto;
+  width: 85%;
+  margin: auto;
 }
 
 .personal-info h1 {
