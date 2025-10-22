@@ -1,5 +1,5 @@
 <?php
-require_once '../php/check_session.php'; // Đã khởi tạo $myconn sẵn
+require_once '../php/check_session.php';
 require_once '../php/connect.php';
 $myconn = new DatabaseConnection();
 $myconn->connect();
@@ -14,18 +14,21 @@ $avatarPath = ($_SESSION['Role'] === 'admin')
   : "../../assets/images/sang.jpg";
 
 $username = $email = $role = $phone = $address = $FullName = '';
+$addressDetail = $wardId = $districtId = $provinceId = '';
+$wardName = $districtName = $provinceName = '';
 
-$sql = "SELECT u.Username, u.FullName, u.Email, u.Role, u.Phone, u.address_id, a.address_detail as address_detail,
-        pr.name as province_name, dr.name as district_name, w.name as ward_name
+$sql = "SELECT u.Username, u.FullName, u.Email, u.Role, u.Phone, u.address_id, 
+        a.address_detail, a.ward_id,
+        pr.province_id, pr.name as province_name, 
+        dr.district_id, dr.name as district_name, 
+        w.ward_id, w.name as ward_name
         FROM users u
         join address a ON u.address_id = a.address_id
-              join ward w ON a.ward_id = w.ward_id
-              JOIN district dr ON w.district_id = dr.district_id
-              JOIN province pr ON dr.province_id = pr.province_id
-      
+        join ward w ON a.ward_id = w.ward_id
+        JOIN district dr ON w.district_id = dr.district_id
+        JOIN province pr ON dr.province_id = pr.province_id
         WHERE u.Username = ?";
 
-$stmt = $myconn->getConnection()->prepare($sql);
 $result = $myconn->queryPrepared($sql, [$_SESSION['Username']]);
 
 if ($result && $result->num_rows > 0) {
@@ -36,17 +39,22 @@ if ($result && $result->num_rows > 0) {
   $email = $row['Email'];
   $role = $row['Role'];
   $phone = $row['Phone'];
-  $address = $row['address_detail'] . ', ' .
-    $row['ward_name'] . ', ' .
-    $row['district_name'] . ', ' .
-    $row['province_name'];
+
+  $addressDetail = $row['address_detail'];
+  $wardId = $row['ward_id'];
+  $districtId = $row['district_id'];
+  $provinceId = $row['province_id'];
+
+  $wardName = $row['ward_name'];
+  $districtName = $row['district_name'];
+  $provinceName = $row['province_name'];
+
+  $address = $addressDetail . ', ' . $wardName . ', ' . $districtName . ', ' . $provinceName;
 } else {
   echo "Không tìm thấy thông tin người dùng.";
   exit();
 }
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -62,11 +70,11 @@ if ($result && $result->num_rows > 0) {
   <link rel="stylesheet" href="../style/generall.css">
   <link rel="stylesheet" href="../style/main1.css">
   <link rel="stylesheet" href="../style/accountStyle.css">
+  <link rel="stylesheet" href="../style/account.css">
   <link rel="stylesheet" href="./asset/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="../style/LogInfo.css">
   <link rel="stylesheet" href="../style/reponsiveAccount.css">
 </head>
-
 
 <body>
   <div class="header">
@@ -307,28 +315,273 @@ if ($result && $result->num_rows > 0) {
           <div class="info-container">
             <div class="info-row">
               <label>Họ và tên:</label>
-              <span><?php echo $FullName ?></span>
+              <span id="display-fullname"><?php echo $FullName ?></span>
             </div>
 
             <div class="info-row">
               <label>Số điện thoại:</label>
-              <span><?php echo $phone ?></span>
+              <span id="display-phone"><?php echo $phone ?></span>
             </div>
             <div class="info-row">
               <label>Email:</label>
-              <span><?php echo $email ?></span>
+              <span id="display-email"><?php echo $email ?></span>
             </div>
             <div class="info-row">
               <label>Địa chỉ:</label>
-              <span><?php echo $address ?></span>
+              <span id="display-address"><?php echo $address ?></span>
             </div>
           </div>
+
+          <button class="edit-btn" onclick="openEditModal()">
+            <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa thông tin
+          </button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Modal chỉnh sửa thông tin -->
+  <div id="editModal" class="modal">
+    <div class="modal-content-edit">
+      <div class="modal-header">
+        <h2>Chỉnh sửa thông tin cá nhân</h2>
+        <button class="close" onclick="closeEditModal()">&times;</button>
+      </div>
+
+      <div id="alert" class="alert"></div>
+
+      <form id="editForm">
+        <div class="form-group">
+          <label for="fullname">Họ và tên <span style="color: red;">*</span></label>
+          <input type="text" id="fullname" name="fullname" value="<?php echo $FullName ?>" required>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Số điện thoại <span style="color: red;">*</span></label>
+          <input type="tel" id="phone" name="phone" value="<?php echo $phone ?>" required>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email <span style="color: red;">*</span></label>
+          <input type="email" id="email" name="email" value="<?php echo $email ?>" required>
+        </div>
+
+        <div class="form-group">
+          <label for="province">Tỉnh/Thành phố</label>
+          <select id="province" name="province" onchange="loadDistricts()">
+            <option value="">-- Chọn Tỉnh/Thành phố --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="district">Quận/Huyện</label>
+          <select id="district" name="district" onchange="loadWards()">
+            <option value="">-- Chọn Quận/Huyện --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="ward">Phường/Xã</label>
+          <select id="ward" name="ward_id">
+            <option value="">-- Chọn Phường/Xã --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="address_detail">Địa chỉ chi tiết</label>
+          <input type="text" id="address_detail" name="address_detail" value="<?php echo $addressDetail ?>">
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" onclick="closeEditModal()">Hủy</button>
+          <button type="submit" class="btn-save">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="./asset/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Dữ liệu ban đầu
+    const initialData = {
+      provinceId: '<?php echo $provinceId ?>',
+      districtId: '<?php echo $districtId ?>',
+      wardId: '<?php echo $wardId ?>'
+    };
 
-</body>
+    function openEditModal() {
+      document.getElementById('editModal').style.display = 'block';
+      loadProvinces();
+    }
 
-</html>
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+      document.getElementById('alert').style.display = 'none';
+    }
+
+    // Đóng modal khi click bên ngoài
+    window.onclick = function(event) {
+      const modal = document.getElementById('editModal');
+      if (event.target === modal) {
+        closeEditModal();
+      }
+    }
+
+    // Load danh sách tỉnh/thành phố
+    async function loadProvinces() {
+      try {
+        const response = await fetch('../php/get_locations.php?action=provinces');
+        const data = await response.json();
+
+        if (data.success) {
+          const provinceSelect = document.getElementById('province');
+          provinceSelect.innerHTML = '<option value="">-- Chọn Tỉnh/Thành phố --</option>';
+
+          data.data.forEach(province => {
+            const option = document.createElement('option');
+            option.value = province.province_id;
+            option.textContent = province.name;
+            if (province.province_id === initialData.provinceId) {
+              option.selected = true;
+            }
+            provinceSelect.appendChild(option);
+          });
+
+          // Load quận/huyện nếu đã có tỉnh
+          if (initialData.provinceId) {
+            await loadDistricts();
+          }
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách tỉnh:', error);
+      }
+    }
+
+    // Load danh sách quận/huyện
+    async function loadDistricts() {
+      const provinceId = document.getElementById('province').value;
+      const districtSelect = document.getElementById('district');
+      const wardSelect = document.getElementById('ward');
+
+      districtSelect.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
+      wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+
+      if (!provinceId) return;
+
+      try {
+        const response = await fetch(`../php/get_locations.php?action=districts&province_id=${provinceId}`);
+        const data = await response.json();
+
+        if (data.success) {
+          data.data.forEach(district => {
+            const option = document.createElement('option');
+            option.value = district.district_id;
+            option.textContent = district.name;
+            if (district.district_id === initialData.districtId) {
+              option.selected = true;
+            }
+            districtSelect.appendChild(option);
+          });
+
+          // Load phường/xã nếu đã có quận
+          if (initialData.districtId) {
+            await loadWards();
+          }
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách quận/huyện:', error);
+      }
+    }
+
+    // Load danh sách phường/xã
+    async function loadWards() {
+      const districtId = document.getElementById('district').value;
+      const wardSelect = document.getElementById('ward');
+
+      wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+
+      if (!districtId) return;
+
+      try {
+        const response = await fetch(`../php/get_locations.php?action=wards&district_id=${districtId}`);
+        const data = await response.json();
+
+        if (data.success) {
+          data.data.forEach(ward => {
+            const option = document.createElement('option');
+            option.value = ward.ward_id;
+            option.textContent = ward.name;
+            if (ward.ward_id === initialData.wardId) {
+              option.selected = true;
+            }
+            wardSelect.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách phường/xã:', error);
+      }
+    }
+
+    // Xử lý submit form
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const alertDiv = document.getElementById('alert');
+      const formData = new FormData(this);
+
+      try {
+        const response = await fetch('../php/update-account.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Hiển thị thông báo thành công
+          alertDiv.className = 'alert alert-success';
+          alertDiv.textContent = result.message;
+          alertDiv.style.display = 'block';
+
+          // Cập nhật hiển thị trên trang
+          document.getElementById('display-fullname').textContent = formData.get('fullname');
+          document.getElementById('display-phone').textContent = formData.get('phone');
+          document.getElementById('display-email').textContent = formData.get('email');
+
+          // Cập nhật địa chỉ nếu có thay đổi
+          const wardId = formData.get('ward_id');
+          const addressDetail = formData.get('address_detail');
+          if (wardId && addressDetail) {
+            const wardText = document.getElementById('ward').options[document.getElementById('ward').selectedIndex].text;
+            const districtText = document.getElementById('district').options[document.getElementById('district').selectedIndex].text;
+            const provinceText = document.getElementById('province').options[document.getElementById('province').selectedIndex].text;
+            document.getElementById('display-address').textContent = `${addressDetail}, ${wardText}, ${districtText}, ${provinceText}`;
+          }
+
+          // Cập nhật tên ở header
+          const nameElements = document.querySelectorAll('.name-employee p, .user-name, .offcanvas-title');
+          nameElements.forEach(el => {
+            if (el.classList.contains('user-name')) {
+              return; // Username không đổi
+            }
+            el.textContent = formData.get('fullname');
+          });
+
+          // Đóng modal sau 2 giây
+          setTimeout(() => {
+            closeEditModal();
+          }, 2000);
+
+        } else {
+          // Hiển thị thông báo lỗi
+          alertDiv.className = 'alert alert-error';
+          alertDiv.textContent = result.message;
+          alertDiv.style.display = 'block';
+        }
+      } catch (error) {
+        alertDiv.className = 'alert alert-error';
+        alertDiv.textContent = 'Có lỗi xảy ra: ' + error.message;
+        alertDiv.style.display = 'block';
+      }
+    });
+  </script>

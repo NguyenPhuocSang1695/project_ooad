@@ -3,7 +3,7 @@
 // session_name('admin_session');
 // session_start();
 require_once '../php/connect.php';
-require_once '../php/ProductController.php';
+require_once '../php/ProductManager.php';
 
 $db = new DatabaseConnection();
 $db->connect();
@@ -236,7 +236,7 @@ global $mysqli;
 
             <!-- Body + pagination do renderProducts() xuất ra -->
             <?php
-            $controller = new ProductController();
+            $controller = new ProductManager();
             $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
             echo $controller->renderProducts($page);
             ?>
@@ -246,7 +246,7 @@ global $mysqli;
             </tbody>
           </table>
 
-          <!-- Main pagination (server-rendered by ProductController->renderProducts) -->
+          <!-- Main pagination (server-rendered by ProductManager->renderProducts) -->
           <div id="pagination-search" style="text-align:center; margin-top:20px;"></div>
 
         </div>

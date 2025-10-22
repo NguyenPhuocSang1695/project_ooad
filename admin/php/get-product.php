@@ -1,6 +1,6 @@
 <?php
-require_once('ProductController.php');
+require_once('ProductManager.php');
 
-$controller = new ProductController();
+$controller = new ProductManager();
 $controller->handleGetProductRequest();
 $controller->close();
