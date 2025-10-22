@@ -10,6 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $categoryID = $_POST['categoryID'];
     $price = $_POST['price'];
     $description = $_POST['description'];
+    $suppliers_id = $_POST['SupplierAddProduct'];
+    $quantity_in_stock = $_POST['priceAddProduct'];
 
     // Kiểm tra sản phẩm đã tồn tại chưa
     $checkSql = "SELECT COUNT(*) as count FROM products WHERE ProductName = ?";
@@ -56,11 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // Thêm vào cơ sở dữ liệu
-    $sql = "INSERT INTO products (ProductName, CategoryID, Price, Description, ImageURL, Status)
-            VALUES (?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO products (ProductName, CategoryID, Price, Description, ImageURL, Status, Supplier_id, quantity_in_stock)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("siisss", $productName, $categoryID, $price, $description, $imageRelativeURL, $status);
+    $stmt->bind_param("siisssii", $productName, $categoryID, $price, $description, $imageRelativeURL, $status, $suppliers_id, $quantity_in_stock);
 
     if ($stmt->execute()) {
         echo json_encode(["success" => true, "message" => "Thêm sản phẩm thành công"]);
@@ -71,15 +73,3 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->close();
     $conn->close();
 }
-
-// Giữ nguyên tên củ của file ảnh tải lên và xử lý tránh ghi đè file cũ
-// $newFileName = $originalName; // giữ nguyên tên file
-// $targetFilePath = $targetDir . $originalName;
-// if (file_exists($targetFilePath)) {
-//     // Nếu tên đã tồn tại, thêm timestamp vào tên để tránh ghi đè
-//     $newFileName = pathinfo($originalName, PATHINFO_FILENAME) . "_" . time() . "." . $fileExtension;
-//     $targetFilePath = $targetDir . $newFileName;
-// } else {
-//     $newFileName = $originalName;
-// }
-// $imageRelativeURL = "/assets/images/" . $newFileName;
