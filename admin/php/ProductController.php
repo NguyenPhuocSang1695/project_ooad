@@ -302,20 +302,6 @@ class ProductController
         return ob_get_clean();
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // Lấy sản phẩm phân trang + tìm kiếm
     public function getProductsPaginatedForSearch($page = 1, $keyword = '')
     {

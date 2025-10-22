@@ -10,69 +10,7 @@ $db->connect();
 global $db;
 $mysqli = $db->getConnection();
 global $mysqli;
-// class AutoProductLoader
-// {
-//   private $productId;
-//   private $productData;
 
-//   public function __construct()
-//   {
-//     $this->productId = isset($_GET['product_id']) ? $_GET['product_id'] : null;
-//   }
-
-//   public function hasProductId()
-//   {
-//     return !empty($this->productId);
-//   }
-
-//   public function generateAutoLoadScript()
-//   {
-//     if (!$this->hasProductId()) return '';
-
-//     $productId = htmlspecialchars($this->productId, ENT_QUOTES, 'UTF-8');
-//     $script = "
-//         <script>
-//             document.addEventListener('DOMContentLoaded', function() {
-//                 fetch('../php/get-product.php?id={$productId}')
-//                     .then(response => response.json())
-//                     .then(data => {
-//                         if (data) {
-//                             const searchInput = document.querySelector('.search-input');
-//                             if (searchInput) {
-//                                 searchInput.value = data.ProductName;
-//                                 searchProducts(1, {$productId});
-//                             }
-//                         }
-//                     })
-//                     .catch(error => console.error('Error:', error));
-//             });
-//         </script>";
-
-//     return $script;
-//   }
-// }
-
-// $product_id = isset($_GET['product_id']) ? $_GET['product_id'] : null;
-
-// if ($product_id) {
-//   echo "<script>
-//     document.addEventListener('DOMContentLoaded', function() {
-//       // Tự động tìm kiếm sản phẩm với ID cụ thể
-//       fetch('../php/get-product.php?id=" . $product_id . "')
-//         .then(response => response.json())
-//         .then(data => {
-//           if (data) {
-//             const searchInput = document.querySelector('.search-input');
-//             if (searchInput) {
-//               searchInput.value = data.ProductName;
-//               searchProducts(1, " . $product_id . ");
-//             }
-//           }
-//         })
-//         .catch(error => console.error('Error:', error));
-//     });
-//   </script>";
-// }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -92,293 +30,8 @@ global $mysqli;
   <link href="asset/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../style/responsiveWareHouse.css">
   <link rel="stylesheet" href="../style/warehouse-pagination.css">
+  <link rel="stylesheet" href="../style/wareHouse.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
-    /* Popup overlay cho thêm sản phẩm */
-    .add-product-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      /* Nền mờ */
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      margin: auto;
-    }
-
-    .add-product-content {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-      width: 400px;
-      max-height: 80vh;
-      overflow-y: auto;
-      position: relative;
-    }
-
-    /* Popup overlay */
-    .product-details-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      /* Nền mờ */
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* .product-details-overlay.active {
-      display: flex;
-    } */
-
-    .product-details-content {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-      width: 400px;
-      max-height: 80vh;
-      overflow-y: auto;
-      position: relative;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #ff4444;
-      color: white;
-      border: none;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      z-index: 10000000;
-    }
-
-    .close-btn:hover {
-      background: #cc0000;
-    }
-
-    /* Đảm bảo nội dung trong popup không bị tràn */
-    .details-grid p,
-    .form-group label,
-    .form-group input {
-      font-size: 14px;
-    }
-
-    .form-grid {
-      grid-template-columns: 1fr 2fr;
-      gap: 15px;
-    }
-
-    .image-preview,
-    .edit-image-preview {
-      max-width: 150px;
-    }
-
-    /* Responsive */
-    @media only screen and (max-width: 29.9375em) {
-
-      .product-details-content,
-      .add-product-content {
-        width: 90%;
-        padding: 15px;
-      }
-
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .details-grid p,
-      .form-group label,
-      .form-group input {
-        font-size: 12px;
-      }
-
-      .image-preview,
-      .edit-image-preview {
-        max-width: 100px;
-      }
-    }
-
-    @media only screen and (min-width: 30em) and (max-width: 63.9375em) {
-      .product-details-content {
-        width: 70%;
-      }
-
-      .add-product-content {
-        padding: 20px;
-        width: 66%;
-      }
-    }
-
-    @media only screen and (min-width: 64em) {
-      .product-details-content {
-        width: 40%;
-      }
-
-      .add-product-content {
-        padding: 25px;
-        width: 550px;
-      }
-
-      .form-grid {
-        grid-template-columns: 1fr 2fr;
-        gap: 10px;
-      }
-    }
-
-    /* Form thêm sản phẩm  */
-    #add-product-btn {
-      width: 150px;
-    }
-
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      width: 350px;
-      max-width: 100%;
-      width: 100%;
-    }
-
-    /* Tiêu đề của form */
-    .card h2 {
-      text-align: center;
-      font-size: 24px;
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    /* Cài đặt khoảng cách cho các trường nhập liệu */
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    label {
-      font-weight: bold;
-      font-size: 14px;
-      color: #555;
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    input,
-    textarea,
-    select {
-      width: 100%;
-      padding: 10px;
-      font-size: 14px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      background-color: #f9f9f9;
-    }
-
-    /* Cải tiến textarea */
-    textarea {
-      resize: vertical;
-      height: 80px;
-    }
-
-    /* Hiển thị ảnh trước khi gửi */
-    .image-preview {
-      max-width: 200px;
-      margin-top: 10px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Nút gửi form */
-    .btn {
-      width: 100%;
-
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    /* Các lỗi hoặc thông báo */
-    .alert {
-      padding: 10px;
-      margin-bottom: 15px;
-      background-color: #f44336;
-      color: white;
-      border-radius: 5px;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    .alert-success {
-      background-color: #4CAF50;
-    }
-
-    .image-preview {
-      max-width: 200px;
-      margin-top: 10px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Mobile responsive */
-
-
-    .category-note {
-      font-size: 12px;
-      color: #777;
-      margin-top: 5px;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 30px;
-      height: 30px;
-      background-color: #ff4444;
-      border: none;
-      border-radius: 50%;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1002;
-      transition: background-color 0.2s;
-    }
-
-    .close-btn:hover {
-      background-color: #cc0000;
-    }
-
-    .product-details-overlay {
-      /* // ...existing code... */
-    }
-  </style>
 </head>
 
 <body>
@@ -581,14 +234,6 @@ global $mysqli;
               </tr>
             </thead>
 
-            <style>
-              #productsTable td:nth-child(2),
-              td:nth-child(3),
-              td:nth-child(4) {
-                text-align: center;
-              }
-            </style>
-
             <!-- Body + pagination do renderProducts() xuất ra -->
             <?php
             $controller = new ProductController();
@@ -609,10 +254,10 @@ global $mysqli;
     </div>
 
 
-    <!-- Popup overlay cho thông tin sản phẩm -->
+    <!-- Popup overlay cho thông tin sản phẩm
     <div class="product-details-overlay" id="productDetailsOverlay">
       <div class="product-details-content" id="productDetailsContent"></div>
-    </div>
+    </div> -->
 
     <!-- Popup overlay cho add product-->
     <div class="add-product-overlay" id="addProductOverlay">
@@ -765,10 +410,22 @@ global $mysqli;
                   <div class="col-md-6 mb-3">
                     <label for="editCategoryID" class="form-label">Danh mục</label>
                     <select class="form-control" id="editCategoryID" name="categoryID" required>
-                      <option value="1">Cây văn phòng</option>
-                      <option value="2">Cây dưới nước</option>
-                      <option value="3">Cây dễ chăm</option>
-                      <option value="4">Cây để bàn</option>
+                      <option value="" disabled>-- Chọn danh mục --</option>
+                      <?php
+                      // Truy vấn danh sách category
+                      $sql = "SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryID ASC";
+                      $result = $mysqli->query($sql);
+
+                      if ($result) {
+                        while ($row = $result->fetch_assoc()) {
+                          // Nếu muốn chọn sẵn category đang có của sản phẩm
+                          $selected = (isset($product) && $product['CategoryID'] == $row['CategoryID']) ? 'selected' : '';
+                          echo '<option value="' . $row['CategoryID'] . '" ' . $selected . '>' . htmlspecialchars($row['CategoryName']) . '</option>';
+                        }
+                      } else {
+                        echo '<option value="">Không có danh mục</option>';
+                      }
+                      ?>
                     </select>
                   </div>
                 </div>
@@ -784,6 +441,35 @@ global $mysqli;
                       <option value="appear">Hiện</option>
                       <option value="hidden">Ẩn</option>
                     </select>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <!-- Nhà cung cấp -->
+                  <div class="col-md-6 mb-3">
+                    <label for="editSupplier" class="form-label">Nhà cung cấp</label>
+                    <select class="form-control" id="editSupplier" name="supplierID" required>
+                      <option value="" disabled>-- Chọn nhà cung cấp --</option>
+                      <?php
+                      $sql = "select supplier_id, supplier_name from suppliers";
+                      $result = $mysqli->query($sql);
+                      $suppliers = [];
+                      while ($row = $result->fetch_assoc()) {
+                        $suppliers[] = $row;
+                      }
+                      ?>
+                      <?php foreach ($suppliers as $supplier): ?>
+                        <option value="<?= $supplier['supplier_id'] ?>">
+                          <?= htmlspecialchars($supplier['supplier_name']) ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+
+                  <!-- Số lượng sản phẩm -->
+                  <div class="col-md-6 mb-3">
+                    <label for="editQuantity" class="form-label">Số lượng</label>
+                    <input type="number" class="form-control" id="editQuantity" name="quantity" value="<?= htmlspecialchars($product['Quantity']) ?>">
                   </div>
                 </div>
 
@@ -810,17 +496,20 @@ global $mysqli;
   <script src="../js/checklog.js"></script>
 
   <script>
-    // Function to show edit product overlay
+    // Hiện phần chỉnh sửa sản phẩm
     function editProduct(productId) {
       fetch(`../php/get-product.php?id=${productId}`)
         .then(response => response.json())
         .then(product => {
+          //Hiển thị thông tin của sản phẩm từ database lên popup chỉnh sửa (placeholder)
           document.getElementById('editProductId').value = product.ProductID;
           document.getElementById('editProductName').value = product.ProductName;
           document.getElementById('editCategoryID').value = product.CategoryID;
           document.getElementById('editPrice').value = product.Price;
           document.getElementById('editDescription').value = product.Description;
           document.getElementById('editStatus').value = product.Status;
+          document.getElementById('editQuantity').value = product.quantity_in_stock;
+          document.getElementById('editSupplier').value = product.Supplier_id;
 
           const currentImage = document.getElementById('currentImage');
           currentImage.src = '../../' + product.ImageURL;
@@ -929,11 +618,6 @@ global $mysqli;
         document.querySelectorAll('.avatar').forEach(img => img.src = userInfo.avatar);
       }
     });
-
-
-
-
-
 
     // Initialize currentPage from server (so server-side ?page=X is respected)
     let currentPage = <?php echo isset($page) ? (int)$page : 1; ?>;
@@ -1112,124 +796,10 @@ global $mysqli;
     })();
     // Load lần đầu (respect currentPage)
     loadProducts(currentPage);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // document.addEventListener('DOMContentLoaded', function() {
-    //   const searchInput = document.querySelector('.search-input');
-    //   const searchBtn = document.querySelector('.search-btn');
-
-    //   // Nhấn Enter trong ô input
-    //   searchInput.addEventListener('keypress', function(e) {
-    //     if (e.key === 'Enter') searchProducts(1);
-    //   });
-
-    //   // Nhấn nút tìm kiếm
-    //   searchBtn.addEventListener('click', function() {
-    //     searchProducts(1);
-    //   });
-    // });
-
-    // // Gọi ngay khi trang load
-    // document.addEventListener('DOMContentLoaded', () => {
-    //   searchProducts(1);
-
-    //   // Cho phép tìm kiếm khi người dùng gõ phím
-    //   const searchInput = document.querySelector('.search-input');
-    //   searchInput.addEventListener('keyup', () => searchProducts(1));
-    // });
-
-
-    // // Thêm debounce để tránh gọi API quá nhiều
-    // let searchTimeout;
-    // document.querySelector('.search-input').addEventListener('input', function() {
-    //   clearTimeout(searchTimeout);
-    //   searchTimeout = setTimeout(() => searchProducts(1), 300); // Giảm thời gian delay xuống 300ms
-    // });
-
-    // // Xử lý khi nhấn Enter
-    // document.querySelector('.search-input').addEventListener('keypress', function(e) {
-    //   if (e.key === 'Enter') {
-    //     clearTimeout(searchTimeout);
-    //     searchProducts(1);
-    //   }
-    // });
-
-    // // Xử lý khi nhấn nút tìm kiếm
-    // document.querySelector('.search-btn').addEventListener('click', function() {
-    //   clearTimeout(searchTimeout);
-    //   searchProducts(1);
-    // });
-
-    // // Load tất cả sản phẩm khi trang được tải
-    // document.addEventListener('DOMContentLoaded', function() {
-    //   searchProducts(1);
-    // });
   </script>
 
   <style>
-    .product-details-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
 
-    .product-details-content {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 800px;
-      max-height: 90vh;
-      overflow-y: auto;
-      position: relative;
-    }
-
-    .image-preview-container img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 4px;
-    }
-
-    .form-actions {
-      border-top: 1px solid #dee2e6;
-      padding-top: 1rem;
-    }
-
-    .category-note {
-      font-size: 12px;
-      color: #777;
-      margin-top: 5px;
-    }
   </style>
 </body>
 

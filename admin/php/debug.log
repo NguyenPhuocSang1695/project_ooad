@@ -1,0 +1,11 @@
+Array
+(
+    [productId] => 48
+    [productName] => Cây chuối rẻ quạt
+    [categoryID] => 1
+    [quantity] => 122
+    [supplierID] => 2
+    [price] => 235000
+    [status] => appear
+    [description] => Cây chuối rẻ quạt có lá...
+)

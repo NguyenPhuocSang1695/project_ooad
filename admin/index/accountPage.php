@@ -1,5 +1,8 @@
 <?php
 require_once '../php/check_session.php'; // Đã khởi tạo $myconn sẵn
+require_once '../php/connect.php';
+$myconn = new DatabaseConnection();
+$myconn->connect();
 
 if (!isset($_SESSION['Username'])) {
   header('Location: ../index.php');
@@ -12,30 +15,33 @@ $avatarPath = ($_SESSION['Role'] === 'admin')
 
 $username = $email = $role = $phone = $address = $FullName = '';
 
-$sql = "SELECT u.Username, u.FullName, u.Email, u.Role, u.Phone, u.Address, 
-        p.name as province_name, d.name as district_name, w.name as ward_name
+$sql = "SELECT u.Username, u.FullName, u.Email, u.Role, u.Phone, u.address_id, a.address_detail as address_detail,
+        pr.name as province_name, dr.name as district_name, w.name as ward_name
         FROM users u
-        JOIN province p ON u.Province = p.province_id
-        JOIN district d ON u.District = d.district_id
-        JOIN wards w ON u.Ward = w.wards_id
+        join address a ON u.address_id = a.address_id
+              join ward w ON a.ward_id = w.ward_id
+              JOIN district dr ON w.district_id = dr.district_id
+              JOIN province pr ON dr.province_id = pr.province_id
+      
         WHERE u.Username = ?";
 
-$stmt = $myconn->prepare($sql);
-$stmt->bind_param("s", $_SESSION['Username']);
-$stmt->execute();
-$result = $stmt->get_result();
+$stmt = $myconn->getConnection()->prepare($sql);
+$result = $myconn->queryPrepared($sql, [$_SESSION['Username']]);
 
-if ($result->num_rows > 0) {
-  while ($row = $result->fetch_assoc()) {
-    $username = $row['Username'];
-    $FullName = $row['FullName'];
-    $email = $row['Email'];
-    $role = $row['Role'];
-    $phone = $row['Phone'];
-    $address = $row['Address'] . ', ' . $row['district_name'] . ', ' . $row['ward_name'] . ', ' . $row['province_name'];
-  }
+if ($result && $result->num_rows > 0) {
+  $row = $result->fetch_assoc();
+
+  $username = $row['Username'];
+  $FullName = $row['FullName'];
+  $email = $row['Email'];
+  $role = $row['Role'];
+  $phone = $row['Phone'];
+  $address = $row['address_detail'] . ', ' .
+    $row['ward_name'] . ', ' .
+    $row['district_name'] . ', ' .
+    $row['province_name'];
 } else {
-  echo "0 results";
+  echo "Không tìm thấy thông tin người dùng.";
   exit();
 }
 ?>

@@ -27,6 +27,9 @@ try {
     $price = (float)$_POST['price'];
     $description = trim($_POST['description']);
     $status = $_POST['status'] ?? 'appear';
+    $quantity = isset($_POST['quantity']) ? (int)$_POST['quantity'] : null;
+    $Supplier_id = isset($_POST['supplierID']) ? (int)$_POST['supplierID'] : null;
+
 
     if (empty($productName)) {
         throw new Exception('Tên sản phẩm không được để trống');
@@ -113,6 +116,8 @@ try {
             Price = ?,
             Description = ?,
             Status = ?,
+            Supplier_id = ?,
+            quantity_in_stock = ?,
             ImageURL = ?
             WHERE ProductID = ?";
 
@@ -121,7 +126,20 @@ try {
         throw new Exception('Không thể chuẩn bị truy vấn cập nhật: ' . $conn->error);
     }
 
-    $stmt->bind_param("sidsssi", $productName, $categoryId, $price, $description, $status, $newImageURL, $productId);
+    $stmt->bind_param(
+        "sidssissi",
+        $productName,       // s
+        $categoryId,        // i
+        $price,             // d
+        $description,       // s
+        $status,            // s
+        $Supplier_id,        // i
+        $quantity,          // s (nếu là int thì đổi thành i)
+        $newImageURL,       // s
+        $productId          // i
+    );
+
+    file_put_contents('debug.log', print_r($_POST, true));
 
     if (!$stmt->execute()) {
         throw new Exception('Không thể cập nhật sản phẩm: ' . $stmt->error);
