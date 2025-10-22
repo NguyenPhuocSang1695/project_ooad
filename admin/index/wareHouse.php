@@ -31,6 +31,7 @@ global $mysqli;
   <link rel="stylesheet" href="../style/responsiveWareHouse.css">
   <link rel="stylesheet" href="../style/warehouse-pagination.css">
   <link rel="stylesheet" href="../style/wareHouse.css">
+  <link rel="stylesheet" href="../style/wareHouseFilter.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
@@ -216,6 +217,73 @@ global $mysqli;
         </button>
       </form>
 
+      <div class="filters-container">
+        <div class="filters-row">
+          <!-- Danh mục -->
+          <div class="filter-group">
+            <label for="categoryFilter">Danh mục:</label>
+            <select id="categoryFilter" class="filter-select">
+              <option value="all">Tất cả</option>
+              <?php
+              $sql = "SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryName ASC";
+              $result = $mysqli->query($sql);
+              if ($result) {
+                while ($row = $result->fetch_assoc()) {
+                  echo "<option value='{$row['CategoryID']}'>{$row['CategoryName']}</option>";
+                }
+              }
+              ?>
+            </select>
+          </div>
+
+          <!-- Trạng thái -->
+          <div class="filter-group">
+            <label for="statusFilter">Trạng thái:</label>
+            <select id="statusFilter" class="filter-select">
+              <option value="all">Tất cả</option>
+              <option value="appear">Đang hiện</option>
+              <option value="hidden">Đã ẩn</option>
+            </select>
+          </div>
+
+          <!-- Giá từ -->
+          <div class="filter-group">
+            <label for="priceMin">Giá từ:</label>
+            <input type="number" id="priceMin" class="filter-input" placeholder="0" min="0" step="1000">
+          </div>
+
+          <!-- Giá đến -->
+          <div class="filter-group">
+            <label for="priceMax">Giá đến:</label>
+            <input type="number" id="priceMax" class="filter-input" placeholder="0" min="0" step="1000">
+          </div>
+
+          <!-- Sắp xếp -->
+          <div class="filter-group">
+            <label for="sortBy">Sắp xếp:</label>
+            <select id="sortBy" class="filter-select">
+              <option value="name_asc">Tên A-Z</option>
+              <option value="name_desc">Tên Z-A</option>
+              <option value="price_asc">Giá tăng dần</option>
+              <option value="price_desc">Giá giảm dần</option>
+              <option value="newest">Mới nhất</option>
+              <option value="oldest">Cũ nhất</option>
+            </select>
+          </div>
+
+          <!-- Nút reset -->
+          <div class="filter-group">
+            <button id="resetFilters" class="btn-reset-filters">
+              <i class="fa-solid fa-rotate-right"></i> Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <style>
+
+      </style>
+
       <div class="management-content">
         <div class="products-section">
           <div class="section-header">
@@ -245,6 +313,8 @@ global $mysqli;
               <!-- Nội dung được load bằng JS -->
             </tbody>
           </table>
+
+          <!-- <div id="pagination" class="pagination" style="display: none"></div> -->
 
           <!-- Main pagination (server-rendered by ProductManager->renderProducts) -->
           <div id="pagination-search" style="text-align:center; margin-top:20px;"></div>
@@ -639,146 +709,208 @@ global $mysqli;
     });
 
     // Initialize currentPage from server (so server-side ?page=X is respected)
-    let currentPage = <?php echo isset($page) ? (int)$page : 1; ?>;
-
     function loadProducts(page = 1) {
       const keyword = (document.getElementById('search-input') || {
         value: ''
       }).value.trim();
+      const category = document.getElementById('categoryFilter').value;
+      const status = document.getElementById('statusFilter').value;
+      const priceMin = document.getElementById('priceMin').value;
+      const priceMax = document.getElementById('priceMax').value;
+      const sortBy = document.getElementById('sortBy').value;
 
-      // Toggle visibility: when searching, hide server tfoot and main pagination, show pagination-search
+      let url = `../php/filter-sort-product.php?page=${page}`;
+      if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+      if (category && category !== 'all') url += `&category=${category}`;
+      if (status && status !== 'all') url += `&status=${status}`;
+      if (priceMin) url += `&price_min=${priceMin}`;
+      if (priceMax) url += `&price_max=${priceMax}`;
+      url += `&sort_by=${sortBy}`;
+
+      const hasFilters = keyword || (category && category !== 'all') ||
+        (status && status !== 'all') || priceMin || priceMax;
+
+      // Ẩn server-side pagination khi có filter
       const tfoot = document.querySelector('#productsTable tfoot');
-      const paginationMain = document.getElementById('pagination');
-      const paginationSearch = document.getElementById('pagination-search');
-
-      if (keyword) {
-        if (tfoot) tfoot.style.display = 'none';
-        if (paginationMain) paginationMain.style.display = 'none';
-        if (paginationSearch) paginationSearch.style.display = '';
-      } else {
-        if (tfoot) tfoot.style.display = '';
-        if (paginationMain) paginationMain.style.display = '';
-        if (paginationSearch) paginationSearch.style.display = 'none';
+      if (tfoot) {
+        tfoot.style.display = hasFilters ? 'none' : '';
       }
 
-      fetch(`../php/search-products.php?page=${page}&keyword=${encodeURIComponent(keyword)}`)
+      fetch(url)
         .then(res => res.json())
         .then(data => {
           const tbody = document.getElementById('productsBody');
           tbody.innerHTML = '';
 
-          if (data && data.products && data.products.length > 0) {
+          if (data.success && data.products && data.products.length > 0) {
             data.products.forEach(p => {
+
+
               const tr = document.createElement('tr');
               tr.innerHTML = `
-                        <td><img src="../..${p.ImageURL}" style="width:100px;height:100px;object-fit:cover;"></td>
-                        <td style="text-align:center;">${p.ProductName}</td>
-                        <td style="text-align:center;">${p.CategoryName}</td>
-                        <td style="text-align:center;">${p.Price.toLocaleString()}</td>
-                        <td style="text-align:center;">
-                            <button class="btn btn-warning btn-sm" onclick="editProduct(${p.ProductID})">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
-                        </td>
-                    `;
+            <td><img src="../..${p.ImageURL}" style="width:100px;height:100px;object-fit:cover;border-radius:4px;"></td>
+            <td style="text-align:center;">
+              ${p.ProductName}
+            </td>
+            <td style="text-align:center;">${p.CategoryName}</td>
+            <td style="text-align:center;">${p.Price.toLocaleString()} VND</td>
+            <td style="text-align:center;">
+              <button class="btn btn-warning btn-sm" onclick="editProduct(${p.ProductID})">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+            </td>
+          `;
               tbody.appendChild(tr);
             });
           } else {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Không có sản phẩm nào</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;">
+          <i class="fa-solid fa-box-open" style="font-size:48px;color:#ccc;margin-bottom:10px;"></i>
+          <p>Không tìm thấy sản phẩm nào</p>
+        </td></tr>`;
           }
 
-          // Render pagination into the appropriate container
-          const targetPagination = keyword ? document.getElementById('pagination-search') : document.getElementById('pagination');
-          if (targetPagination) targetPagination.innerHTML = '';
+          // Chỉ render pagination khi có filter
+          const paginationSearch = document.getElementById('pagination-search');
+          if (paginationSearch) {
+            paginationSearch.innerHTML = '';
 
-          if (data && data.pagination && data.pagination.totalPages > 1) {
-            // Previous button
-            const prevBtn = document.createElement('a');
-            prevBtn.href = '#';
-            prevBtn.className = `pagination-item ${data.pagination.currentPage === 1 ? 'disabled' : ''}`;
-            prevBtn.innerHTML = '&laquo;';
-            prevBtn.onclick = (e) => {
-              e.preventDefault();
-              if (data.pagination.currentPage > 1) {
-                currentPage = data.pagination.currentPage - 1;
-                loadProducts(currentPage);
-              }
-            };
-            targetPagination.appendChild(prevBtn);
-
-            // First page
-            if (data.pagination.currentPage > 2) {
-              const firstBtn = document.createElement('a');
-              firstBtn.href = '#';
-              firstBtn.className = 'pagination-item';
-              firstBtn.textContent = '1';
-              firstBtn.onclick = (e) => {
-                e.preventDefault();
-                currentPage = 1;
-                loadProducts(1);
-              };
-              targetPagination.appendChild(firstBtn);
-
-              if (data.pagination.currentPage > 3) {
-                const ellipsis = document.createElement('span');
-                ellipsis.className = 'pagination-ellipsis';
-                ellipsis.textContent = '...';
-                targetPagination.appendChild(ellipsis);
-              }
+            if (hasFilters && data.pagination && data.pagination.totalPages > 1) {
+              renderPagination(paginationSearch, data.pagination);
             }
-
-            // Page numbers
-            for (let i = Math.max(1, data.pagination.currentPage - 1); i <= Math.min(data.pagination.totalPages, data.pagination.currentPage + 1); i++) {
-              const btn = document.createElement('a');
-              btn.href = '#';
-              btn.className = `pagination-item ${i === data.pagination.currentPage ? 'active' : ''}`;
-              btn.textContent = i;
-              btn.onclick = (e) => {
-                e.preventDefault();
-                currentPage = i;
-                loadProducts(i);
-              };
-              targetPagination.appendChild(btn);
-            }
-
-            // Last page
-            if (data.pagination.currentPage < data.pagination.totalPages - 1) {
-              if (data.pagination.currentPage < data.pagination.totalPages - 2) {
-                const ellipsis = document.createElement('span');
-                ellipsis.className = 'pagination-ellipsis';
-                ellipsis.textContent = '...';
-                targetPagination.appendChild(ellipsis);
-              }
-
-              const lastBtn = document.createElement('a');
-              lastBtn.href = '#';
-              lastBtn.className = 'pagination-item';
-              lastBtn.textContent = data.pagination.totalPages;
-              lastBtn.onclick = (e) => {
-                e.preventDefault();
-                currentPage = data.pagination.totalPages;
-                loadProducts(data.pagination.totalPages);
-              };
-              targetPagination.appendChild(lastBtn);
-            }
-
-            // Next button
-            const nextBtn = document.createElement('a');
-            nextBtn.href = '#';
-            nextBtn.className = `pagination-item ${data.pagination.currentPage === data.pagination.totalPages ? 'disabled' : ''}`;
-            nextBtn.innerHTML = '&raquo;';
-            nextBtn.onclick = (e) => {
-              e.preventDefault();
-              if (data.pagination.currentPage < data.pagination.totalPages) {
-                currentPage = data.pagination.currentPage + 1;
-                loadProducts(currentPage);
-              }
-            };
-            targetPagination.appendChild(nextBtn);
           }
         })
-        .catch(err => console.error(err));
+        .catch(err => {
+          console.error('Error loading products:', err);
+          alert('Có lỗi xảy ra khi tải sản phẩm!');
+        });
     }
+
+    // Tách hàm render pagination ra để code gọn hơn
+    function renderPagination(container, pagination) {
+      // Previous button
+      const prevBtn = document.createElement('a');
+      prevBtn.href = '#';
+      prevBtn.className = `pagination-item ${pagination.currentPage === 1 ? 'disabled' : ''}`;
+      prevBtn.innerHTML = '&laquo;';
+      prevBtn.onclick = (e) => {
+        e.preventDefault();
+        if (pagination.currentPage > 1) {
+          currentPage = pagination.currentPage - 1;
+          loadProducts(currentPage);
+        }
+      };
+      container.appendChild(prevBtn);
+
+      // First page
+      if (pagination.currentPage > 2) {
+        const firstBtn = document.createElement('a');
+        firstBtn.href = '#';
+        firstBtn.className = 'pagination-item';
+        firstBtn.textContent = '1';
+        firstBtn.onclick = (e) => {
+          e.preventDefault();
+          currentPage = 1;
+          loadProducts(1);
+        };
+        container.appendChild(firstBtn);
+
+        if (pagination.currentPage > 3) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          container.appendChild(ellipsis);
+        }
+      }
+
+      // Page numbers
+      for (let i = Math.max(1, pagination.currentPage - 1); i <= Math.min(pagination.totalPages, pagination.currentPage + 1); i++) {
+        const btn = document.createElement('a');
+        btn.href = '#';
+        btn.className = `pagination-item ${i === pagination.currentPage ? 'active' : ''}`;
+        btn.textContent = i;
+        btn.onclick = (e) => {
+          e.preventDefault();
+          currentPage = i;
+          loadProducts(i);
+        };
+        container.appendChild(btn);
+      }
+
+      // Last page
+      if (pagination.currentPage < pagination.totalPages - 1) {
+        if (pagination.currentPage < pagination.totalPages - 2) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          container.appendChild(ellipsis);
+        }
+
+        const lastBtn = document.createElement('a');
+        lastBtn.href = '#';
+        lastBtn.className = 'pagination-item';
+        lastBtn.textContent = pagination.totalPages;
+        lastBtn.onclick = (e) => {
+          e.preventDefault();
+          currentPage = pagination.totalPages;
+          loadProducts(pagination.totalPages);
+        };
+        container.appendChild(lastBtn);
+      }
+
+      // Next button
+      const nextBtn = document.createElement('a');
+      nextBtn.href = '#';
+      nextBtn.className = `pagination-item ${pagination.currentPage === pagination.totalPages ? 'disabled' : ''}`;
+      nextBtn.innerHTML = '&raquo;';
+      nextBtn.onclick = (e) => {
+        e.preventDefault();
+        if (pagination.currentPage < pagination.totalPages) {
+          currentPage = pagination.currentPage + 1;
+          loadProducts(currentPage);
+        }
+      };
+      container.appendChild(nextBtn);
+    }
+
+
+
+    // Event listeners cho các bộ lọc
+    document.getElementById('categoryFilter').addEventListener('change', () => {
+      currentPage = 1;
+      loadProducts(1);
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', () => {
+      currentPage = 1;
+      loadProducts(1);
+    });
+
+    document.getElementById('priceMin').addEventListener('change', () => {
+      currentPage = 1;
+      loadProducts(1);
+    });
+
+    document.getElementById('priceMax').addEventListener('change', () => {
+      currentPage = 1;
+      loadProducts(1);
+    });
+
+    document.getElementById('sortBy').addEventListener('change', () => {
+      currentPage = 1;
+      loadProducts(1);
+    });
+
+    // Reset filters
+    document.getElementById('resetFilters').addEventListener('click', () => {
+      document.getElementById('search-input').value = '';
+      document.getElementById('categoryFilter').value = 'all';
+      document.getElementById('statusFilter').value = 'all';
+      document.getElementById('priceMin').value = '';
+      document.getElementById('priceMax').value = '';
+      document.getElementById('sortBy').value = 'newest';
+      currentPage = 1;
+      loadProducts(1);
+    });
 
     // Prevent the search form from performing a full page submit and wire up search
     (function() {
@@ -816,10 +948,6 @@ global $mysqli;
     // Load lần đầu (respect currentPage)
     loadProducts(currentPage);
   </script>
-
-  <style>
-
-  </style>
 </body>
 
 </html>
