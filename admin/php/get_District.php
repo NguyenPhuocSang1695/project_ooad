@@ -1,33 +1,38 @@
 <?php
 header('Content-Type: application/json');
-include 'connect.php';
+require_once 'connect.php';
 
-if ($myconn->connect_error) {
-    echo json_encode(['success' => false, 'error' => 'Connection failed: ' . $myconn->connect_error]);
-    exit;
-}
-$myconn->set_charset("utf8");
+try {
+    $db = new DatabaseConnection();
+    $db->connect();
 
-$province_id = 0;
-if (isset($_GET['province_id']) && is_numeric($_GET['province_id'])) {
-    $province_id = intval($_GET['province_id']);
-}
-
-if ($province_id > 0) {
-    $stmt = $myconn->prepare('SELECT district_id, name FROM district WHERE province_id = ? ORDER BY name ASC');
-    $stmt->bind_param('i', $province_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $data = [];
-    while ($row = $result->fetch_assoc()) {
-        $data[] = [
-            'id' => $row['district_id'],
-            'name' => $row['name']
-        ];
+    $province_id = 0;
+    if (isset($_GET['province_id']) && is_numeric($_GET['province_id'])) {
+        $province_id = intval($_GET['province_id']);
     }
-    $stmt->close();
-    echo json_encode(['success' => true, 'data' => $data]);
-} else {
-    echo json_encode(['success' => false, 'error' => 'Invalid province ID']);
+
+    if ($province_id > 0) {
+        $result = $db->queryPrepared(
+            'SELECT district_id, name FROM district WHERE province_id = ? ORDER BY name ASC',
+            [$province_id],
+            'i'
+        );
+        
+        $data = [];
+        while ($row = $result->fetch_assoc()) {
+            $data[] = [
+                'id' => $row['district_id'],
+                'name' => $row['name']
+            ];
+        }
+        
+        $db->close();
+        echo json_encode(['success' => true, 'data' => $data]);
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Invalid province ID']);
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 ?>

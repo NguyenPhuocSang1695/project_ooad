@@ -95,7 +95,7 @@ try {
     }
 
     // Verify ward exists and belongs to district
-    $check_ward = "SELECT wards_id FROM wards WHERE wards_id = ? AND district_id = ?";
+    $check_ward = "SELECT ward_id FROM ward WHERE ward_id = ? AND district_id = ?";
     $stmt = $myconn->prepare($check_ward);
     $stmt->bind_param("ii", $ward_id, $district_id);
     $stmt->execute();

@@ -1,75 +1,68 @@
 <?php
-header('Content-Type: application/json');
-include 'connect.php';
+header('Content-Type: application/json; charset=utf-8');
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
 
-if ($myconn->connect_error) {
-    die(json_encode(['success' => false, 'error' => 'Connection failed: ' . $myconn->connect_error]));
-}
- 
-$orderId = isset($_GET['orderId']) ? intval($_GET['orderId']) : 0;
+require_once 'connect.php';
+require_once 'Services/OrderService.php';
 
-if (!$orderId) {
-    die(json_encode(['success' => false, 'error' => 'Order ID is required']));
-}
+try {
+    // Initialize connection
+    $db = new DatabaseConnection();
+    $db->connect();
+    
+    $orderId = isset($_GET['orderId']) ? intval($_GET['orderId']) : 0;
 
-// Lấy thông tin đơn hàng và người mua
-$orderQuery = "SELECT o.*, u.FullName, u.Phone, u.Address,
-    CONCAT(u.Address, ', ', d.name, ', ', p.name) as full_address
-    FROM orders o
-    JOIN users u ON o.Username = u.Username 
-    LEFT JOIN province p ON o.Province = p.province_id
-    LEFT JOIN district d ON o.District = d.district_id
-    WHERE o.OrderID = ?";
+    if (!$orderId) {
+        throw new Exception('Order ID is required');
+    }
 
-$stmt = $myconn->prepare($orderQuery);
-$stmt->bind_param("i", $orderId);
-$stmt->execute();
-$orderResult = $stmt->get_result();
-$orderInfo = $orderResult->fetch_assoc();
+    $orderService = new OrderService($db);
+    $orderData = $orderService->getOrderWithDetails($orderId);
+    
+    /** @var Order $order */
+    $order = $orderData['order'];
+    
+    /** @var OrderDetail[] $details */
+    $details = $orderData['details'];
 
-if (!$orderInfo) {
-    die(json_encode(['success' => false, 'error' => 'Order not found']));
-}
+    // Transform products array
+    $products = [];
+    foreach ($details as $detail) {
+        $products[] = [
+            'productId' => $detail->getProductId(),
+            'productName' => $detail->getProductName() ?: 'Unknown',
+            'quantity' => $detail->getQuantity(),
+            'unitPrice' => floatval($detail->getUnitPrice()),
+            'totalPrice' => floatval($detail->getTotalPrice())
+        ];
+    }
 
-// Lấy chi tiết sản phẩm trong đơn hàng
-$productsQuery = "SELECT od.*, p.ProductName, p.ImageURL 
-                 FROM orderdetails od 
-                 JOIN products p ON od.ProductID = p.ProductID 
-                 WHERE od.OrderID = ?";
-
-$stmt = $myconn->prepare($productsQuery);
-$stmt->bind_param("i", $orderId);
-$stmt->execute();
-$productsResult = $stmt->get_result();
-$products = [];
-
-while ($product = $productsResult->fetch_assoc()) {
-    $products[] = [
-        'productName' => $product['ProductName'],
-        'quantity' => $product['Quantity'],
-        'unitPrice' => $product['UnitPrice'],
-        'totalPrice' => $product['TotalPrice'],
-        'imageUrl' => $product['ImageURL']
+    // Prepare response
+    $response = [
+        'success' => true,
+        'order' => [
+            'orderId' => intval($order->getOrderId()),
+            'username' => $order->getUsername(),
+            'orderDate' => $order->getDateGeneration(),
+            'status' => $order->getStatus(),
+            'customerName' => $order->getCustomerName(),
+            'customerPhone' => $order->getPhone(),
+            'address' => $order->getFullAddress(),
+            'paymentMethod' => $order->getPaymentMethod(),
+            'totalAmount' => floatval($order->getTotalAmount()),
+            'productCount' => count($products),
+            'products' => $products
+        ]
     ];
+
+    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
+
+} catch (Exception $e) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
 }
-
-// Chuẩn bị response
-$response = [
-    'success' => true,
-    'order' => [
-        'orderId' => $orderInfo['OrderID'],
-        'orderDate' => $orderInfo['DateGeneration'],
-        'status' => $orderInfo['Status'],
-        'receiverName' => $orderInfo['FullName'],
-        'receiverPhone' => $orderInfo['Phone'],
-        'receiverAddress' => $orderInfo['full_address'],
-        'paymentMethod' => $orderInfo['PaymentMethod'],
-        'totalAmount' => $orderInfo['TotalAmount'],
-        'products' => $products
-    ]
-];
-
-echo json_encode($response, JSON_UNESCAPED_UNICODE);
-$stmt->close();
-$myconn->close();
 ?>
