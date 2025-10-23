@@ -7,15 +7,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Vẫn gọi API để cập nhật thông tin mới nhất
-    fetch('../php/sessionHandler.php')
-        .then(response => response.json())
+    fetch('../php/check_session.php')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.status === 'success') {
                 const userInfo = {
                     username: data.username,
                     fullname: data.fullname,
                     role: data.role,
-                    avatar: data.role === 'admin' ? '../../assets/images/admin.jpg' : '../../assets/images/sang.jpg'
+                    avatar: '../../assets/images/sang.jpg'
                 };
                 
                 // Lưu thông tin vào localStorage
@@ -28,6 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(error => {
             console.error('Lỗi khi kiểm tra trạng thái đăng nhập:', error);
+            localStorage.removeItem('userInfo');
+            window.location.href = '../index.php';
         });
 });
 function updateUIWithUserInfo(userInfo) {

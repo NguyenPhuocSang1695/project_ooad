@@ -1,8 +1,24 @@
+// Global variable để theo dõi trang hiện tại
+let currentPage = 1;
+
 document.addEventListener("DOMContentLoaded", function () {
   const filterForm = document.getElementById("filter-form");
   const filterModal = new bootstrap.Modal(
     document.getElementById("filterModal")
   );
+
+  // Event listener cho nút "Xem chi tiết" đơn hàng (view-btn)
+  document.addEventListener("click", function (e) {
+    if (e.target.closest(".view-btn")) {
+      e.preventDefault();
+      const row = e.target.closest("tr");
+      const orderId = row?.querySelector("td:first-child")?.textContent?.trim();
+      if (orderId) {
+        console.log('[VIEW_ORDER] Order ID:', orderId);
+        showOrderDetailModal(orderId);
+      }
+    }
+  });
 
   if (filterForm) {
     filterForm.addEventListener("submit", function (e) {
@@ -13,8 +29,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // // Khởi tạo lần đầu hiển thị dữ liệu không lọc
-  // filterOrders();
   const orderTableBody = document.getElementById("order-table-body");
   const districtInput = document.getElementById("district-input");
   const districtSuggestions = document.getElementById("district-suggestions");
@@ -25,8 +39,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const nextPageButton = document.getElementById("nextPage");
 
   const limit = 5;
-  let currentPage =
-    parseInt(new URLSearchParams(window.location.search).get("page")) || 1;
+  // Get current page from URL (currentPage is already declared as global variable)
+  const urlParams = new URLSearchParams(window.location.search);
+  currentPage = parseInt(urlParams.get("page")) || 1;
 
   window.applyFilters = function () {
     currentPage = 1;
@@ -104,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 !e.target.closest(".status-btn") &&
                 !e.target.closest(".action-btn")
               ) {
-                window.location.href = `orderDetail2.php?code_Product=${order.madonhang}`;
+                showOrderDetailModal(order.madonhang);
               }
             });
 
@@ -723,6 +738,9 @@ function initFilters() {
       if (desktopForm) syncFormData(mobileForm, desktopForm);
     });
   }
+
+  // Khởi tạo lần đầu hiển thị dữ liệu không lọc
+  filterOrders();
 }
 
 // Khởi tạo khi trang đã load
@@ -978,3 +996,128 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
   initFilters();
 });
+
+
+function showOrderDetailModal(orderId) {
+  console.log('[SHOW_DETAIL] Loading order:', orderId);
+  
+  // Fetch order details from API
+  fetch(`../php/get_order_detail.php?orderId=${encodeURIComponent(orderId)}`)
+    .then(response => response.json())
+    .then(data => {
+      console.log('[ORDER_DETAIL] Data:', data);
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Không thể tải chi tiết đơn hàng');
+      }
+      
+      const order = data.order;
+      
+      // Build products table HTML
+      let productsHTML = '';
+      order.products.forEach((product, index) => {
+        productsHTML += `
+          <tr>
+            <td style="text-align: center;">${index + 1}</td>
+            <td>${product.productName}</td>
+            <td style="text-align: center;">${product.quantity}</td>
+            <td style="text-align: right;">${parseInt(product.unitPrice).toLocaleString('vi-VN')} VNĐ</td>
+            <td style="text-align: right;">${parseInt(product.totalPrice).toLocaleString('vi-VN')} VNĐ</td>
+          </tr>
+        `;
+      });
+      
+      // Update modal content
+      const modalBody = document.querySelector('#orderDetailModal .modal-body');
+      if (modalBody) {
+        modalBody.innerHTML = `
+          <div style="padding: 20px;">
+            <!-- Order Info Section -->
+            <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📋 Thông tin đơn hàng</h5>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Mã đơn hàng</label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">#${order.orderId}</p>
+                </div>
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Ngày tạo</label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${new Date(order.orderDate).toLocaleString('vi-VN')}</p>
+                </div>
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Trạng thái</label>
+                  <p style="margin: 5px 0;">
+                    <span style="display: inline-block; padding: 5px 12px; border-radius: 20px; background-color: #28a745; color: white; font-weight: 600; font-size: 12px;">
+                      ${order.status}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Phương thức TT</label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.paymentMethod}</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Customer Info Section -->
+            <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">👤 Thông tin khách hàng</h5>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên</label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerName}</p>
+                </div>
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại</label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerPhone}</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Address Section -->
+            <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📍 Địa chỉ giao hàng</h5>
+              <p style="margin: 0; color: #333; line-height: 1.6;">${order.address}</p>
+            </div>
+            
+            <!-- Products Section -->
+            <div style="margin-bottom: 30px;">
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📦 Sản phẩm (${order.productCount})</h5>
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background-color: #f8f9fa; border-bottom: 2px solid #ddd;">
+                  <tr>
+                    <th style="padding: 12px; text-align: center; color: #666; font-weight: 600;">STT</th>
+                    <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Sản phẩm</th>
+                    <th style="padding: 12px; text-align: center; color: #666; font-weight: 600;">Số lượng</th>
+                    <th style="padding: 12px; text-align: right; color: #666; font-weight: 600;">Đơn giá</th>
+                    <th style="padding: 12px; text-align: right; color: #666; font-weight: 600;">Tổng</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${productsHTML}
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Total Section -->
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 16px; font-weight: 600; color: #333;">Tổng cộng:</span>
+                <span style="font-size: 24px; font-weight: 700; color: #667eea;">${parseInt(order.totalAmount).toLocaleString('vi-VN')} VNĐ</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+      modal.show();
+      
+      console.log('[ORDER_DETAIL] Modal displayed successfully');
+    })
+    .catch(error => {
+      console.error('[ERROR_DETAIL]', error);
+      alert('Lỗi khi tải chi tiết đơn hàng: ' + error.message);
+    });
+}

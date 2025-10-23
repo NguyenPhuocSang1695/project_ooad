@@ -15,11 +15,11 @@ try {
             w.name as ward_name,
             p.province_id,
             d.district_id,
-            w.wards_id
+            w.ward_id
             FROM users u
             LEFT JOIN province p ON u.Province = p.province_id
             LEFT JOIN district d ON u.District = d.district_id
-            LEFT JOIN wards w ON u.Ward = w.wards_id
+            LEFT JOIN ward w ON u.Ward = w.ward_id
             WHERE u.Username = ?";
 
     $stmt = $myconn->prepare($sql);
