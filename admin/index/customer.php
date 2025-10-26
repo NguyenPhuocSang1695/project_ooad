@@ -16,7 +16,10 @@
   <link href="../style/customer-table.css" rel="stylesheet">
   <link href="../style/customer-search.css" rel="stylesheet">
   <link rel="stylesheet" href="../style/responsiveCustomer.css">
+  <link rel="stylesheet" href="../style/add-user-modal.css">
   <script src="../js/customer-search.js" defer></script>
+  <script src="../js/add-user.js" defer></script>
+  <script src="../js/edit-user.js" defer></script>
   <style>
     .loading {
       background-image: url('data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==');
@@ -245,6 +248,9 @@ require_once '../php/User.php';
       <button id="toggleSearch" class="toggle-search-btn">
         <i class="fas fa-search"></i> Tìm kiếm
       </button>
+      <button id="addUser" class="toggle-search-btn">
+        <i class="fas fa-user-plus"></i> Thêm người dùng
+      </button>
     </div>
     <div class="search-wrapper" id="searchWrapper" style="display: none;">
       <form class="search-container-customer" method="GET">
@@ -345,6 +351,13 @@ require_once '../php/User.php';
         });
     });
     </script>
+
+  <?php
+  define('INCLUDE_CHECK', true);
+  require_once '../php/add_user_form.php';
+  // Include edit user modal so JS can find its elements
+  require_once '../php/edit_user_form.php';
+  ?>
   
   </body>
 
