@@ -87,6 +87,14 @@ global $mysqli;
               <p>Thống kê</p>
             </div>
           </a>
+          <a href="voucherManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Mã giảm giá</p>
+            </div>
+          </a>
           <a href="accountPage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
               <button class="button-function-selection">
@@ -195,6 +203,14 @@ global $mysqli;
           <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
         </button>
         <p>Thống kê</p>
+      </div>
+    </a>
+    <a href="voucherManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Mã giảm giá</p>
       </div>
     </a>
     <a href="accountPage.php" style="text-decoration: none; color: black;">
