@@ -107,7 +107,7 @@ function getStatusInfo($status)
         'class' => 'status-btn status-pending',
         'icon' => '<i class="fa-solid fa-spinner"></i>'
       ];
-      case 'confirmed':
+    case 'confirmed':
       return [
         'text' => 'Đã xác nhận',
         'class' => 'status-btn status-confirmed',
@@ -352,8 +352,9 @@ $paymentStatusInfo = getPaymentStatusInfo($paymentMethod);
     .product-name {
       font-weight: 500;
     }
+
     .product-image {
-      display:none;
+      display: none;
     }
   </style>
 </head>
@@ -427,6 +428,7 @@ $paymentStatusInfo = getPaymentStatusInfo($paymentMethod);
               <p>Thống kê</p>
             </div>
           </a>
+
           <a href="accountPage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
               <button class="button-function-selection">
