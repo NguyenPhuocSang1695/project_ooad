@@ -273,7 +273,7 @@ $voucherResult = $myconn->query($sqlVouchers);
       <!-- FORM THÊM VOUCHER -->
       <div class="voucher-form-container">
         <h2>🎟️ Thêm Voucher Mới</h2>
-        <form action="../php/process_addVoucher.php" method="POST" class="voucher-form">
+        <form class="voucher-form">
           <div class="form-group">
             <label for="name">Tên voucher:</label>
             <input type="text" id="name" name="name" required placeholder="VD: GiamGia20">
@@ -303,6 +303,7 @@ $voucherResult = $myconn->query($sqlVouchers);
             </button>
           </div>
         </form>
+
       </div>
 
       <!-- DANH SÁCH VOUCHER -->
@@ -803,6 +804,42 @@ $voucherResult = $myconn->query($sqlVouchers);
 
 
   <script>
+    // Add voucher 
+    document.addEventListener("DOMContentLoaded", () => {
+      const addForm = document.querySelector(".voucher-form");
+
+      if (addForm) {
+        addForm.addEventListener("submit", async function(e) {
+          e.preventDefault();
+
+          const formData = new FormData(this);
+
+          try {
+            const response = await fetch("../php/addVoucher.php", {
+              method: "POST",
+              body: formData
+            });
+
+            const result = await response.text();
+            alert(result.trim());
+
+            // Xóa nội dung form sau khi thêm
+            this.reset();
+
+            // Reload nhẹ danh sách voucher (nếu có)
+            if (typeof loadVoucherList === "function") {
+              loadVoucherList(); // nếu bạn có hàm load lại danh sách
+            } else {
+              location.reload();
+            }
+          } catch (error) {
+            alert("Lỗi khi thêm voucher!");
+            console.error(error);
+          }
+        });
+      }
+    });
+
     // --- Tìm kiếm voucher ---
     const searchInput = document.getElementById('searchVoucher');
     if (searchInput) {
@@ -859,9 +896,25 @@ $voucherResult = $myconn->query($sqlVouchers);
     }
 
     // --- Xóa voucher ---
-    function deleteVoucher(id, name) {
+    // --- Xóa voucher ---
+    async function deleteVoucher(id, name) {
       if (confirm(`Bạn có chắc chắn muốn xóa voucher "${name}" không?`)) {
-        window.location.href = `../php/deleteVoucher.php?id=${id}`;
+        try {
+          const formData = new FormData();
+          formData.append('id', id);
+
+          const response = await fetch('../php/deleteVoucher.php', {
+            method: 'POST',
+            body: formData
+          });
+
+          const result = await response.text();
+          alert(result.trim());
+          location.reload(); // reload lại trang để cập nhật danh sách
+        } catch (error) {
+          alert('Lỗi khi xóa voucher!');
+          console.error(error);
+        }
       }
     }
   </script>

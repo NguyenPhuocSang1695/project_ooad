@@ -1,16 +1,20 @@
 <?php
 require_once './connect.php';
 
-// Tạo kết nối
+// Kết nối database
 $db = new DatabaseConnection();
 $db->connect();
 $conn = $db->getConnection();
 
-// Lấy ID voucher cần xóa
-if (isset($_GET['id']) && is_numeric($_GET['id'])) {
-    $id = intval($_GET['id']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = $_POST['id'] ?? '';
 
-    // Kiểm tra voucher có tồn tại không
+    if (empty($id) || !is_numeric($id)) {
+        echo "ID voucher không hợp lệ!";
+        exit;
+    }
+
+    // Kiểm tra voucher có tồn tại
     $check_sql = "SELECT * FROM vouchers WHERE id = ?";
     $check_stmt = $conn->prepare($check_sql);
     $check_stmt->bind_param("i", $id);
@@ -18,25 +22,25 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $result = $check_stmt->get_result();
 
     if ($result->num_rows === 0) {
-        echo "<script>alert('Voucher không tồn tại hoặc đã bị xóa!'); history.back();</script>";
+        echo "Voucher không tồn tại hoặc đã bị xóa!";
         exit;
     }
 
-    // Xóa voucher
-    $sql = "DELETE FROM vouchers WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $id);
+    // Tiến hành xóa
+    $delete_sql = "DELETE FROM vouchers WHERE id = ?";
+    $delete_stmt = $conn->prepare($delete_sql);
+    $delete_stmt->bind_param("i", $id);
 
-    if ($stmt->execute()) {
-        echo "<script>alert('Xóa voucher thành công!'); window.location.href='../index/voucherManage.php';</script>";
+    if ($delete_stmt->execute()) {
+        echo "Xóa voucher thành công!";
     } else {
-        echo "<script>alert('Xóa voucher thất bại!'); history.back();</script>";
+        echo "Xóa voucher thất bại!";
     }
 
-    $stmt->close();
+    $delete_stmt->close();
     $check_stmt->close();
 } else {
-    echo "<script>alert('Thiếu ID voucher hợp lệ!'); history.back();</script>";
+    echo "Phương thức không hợp lệ!";
 }
 
 $db->close();
