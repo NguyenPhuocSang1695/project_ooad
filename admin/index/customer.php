@@ -13,69 +13,65 @@
   <link href="../style/customer1.css" rel="stylesheet">
   <link href="../style/LogInfo.css" rel="stylesheet">
   <link href="asset/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="../style/customer-table.css" rel="stylesheet">
+  <link href="../style/customer-search.css" rel="stylesheet">
   <link rel="stylesheet" href="../style/responsiveCustomer.css">
+  <link rel="stylesheet" href="../style/add-user-modal.css">
+  <script src="../js/customer-search.js" defer></script>
+  <script src="../js/add-user.js" defer></script>
+  <script src="../js/edit-user.js" defer></script>
   <style>
-    .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .page-btn {
-      padding: 5px 15px;
-      border: 1px solid #ddd;
-      background-color: #fff;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: all 0.3s ease;
-    }
-
-    .page-btn:disabled {
-      background-color: #f5f5f5;
-      cursor: not-allowed;
-      color: #999;
-    }
-
-    .page-btn:hover:not(:disabled) {
-      background-color: #f0f0f0;
-    }
-
-    .page-btn.active {
-      background-color: #6aa173;
-      color: white;
-      border-color: #6aa173;
-    }
-
-    .pagination-container {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .page-number {
-      padding: 5px 10px;
-      border: 1px solid #ddd;
-      background-color: #fff;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: all 0.3s ease;
-    }
-
-    .page-number:hover {
-      background-color: #f0f0f0;
-    }
-
-    .page-number.active {
-      background-color: #6aa173;
-      color: white;
-      border-color: #6aa173;
+    .loading {
+      background-image: url('data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==');
+      background-repeat: no-repeat;
+      background-position: right 45px center;
     }
   </style>
 </head>
 
 <body>
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once '../php/connect.php';
+require_once '../php/UserManager.php';
+require_once '../php/User.php';
+
+  // Check if accessed from homePage
+  $fromHomePage = isset($_GET['from']) && $_GET['from'] === 'home';
+
+  try {
+      $userManager = new UserManager($myconn ?? null);
+      $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+      
+      // Calculate pagination using UserManager
+      $records_per_page = 5;
+      $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+      $page = max(1, $page);
+      $offset = ($page - 1) * $records_per_page;
+
+      if (!empty($search)) {
+          // Nếu có từ khóa tìm kiếm
+          $users = $userManager->searchUsers($search, $offset, $records_per_page);
+          $total_records = $userManager->getTotalSearchResults($search);
+      } else {
+          // Nếu không có tìm kiếm, hiển thị tất cả users
+          $total_records = $userManager->getTotalUsers($fromHomePage ? 'customer' : null);
+          $users = $userManager->getUsers($offset, $records_per_page, $fromHomePage ? 'customer' : null);
+      }
+
+      $total_pages = $total_records > 0 ? (int)ceil($total_records / $records_per_page) : 1;
+  } catch (Exception $e) {
+      echo "<div class='alert alert-danger'>Lỗi khi tải dữ liệu: " . htmlspecialchars($e->getMessage()) . "</div>";
+      $users = [];
+      $total_pages = 1;
+  }
+  ?>
+  
+  <!-- Header và sidebar giữ nguyên -->
+
+ <!-- header -->
   <div class="header">
     <div class="index-menu">
       <i class="fa-solid fa-bars" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button"
@@ -193,6 +189,7 @@
       </div>
     </div>
   </div>
+  <!-- sidebar -->
   <div class="side-bar">
     <div class="backToHome">
       <a href="homePage.php" style="text-decoration: none; color: black;">
@@ -245,762 +242,123 @@
       </div>
     </a>
   </div>
-  <!-- Nội dung chính -->
-  <div class="container-main">
-    <div class="left-section-customer">
-      <div class="search-container-customer" style="margin-bottom: 20px;">
-        <input class="search-bar-customer" type="text" placeholder="Tìm kiếm theo tên, email, số điện thoại..." onkeyup="searchUsers()">
-        <button class="search-icon-customer" onclick="searchUsers()">
-          <i class="fa-solid fa-magnifying-glass"></i>
+  <!-- main container -->
+  <div class="customer-container">
+    <div class="search-toggle-wrapper">
+      <button id="toggleSearch" class="toggle-search-btn">
+        <i class="fas fa-search"></i> Tìm kiếm
+      </button>
+      <button id="addUser" class="toggle-search-btn">
+        <i class="fas fa-user-plus"></i> Thêm người dùng
+      </button>
+    </div>
+    <div class="search-wrapper" id="searchWrapper" style="display: none;">
+      <form class="search-container-customer" method="GET">
+        <input type="text" 
+               name="search"
+               class="search-bar-customer" 
+               placeholder="Tìm kiếm theo tên, email, số điện thoại..." 
+               value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
+        <button type="submit" class="search-button">
+          <i class="fas fa-search"></i>
         </button>
-      </div>
-      <button type="button" class="btn btn-success" onclick="showAddUserPopup()">Thêm người dùng</button>
-      <style>
-        #userTable th:nth-child(1),
-        th:nth-child(2),
-        th:nth-child(3),
-        th:nth-child(4),
-        th:nth-child(5),
-        th:nth-child(6) {
-          text-align: center;
-        }
-
-        #userTable td {
-          text-align: center;
-        }
-      </style>
-      <table class="user-table" id="userTable">
-        <thead>
-          <tr>
-            <th>Tên tài khoản</th>
-            <th>Họ và tên</th>
-            <th>Số điện thoại</th>
-            <th>Email</th>
-            <th>Vai trò</th>
-            <th>Trạng thái</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-
-          <?php
-          require_once '../php/connect.php';
-
-          // Check if accessed from homePage
-          $fromHomePage = isset($_GET['from']) && $_GET['from'] === 'home';
-          
-          // Get total number of users based on access source
-          $count_query = "SELECT COUNT(*) as total FROM users";
-          if ($fromHomePage) {
-              $count_query .= " WHERE Role='customer'";
-          }
-          $count_result = mysqli_query($myconn, $count_query);
-          $count_row = mysqli_fetch_assoc($count_result);
-          $total_records = $count_row['total'];
-
-          // Calculate total pages
-          $records_per_page = 5;
-          $total_pages = ceil($total_records / $records_per_page);
-
-          // Get current page
-          $page = isset($_GET['page']) ? $_GET['page'] : 1;
-          $offset = ($page - 1) * $records_per_page;
-
-          // Get users for current page
-          $sql = "SELECT Username, FullName, Phone, Email, Status, Role FROM users";
-          if ($fromHomePage) {
-              $sql .= " WHERE Role='customer'";
-          }
-          $sql .= " ORDER BY CASE WHEN Role = 'admin' THEN 0 ELSE 1 END, Role
-                   LIMIT $offset, $records_per_page";
-
-          $result = mysqli_query($myconn, $sql);
-          while ($row = mysqli_fetch_assoc($result)) {
-            $statusText = $row['Status'] === 'Active' ? 'Hoạt động' : 'Đã khóa';
-            $statusClass = $row['Status'] === 'Active' ? 'text-success' : 'text-danger';
-            $roleText = $row['Role'] === 'admin' ? 'Quản trị viên' : 'Khách hàng';
-
-            echo "<tr>";
-            echo "<td>" . $row['Username'] . "</td>";
-            echo "<td>" . $row['FullName'] . "</td>";
-            echo "<td>" . $row['Phone'] . "</td>";
-            echo "<td>" . $row['Email'] . "</td>";
-            echo "<td>" . $roleText . "</td>";
-            echo "<td class='" . $statusClass . "'>" . $statusText . "</td>";
-            echo "<td><button class='btn btn-outline-warning' onclick='showEditUserPopup(\"" . $row['Username'] . "\")'>Chỉnh sửa</button></td>";
-            echo "</tr>";
-          }
-          ?>
-        </tbody>
-      </table>
-      <div class="pagination">
-        <?php
-        // Previous button
-        echo "<button onclick='changePage(" . ($page > 1 ? $page - 1 : 1) . ")' class='page-btn' " . ($page == 1 ? 'disabled' : '') . ">
-          <i class='fas fa-chevron-left'></i>
-        </button>";
-
-        // Calculate page range
-        $maxVisiblePages = 5;
-        $startPage = max(1, $page - floor($maxVisiblePages / 2));
-        $endPage = min($total_pages, $startPage + $maxVisiblePages - 1);
-
-        if ($endPage - $startPage + 1 < $maxVisiblePages) {
-          $startPage = max(1, $endPage - $maxVisiblePages + 1);
-        }
-
-        // First page
-        if ($startPage > 1) {
-          echo "<button onclick='changePage(1)' class='page-number'>1</button>";
-          if ($startPage > 2) {
-            echo "<span>...</span>";
-          }
-        }
-
-        // Page numbers
-        for ($i = $startPage; $i <= $endPage; $i++) {
-          $activeClass = $i == $page ? 'active' : '';
-          echo "<button onclick='changePage($i)' class='page-number $activeClass'>$i</button>";
-        }
-
-        // Last page
-        if ($endPage < $total_pages) {
-          if ($endPage < $total_pages - 1) {
-            echo "<span>...</span>";
-          }
-          echo "<button onclick='changePage($total_pages)' class='page-number'>$total_pages</button>";
-        }
-
-        // Next button
-        echo "<button onclick='changePage(" . ($page < $total_pages ? $page + 1 : $total_pages) . ")' class='page-btn' " . ($page == $total_pages ? 'disabled' : '') . ">
-          <i class='fas fa-chevron-right'></i>
-        </button>";
-        ?>
-      </div>
-    </div>
-  </div>
-
-  <!-- Popup overlay cho thêm người dùng -->
-  <div class="user-overlay" id="addUserOverlay">
-    <div class="user-content">
-      <h3>Thêm Người Dùng Mới</h3>
-      <form id="addUserForm" onsubmit="event.preventDefault(); addUser();">
-        <div class="form-group">
-          <label>Tên tài khoản: <span class="required">*</span></label>
-          <input type="text" id="addUsername" required minlength="3">
-          <span class="error" id="username-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Họ và tên: <span class="required">*</span></label>
-          <input type="text" id="addFullName" required>
-          <span class="error" id="fullname-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Email:</label>
-          <input type="email" id="addEmail">
-          <span class="error" id="email-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Mật khẩu: <span class="required">*</span></label>
-          <input type="password" id="addPassword" required minlength="8">
-          <span class="error" id="password-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Xác nhận mật khẩu: <span class="required">*</span></label>
-          <input type="password" id="addConfirmPassword" required minlength="8">
-          <span class="error" id="confirm-password-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Số điện thoại: <span class="required">*</span></label>
-          <input type="tel" id="addPhone" required pattern="[0-9]{10}">
-          <span class="error" id="phone-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Địa chỉ chi tiết: <span class="required">*</span></label>
-          <input type="text" id="addAddress" required placeholder="Số nhà, tên đường...">
-          <span class="error" id="address-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Tỉnh/Thành phố: <span class="required">*</span></label>
-          <select id="addProvince" required onchange="loadDistricts(this.value)">
-            <option value="">Chọn tỉnh/thành phố</option>
-            <?php
-            require_once '../php/connect.php';
-            $sql = "SELECT province_id, name FROM province ORDER BY name";
-            $result = mysqli_query($myconn, $sql);
-            while ($row = mysqli_fetch_assoc($result)) {
-              echo "<option value='" . $row['province_id'] . "'>" . $row['name'] . "</option>";
-            }
-            ?>
-          </select>
-          <span class="error" id="province-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Quận/Huyện: <span class="required">*</span></label>
-          <select id="addDistrict" required onchange="loadWards(this.value)">
-            <option value="">Chọn quận/huyện</option>
-          </select>
-          <span class="error" id="district-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Phường/Xã: <span class="required">*</span></label>
-          <select id="addWard" required>
-            <option value="">Chọn phường/xã</option>
-          </select>
-          <span class="error" id="ward-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Vai trò: <span class="required">*</span></label>
-          <select id="addRole" required>
-            <option value="customer">Khách hàng</option>
-            <option value="admin">Quản trị viên</option>
-          </select>
-          <span class="error" id="role-error"></span>
-        </div>
-        <div class="form-group">
-          <label>Trạng thái:</label>
-          <select id="addStatus">
-            <option value="Active">Hoạt động</option>
-            <option value="Block">Khóa</option>
-          </select>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="save-btn">Thêm</button>
-          <button type="button" onclick="closeAddUserPopup()" class="cancel-btn">Hủy</button>
-        </div>
       </form>
     </div>
-  </div>
+    
+    <div class="search-results-info">
+        <?php if (isset($_GET['search']) && $_GET['search']): ?>
+            <?php $totalResults = $userManager->getTotalSearchResults($_GET['search']); ?>
+            <p>Tìm thấy <?php echo $totalResults; ?> kết quả cho "<?php echo htmlspecialchars($_GET['search']); ?>"</p>
+        <?php endif; ?>
 
-  <!-- Popup overlay cho chỉnh sửa -->
-  <div class="user-overlay" id="userDetailsOverlay">
-    <div class="user-content" id="userDetailsContent">
-
-    </div>
-  </div>
-
-  <!-- Popup overlay cho chỉnh sửa người dùng -->
-  <div class="user-overlay" id="editUserOverlay">
-    <div class="user-content" id="editUserContent">
-      <h3>Chỉnh Sửa Thông Tin Người Dùng</h3>
-      <form id="editUserForm">
-        <div class="form-group">
-          <label>Tên tài khoản:</label>
-          <input type="text" id="editUsername" readonly>
-        </div>
-        <div class="form-group">
-          <label>Họ và tên: <span class="required">*</span></label>
-          <input type="text" id="editFullName" required>
-        </div>
-        <div class="form-group">
-          <label>Email:</label>
-          <input type="email" id="editEmail">
-        </div>
-        <div class="form-group">
-          <label>Số điện thoại: <span class="required">*</span></label>
-          <input type="tel" id="editPhone" required pattern="[0-9]{10}">
-        </div>
-        <div class="form-group">
-          <label>Địa chỉ chi tiết: <span class="required">*</span></label>
-          <input type="text" id="editAddress" required>
-        </div>
-        <div class="form-group">
-          <label>Tỉnh/Thành phố: <span class="required">*</span></label>
-          <select id="editProvince" required onchange="loadEditDistricts(this.value)">
-            <option value="">Chọn tỉnh/thành phố</option>
-            <?php
-            $sql = "SELECT province_id, name FROM province ORDER BY name";
-            $result = mysqli_query($myconn, $sql);
-            while ($row = mysqli_fetch_assoc($result)) {
-              echo "<option value='" . $row['province_id'] . "'>" . $row['name'] . "</option>";
-            }
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>Tên đăng nhập</th>
+          <th>Họ và tên</th>
+          <th>Số điện thoại</th>
+          <th>Email</th>
+          <th>Vai trò</th>
+          <th>Trạng thái</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if (!empty($users)): ?>
+          <?php foreach ($users as $user): ?>
+            <?php 
+            $statusClass = $user->isActive() ? 'status-active' : 'status-inactive';
             ?>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Quận/Huyện: <span class="required">*</span></label>
-          <select id="editDistrict" required onchange="loadEditWards(this.value)">
-            <option value="">Chọn quận/huyện</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Phường/Xã: <span class="required">*</span></label>
-          <select id="editWard" required>
-            <option value="">Chọn phường/xã</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Trạng thái:</label>
-          <select id="editStatus">
-            <option value="Active">Hoạt động</option>
-            <option value="Block">Khóa</option>
-          </select>
-        </div>
-        <div class="form-actions">
-          <button type="button" onclick="saveUserEdit()" class="save-btn">Lưu</button>
-          <button type="button" onclick="closeEditUserPopup()" class="cancel-btn">Hủy</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  <script src="../js/hienthikhachhang.js"></script>
-  <script src="../js/checklog.js"></script>
-  <script src="./asset/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const cachedUserInfo = localStorage.getItem('userInfo');
-      if (cachedUserInfo) {
-        const userInfo = JSON.parse(cachedUserInfo);
-        document.querySelector('.name-employee p').textContent = userInfo.fullname;
-        document.querySelector('.position-employee p').textContent = userInfo.role;
-        document.querySelectorAll('.avatar').forEach(img => img.src = userInfo.avatar);
-      }
-    });
-
-    // Add loading state management
-    let isLoading = false;
-    let searchTimeout;
-
-    function showLoading() {
-      isLoading = true;
-      const tableBody = document.querySelector('#userTable tbody');
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="7" style="text-align: center;">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Đang tìm kiếm...</p>
-          </td>
-        </tr>
-      `;
-    }
-
-    function hideLoading() {
-      isLoading = false;
-    }
-
-    function showError(message) {
-      const tableBody = document.querySelector('#userTable tbody');
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="7" style="text-align: center; color: red;">
-            <i class="fas fa-exclamation-circle"></i>
-            ${message}
-          </td>
-        </tr>
-      `;
-    }
-
-    function renderPagination(currentPage, totalPages) {
-      const paginationContainer = document.querySelector('.pagination');
-      let paginationHTML = '';
-
-      // Previous button
-      paginationHTML += `
-        <button onclick="searchUsers(${currentPage - 1})" class="page-btn" ${currentPage === 1 ? 'disabled' : ''}>
-          <i class="fas fa-chevron-left"></i>
-        </button>`;
-
-      // Page numbers
-      const maxVisiblePages = 5;
-      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-      if (endPage - startPage + 1 < maxVisiblePages) {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-      }
-
-      if (startPage > 1) {
-        paginationHTML += `
-          <button onclick="searchUsers(1)" class="page-number">1</button>
-          ${startPage > 2 ? '<span>...</span>' : ''}
-        `;
-      }
-
-      for (let i = startPage; i <= endPage; i++) {
-        paginationHTML += `
-          <button onclick="searchUsers(${i})" class="page-number ${i === currentPage ? 'active' : ''}">
-            ${i}
-          </button>
-        `;
-      }
-
-      if (endPage < totalPages) {
-        paginationHTML += `
-          ${endPage < totalPages - 1 ? '<span>...</span>' : ''}
-          <button onclick="searchUsers(${totalPages})" class="page-number">${totalPages}</button>
-        `;
-      }
-
-      paginationHTML += `
-        <button onclick="searchUsers(${currentPage + 1})" class="page-btn" ${currentPage === totalPages ? 'disabled' : ''}>
-          <i class="fas fa-chevron-right"></i>
-        </button>`;
-
-      paginationContainer.innerHTML = paginationHTML;
-    }
-
-    function searchUsers(page = 1) {
-      const searchInput = document.querySelector('.search-bar-customer');
-      const searchTerm = searchInput.value.trim();
-      const tableBody = document.querySelector('#userTable tbody');
-      const paginationContainer = document.querySelector('.pagination');
-
-      // Show loading state
-      tableBody.innerHTML = `
-        <tr>
-            <td colspan="7" class="text-center">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </td>
-        </tr>
-    `;
-
-      fetch(`../php/search-users.php?search=${encodeURIComponent(searchTerm)}&page=${page}&per_page=5`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            tableBody.innerHTML = '';
-
-            if (data.users.length === 0) {
-              tableBody.innerHTML = `
-                        <tr>
-                            <td colspan="7" class="text-center">
-                                <i class="fas fa-search"></i>
-                                <p class="mt-2">Không tìm thấy người dùng nào phù hợp</p>
-                            </td>
-                        </tr>
-                    `;
-              paginationContainer.innerHTML = '';
-            } else {
-              data.users.forEach(user => {
-                const statusText = user.status === 'Active' ? 'Hoạt động' : 'Đã khóa';
-                const statusClass = user.status === 'Active' ? 'text-success' : 'text-danger';
-                const roleText = user.role === 'admin' ? 'Quản trị viên' : 'Khách hàng';
-
-                const row = `
-                            <tr>
-                                <td>${user.username}</td>
-                                <td>${user.fullname}</td>
-                                <td>${user.phone}</td>
-                                <td>${user.email || 'Chưa cập nhật'}</td>
-                                <td>${roleText}</td>
-                                <td class="${statusClass}">${statusText}</td>
-                                <td>
-                                    <button class='btn btn-outline-warning' onclick='showEditUserPopup("${user.username}")'>
-                                        Chỉnh sửa
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                tableBody.innerHTML += row;
-              });
-
-              // Update pagination
-              if (data.pagination && data.pagination.totalPages > 0) {
-                renderPagination(data.pagination.currentPage, data.pagination.totalPages);
-              } else {
-                paginationContainer.innerHTML = '';
-              }
-            }
-          } else {
-            tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center text-danger">
-                            ${data.message || 'Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại.'}
-                        </td>
-                    </tr>
-                `;
-            paginationContainer.innerHTML = '';
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          tableBody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center text-danger">
-                        Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.
-                    </td>
-                </tr>
-            `;
-          paginationContainer.innerHTML = '';
-        });
-    }
-
-    // Add debounce to search
-    document.querySelector('.search-bar-customer').addEventListener('input', function() {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => searchUsers(1), 500);
-    });
-
-    // Add event listener for search button
-    document.querySelector('.search-icon-customer').addEventListener('click', function() {
-      searchUsers(1);
-    });
-
-    // Add event listener for Enter key
-    document.querySelector('.search-bar-customer').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        searchUsers(1);
-      }
-    });
-
-    function loadDistricts(provinceId) {
-      if (!provinceId) {
-        document.getElementById('addDistrict').innerHTML = '<option value="">Chọn quận/huyện</option>';
-        document.getElementById('addWard').innerHTML = '<option value="">Chọn phường/xã</option>';
-        return;
-      }
-
-      fetch(`../php/get-districts.php?province_id=${provinceId}`)
-        .then(response => response.json())
-        .then(data => {
-          const districtSelect = document.getElementById('addDistrict');
-          districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-          data.forEach(district => {
-            districtSelect.innerHTML += `<option value="${district.district_id}">${district.name}</option>`;
-          });
-          document.getElementById('addWard').innerHTML = '<option value="">Chọn phường/xã</option>';
-        })
-        .catch(error => console.error('Error loading districts:', error));
-    }
-
-    function loadWards(districtId) {
-      if (!districtId) {
-        document.getElementById('addWard').innerHTML = '<option value="">Chọn phường/xã</option>';
-        return;
-      }
-
-      console.log('Loading wards for district:', districtId);
-
-      fetch(`../php/get-wards.php?district_id=${districtId}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Received wards data:', data);
-          const wardSelect = document.getElementById('addWard');
-          wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
-
-          if (Array.isArray(data) && data.length > 0) {
-            data.forEach(ward => {
-              wardSelect.innerHTML += `<option value="${ward.ward_id}">${ward.name}</option>`;
-            });
-          } else {
-            console.warn('No wards found for district:', districtId);
-            wardSelect.innerHTML += '<option value="" disabled>Không có phường/xã nào</option>';
-          }
-        })
-        .catch(error => {
-          console.error('Error loading wards:', error);
-          const wardSelect = document.getElementById('addWard');
-          wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
-          wardSelect.innerHTML += '<option value="" disabled>Lỗi khi tải dữ liệu</option>';
-        });
-    }
-
-    function addUser() {
-      // Get form data
-      const password = document.getElementById('addPassword').value;
-      const confirmPassword = document.getElementById('addConfirmPassword').value;
-
-      // Check if passwords match
-      if (password !== confirmPassword) {
-        document.getElementById('confirm-password-error').textContent = 'Mật khẩu xác nhận không khớp';
-        return false;
-      }
-
-      const formData = new FormData();
-      formData.append('username', document.getElementById('addUsername').value.trim());
-      formData.append('fullname', document.getElementById('addFullName').value.trim());
-      formData.append('email', document.getElementById('addEmail').value.trim());
-      formData.append('password', password);
-      formData.append('phone', document.getElementById('addPhone').value.trim());
-      formData.append('address', document.getElementById('addAddress').value.trim());
-      formData.append('province_id', document.getElementById('addProvince').value);
-      formData.append('district_id', document.getElementById('addDistrict').value);
-      formData.append('ward_id', document.getElementById('addWard').value);
-      formData.append('status', document.getElementById('addStatus').value);
-      formData.append('role', document.getElementById('addRole').value);
-
-      // Clear previous error messages
-      document.querySelectorAll('.error').forEach(error => error.textContent = '');
-
-      // Send request to server
-      fetch('../php/add-user.php', {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            // Add new user to table
-            const tableBody = document.querySelector('#userTable tbody');
-            const row = document.createElement('tr');
-            const statusText = data.user.status === 'Active' ? 'Hoạt động' : 'Đã khóa';
-            const statusClass = data.user.status === 'Active' ? 'text-success' : 'text-danger';
-
-            row.innerHTML = `
-              <td>${data.user.username}</td>
-              <td>${data.user.fullname}</td>
-              <td>${data.user.phone}</td>
-              <td>${data.user.email}</td>
-              <td>${data.user.role}</td>
-              <td class="${statusClass}">${statusText}</td>
-              <td>
-                <button class='btn btn-outline-warning' onclick='showEditUserPopup("${data.user.username}")'>
-                  Chỉnh sửa
+            <tr>
+              <td><?php echo htmlspecialchars($user->getUsername()); ?></td>
+              <td><?php echo htmlspecialchars($user->getFullname()); ?></td>
+              <td><?php echo htmlspecialchars($user->getPhone()); ?></td>
+              <td><?php echo htmlspecialchars($user->getEmail()); ?></td>
+              <td><span class="role-badge"><?php echo $user->getRoleText(); ?></span></td>
+              <td><span class="status-badge <?php echo $statusClass; ?>"><?php echo $user->getStatusText(); ?></span></td>
+              <td class="action-buttons">
+                <button class="btn-edit" onclick="showEditUserPopup('<?php echo addslashes($user->getUsername()); ?>')">
+                  <i class="fas fa-edit"></i> Sửa
                 </button>
               </td>
-            `;
-            tableBody.insertBefore(row, tableBody.firstChild);
+            </tr>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <tr>
+            <td colspan="7" class="text-center">Không có dữ liệu người dùng</td>
+          </tr>
+        <?php endif; ?>
+      </tbody>
+    </table>
 
-            // Close popup and show success message
-            closeAddUserPopup();
-            alert('Thêm người dùng thành công!');
+    <?php if ($total_pages > 1): ?>
+    <div class="pagination">
+      <?php if ($page > 1): ?>
+        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>" class="page-btn"><i class="fas fa-chevron-left"></i></a>
+      <?php endif; ?>
+      
+      <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+        <?php if ($i == $page): ?>
+          <button class="page-btn active"><?php echo $i; ?></button>
+        <?php else: ?>
+          <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>" class="page-btn"><?php echo $i; ?></a>
+        <?php endif; ?>
+      <?php endfor; ?>
+      
+      <?php if ($page < $total_pages): ?>
+        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>" class="page-btn"><i class="fas fa-chevron-right"></i></a>
+      <?php endif; ?>
+    </div>
+    <?php endif; ?>
+  </div>
 
-            // Clear form
-            document.getElementById('addUserForm').reset();
-          } else {
-            // Show error message in appropriate error span
-            if (data.message.includes('mật khẩu')) {
-              document.getElementById('password-error').textContent = data.message;
-            } else if (data.message.includes('tài khoản')) {
-              document.getElementById('username-error').textContent = data.message;
-              document.getElementById('addUsername').focus();
-            } else {
-              alert(data.message);
+    <script src="asset/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/checklog.js"></script>
+    <script src="../js/main.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.querySelector('.search-bar-customer');
+        const searchForm = document.querySelector('.search-container-customer');
+
+        // Xử lý khi submit form
+        searchForm.addEventListener('submit', function(e) {
+            const searchValue = searchInput.value.trim();
+            if (searchValue === '') {
+                e.preventDefault();
+                window.location.href = 'customer.php';
             }
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Có lỗi xảy ra khi thêm người dùng');
         });
-
-      return false;
-    }
-
-
-    document.getElementById('addConfirmPassword').addEventListener('input', function() {
-      const password = document.getElementById('addPassword').value;
-      const confirmPassword = this.value;
-      const errorSpan = document.getElementById('confirm-password-error');
-
-      if (password !== confirmPassword) {
-        errorSpan.textContent = 'Mật khẩu xác nhận không khớp';
-      } else {
-        errorSpan.textContent = '';
-      }
     });
+    </script>
 
-    document.getElementById('addPassword').addEventListener('input', function() {
-      const password = this.value;
-      const confirmPassword = document.getElementById('addConfirmPassword').value;
-      const errorSpan = document.getElementById('confirm-password-error');
-
-      if (confirmPassword && password !== confirmPassword) {
-        errorSpan.textContent = 'Mật khẩu xác nhận không khớp';
-      } else {
-        errorSpan.textContent = '';
-      }
-    });
-
-    function showEditUserPopup(username) {
-      fetch(`../php/get-user-details.php?username=${username}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            const user = data.user;
-            const currentUser = JSON.parse(localStorage.getItem('userInfo'));
-            const isCurrentUser = currentUser && currentUser.username === user.username;
-
-            document.getElementById('editUsername').value = user.username;
-            document.getElementById('editFullName').value = user.fullname;
-            document.getElementById('editEmail').value = user.email;
-            document.getElementById('editPhone').value = user.phone;
-            document.getElementById('editAddress').value = user.address;
-
-            // Set province and load its districts
-            const provinceSelect = document.getElementById('editProvince');
-            provinceSelect.value = user.province_id;
-            loadEditDistricts(user.province_id, user.district_id, user.ward_id);
-
-            // Chỉ vô hiệu hóa select box trạng thái nếu là tài khoản của chính mình
-            const statusSelect = document.getElementById('editStatus');
-            statusSelect.value = user.status;
-            if (isCurrentUser) {
-              statusSelect.disabled = true;
-              statusSelect.title = "Không thể thay đổi trạng thái của chính mình";
-            } else {
-              statusSelect.disabled = false;
-              statusSelect.title = "";
-            }
-
-            // Show the popup
-            document.getElementById('editUserOverlay').style.display = 'flex';
-          } else {
-            alert(data.message || 'Không thể tải thông tin người dùng');
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Có lỗi xảy ra khi tải thông tin người dùng');
-        });
-    }
-
-    function loadEditDistricts(provinceId, selectedDistrictId = null, selectedWardId = null) {
-      if (!provinceId) {
-        document.getElementById('editDistrict').innerHTML = '<option value="">Chọn quận/huyện</option>';
-        document.getElementById('editWard').innerHTML = '<option value="">Chọn phường/xã</option>';
-        return;
-      }
-
-      fetch(`../php/get-districts.php?province_id=${provinceId}`)
-        .then(response => response.json())
-        .then(data => {
-          const districtSelect = document.getElementById('editDistrict');
-          districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-          data.forEach(district => {
-            districtSelect.innerHTML += `<option value="${district.district_id}">${district.name}</option>`;
-          });
-
-          if (selectedDistrictId) {
-            districtSelect.value = selectedDistrictId;
-            loadEditWards(selectedDistrictId, selectedWardId);
-          }
-        })
-        .catch(error => console.error('Error loading districts:', error));
-    }
-
-    function loadEditWards(districtId, selectedWardId = null) {
-      if (!districtId) {
-        document.getElementById('editWard').innerHTML = '<option value="">Chọn phường/xã</option>';
-        return;
-      }
-
-      fetch(`../php/get-wards.php?district_id=${districtId}`)
-        .then(response => response.json())
-        .then(data => {
-          const wardSelect = document.getElementById('editWard');
-          wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
-          data.forEach(ward => {
-            wardSelect.innerHTML += `<option value="${ward.ward_id}">${ward.name}</option>`;
-          });
-
-          if (selectedWardId) {
-            wardSelect.value = selectedWardId;
-          }
-        })
-        .catch(error => console.error('Error loading wards:', error));
-    }
-  </script>
-</body>
+  <?php
+  define('INCLUDE_CHECK', true);
+  require_once '../php/add_user_form.php';
+  // Include edit user modal so JS can find its elements
+  require_once '../php/edit_user_form.php';
+  ?>
+  
+  </body>
 
 </html>

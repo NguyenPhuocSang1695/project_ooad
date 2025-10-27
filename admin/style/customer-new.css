@@ -1,0 +1,160 @@
+.user-table {
+    width: 95%;
+    margin: 20px auto;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.user-table thead {
+    background-color: #35635A;
+    color: white;
+}
+
+.user-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 500;
+}
+
+.user-table tbody tr {
+    transition: background-color 0.3s;
+}
+
+.user-table tbody tr:hover {
+    background-color: rgba(106, 161, 115, 0.1);
+}
+
+.user-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.user-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.status-active {
+    background-color: rgba(106, 161, 115, 0.2);
+    color: #35635A;
+}
+
+.status-inactive {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+.role-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 500;
+    background-color: rgba(53, 99, 90, 0.1);
+    color: #35635A;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit, .btn-delete {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-edit {
+    background-color: #35635A;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #6AA173;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #c82333;
+}
+
+.search-bar-customer {
+    border: 2px solid #35635A;
+    border-radius: 25px;
+    padding: 10px 20px;
+    width: 100%;
+    max-width: 400px;
+    font-size: 16px;
+    transition: box-shadow 0.3s;
+    outline: none;
+}
+
+.search-bar-customer:focus {
+    box-shadow: 0 0 0 2px rgba(53, 99, 90, 0.2);
+}
+
+.pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.page-btn {
+    padding: 8px 16px;
+    border: 1px solid #35635A;
+    background-color: white;
+    color: #35635A;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.page-btn:hover, .page-btn.active {
+    background-color: #35635A;
+    color: white;
+}
+
+.page-btn:disabled {
+    background-color: #f5f5f5;
+    border-color: #ddd;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* Container styles */
+.customer-container {
+    padding: 20px;
+    margin-left: 80px; /* Account for sidebar width */
+}
+
+/* Search container styles */
+.search-container-customer {
+   
+    margin-top: 100px;
+    max-width: 400px;
+    position: relative;
+}
+
+.search-icon-customer {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #35635A;
+}
