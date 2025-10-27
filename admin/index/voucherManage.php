@@ -463,12 +463,11 @@ $voucherResult = $myconn->query($sqlVouchers);
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     }
 
     .btn-submit:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5);
     }
 
     /* LIST CONTAINER */
@@ -539,7 +538,7 @@ $voucherResult = $myconn->query($sqlVouchers);
     }
 
     .voucher-card:hover {
-      border-color: #667eea;
+      border-color: #276749;
       box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
       transform: translateY(-2px);
     }
@@ -632,17 +631,17 @@ $voucherResult = $myconn->query($sqlVouchers);
     }
 
     .btn-edit {
-      background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+      background: #27A4F2;
       color: white;
     }
 
     .btn-edit:hover {
-      background-color: #5568d3;
+      background-color: #6EC2F7;
       transform: translateY(-2px);
     }
 
     .btn-delete {
-      background-color: #fc8181;
+      background-color: #e53e3e;
       color: white;
     }
 
