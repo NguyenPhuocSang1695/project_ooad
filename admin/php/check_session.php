@@ -23,7 +23,7 @@ if (!isset($_SESSION['Username'])) {
 $username = $_SESSION['Username'];
 
 $result = $db->queryPrepared(
-    "SELECT Status, Fullname, Role FROM users WHERE Username = ? AND Role = 'admin'",
+    "SELECT Status, FullName, Role FROM users WHERE Username = ? AND Role = 'admin'",
     [$username]
 );
 
@@ -53,7 +53,7 @@ http_response_code(200);
 echo json_encode([
     'status' => 'success',
     'username' => $username,
-    'fullname' => $user['Fullname'],
+    'fullname' => $user['FullName'],
     'role' => $user['Role']
 ], JSON_UNESCAPED_UNICODE);
 exit();

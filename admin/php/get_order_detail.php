@@ -38,6 +38,37 @@ try {
         ];
     }
 
+    // Get voucher info if order has voucher
+    $voucherInfo = null;
+    $voucherId = $order->getVoucherId();
+    if ($voucherId) {
+        $voucherResult = $db->queryPrepared(
+            "SELECT id, name, percen_decrease, status, conditions FROM vouchers WHERE id = ?",
+            [$voucherId]
+        );
+        if ($voucherResult && $voucherResult->num_rows > 0) {
+            $voucher = $voucherResult->fetch_assoc();
+            
+            // Calculate original total (before discount)
+            $productSubtotal = 0;
+            foreach ($products as $p) {
+                $productSubtotal += $p['totalPrice'];
+            }
+            
+            $discountAmount = ($productSubtotal * $voucher['percen_decrease']) / 100;
+            
+            $voucherInfo = [
+                'id' => intval($voucher['id']),
+                'name' => $voucher['name'],
+                'discountPercent' => intval($voucher['percen_decrease']),
+                'discountAmount' => floatval($discountAmount),
+                'subtotal' => floatval($productSubtotal),
+                'status' => $voucher['status'],
+                'conditions' => $voucher['conditions']
+            ];
+        }
+    }
+
     // Prepare response
     $response = [
         'success' => true,
@@ -52,7 +83,8 @@ try {
             'paymentMethod' => $order->getPaymentMethod(),
             'totalAmount' => floatval($order->getTotalAmount()),
             'productCount' => count($products),
-            'products' => $products
+            'products' => $products,
+            'voucher' => $voucherInfo
         ]
     ];
 

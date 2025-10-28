@@ -1,19 +1,28 @@
 <?php
-require_once '../php/check_session.php';
+session_name('admin_session');
+session_start();
 require_once '../php/connect.php';
-$myconn = new DatabaseConnection();
-$myconn->connect();
 
 if (!isset($_SESSION['Username'])) {
   header('Location: ../index.php');
   exit();
 }
 
-// Lấy danh sách voucher
-$sqlVouchers = "SELECT * FROM vouchers ORDER BY id DESC";
-$voucherResult = $myconn->query($sqlVouchers);
-?>
-
+$myconn = new DatabaseConnection();
+try {
+  $myconn->connect();
+  
+  // Lấy danh sách voucher
+  $sqlVouchers = "SELECT * FROM vouchers ORDER BY id DESC";
+  $voucherResult = $myconn->query($sqlVouchers);
+} catch (Exception $e) {
+  // Log lỗi
+  error_log("Lỗi voucherManage: " . $e->getMessage());
+  $voucherResult = null;
+  $errorMessage = $e->getMessage();
+}
+?> 
+ 
 <!DOCTYPE html>
 <html lang="en">
 
@@ -273,6 +282,11 @@ $voucherResult = $myconn->query($sqlVouchers);
       <!-- FORM THÊM VOUCHER -->
       <div class="voucher-form-container">
         <h2>🎟️ Thêm Voucher Mới</h2>
+        <?php if (isset($errorMessage)): ?>
+          <div style="background: #fee; color: #c33; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+            <strong>❌ Lỗi:</strong> <?php echo htmlspecialchars($errorMessage); ?>
+          </div>
+        <?php endif; ?>
         <form class="voucher-form">
           <div class="form-group">
             <label for="name">Tên voucher:</label>

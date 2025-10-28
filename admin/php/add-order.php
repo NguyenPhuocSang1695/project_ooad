@@ -71,7 +71,9 @@ try {
     $orderService = new OrderService($db);
     
     $status = $data['status'] ?? 'execute';
-    error_log("[ADD_ORDER] Creating order with status: " . $status);
+    $voucherId = $data['voucher_id'] ?? null;
+    
+    error_log("[ADD_ORDER] Creating order with status: " . $status . ", voucher_id: " . ($voucherId ?? 'null'));
     
     $orderId = $orderService->createOrder(
         $username,
@@ -80,7 +82,8 @@ try {
         $data['payment_method'],
         $data['products'],
         $addressId,
-        $status
+        $status,
+        $voucherId
     );
     
     error_log("[ADD_ORDER] SUCCESS - Order #" . $orderId . " created");

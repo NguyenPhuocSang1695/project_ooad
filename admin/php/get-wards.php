@@ -22,7 +22,7 @@ try {
             'name' => $row['name']
         ];
     }
-
+ 
     $db->close();
     echo json_encode(['success' => true, 'data' => $data]);
 } catch (Exception $e) {

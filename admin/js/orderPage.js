@@ -774,26 +774,6 @@ window.resetFilter = function (formType) {
 };
 
 document.addEventListener("DOMContentLoaded", function () {
-  const citySelect = document.getElementById("city-select");
-  if (citySelect) {
-    citySelect.addEventListener("change", function () {
-      const provinceId = this.value;
-      if (provinceId) {
-        loadDistricts(provinceId);
-      } else {
-        const districtSelect = document.getElementById("district-select");
-        if (districtSelect) {
-          districtSelect.innerHTML =
-            '<option value="">Chọn quận/huyện</option>';
-        }
-      }
-      currentPage = 1; // Đặt lại về trang 1 khi thay đổi thành phố
-      // filterOrders();
-    });
-  }
-});
-
-document.addEventListener("DOMContentLoaded", function () {
   const filterForm = document.getElementById("filter-form");
   const filterModal = new bootstrap.Modal(
     document.getElementById("filterModal")
@@ -827,12 +807,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   loadCities();
 
-  const citySelect = document.getElementById("city-select");
-  if (citySelect) {
-    citySelect.addEventListener("change", function () {
-      const provinceId = this.value;
+  // Dùng event delegation để đảm bảo event listener hoạt động sau khi element được tạo
+  document.addEventListener("change", function (e) {
+    if (e.target && e.target.id === "city-select") {
+      const provinceId = e.target.value;
+      console.log("[CITY_CHANGE_DELEGATION] Province ID selected:", provinceId);
+      
       if (provinceId) {
-        loadDistricts(provinceId);
+        loadDistrictsForFilter(provinceId);
       } else {
         const districtSelect = document.getElementById("district-select");
         if (districtSelect) {
@@ -840,29 +822,104 @@ document.addEventListener("DOMContentLoaded", function () {
             '<option value="">Chọn quận/huyện</option>';
         }
       }
-      currentPage = 1; // Đặt lại về trang 1 khi thay đổi thành phố
-      // filterOrders();
+      currentPage = 1;
+    }
+  });
+  
+  // Backup: Direct event listener for city-select (nếu element đã có trong DOM)
+  const citySelect = document.getElementById("city-select");
+  if (citySelect) {
+    citySelect.addEventListener("change", function () {
+      const provinceId = this.value;
+      console.log("[CITY_CHANGE_DIRECT] Province ID selected:", provinceId);
+      
+      if (provinceId) {
+        loadDistrictsForFilter(provinceId);
+      } else {
+        const districtSelect = document.getElementById("district-select");
+        if (districtSelect) {
+          districtSelect.innerHTML =
+            '<option value="">Chọn quận/huyện</option>';
+        }
+      }
+      currentPage = 1;
     });
   }
 });
 
+// Hàm load districts riêng cho bộ lọc
+window.loadDistrictsForFilter = function (provinceId) {
+  console.log('[LOAD_DISTRICTS_FILTER] For province:', provinceId);
+  
+  const districtSelect = document.getElementById('district-select');
+  
+  if (!districtSelect) {
+    console.error('[LOAD_DISTRICTS_FILTER] district-select not found');
+    return;
+  }
+  
+  districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+  
+  if (!provinceId) {
+    console.log('[LOAD_DISTRICTS_FILTER] No province ID');
+    return;
+  }
+  
+  fetch(`../php/get_District.php?province_id=${encodeURIComponent(provinceId)}`)
+    .then(res => {
+      console.log('[LOAD_DISTRICTS_FILTER] Response status:', res.status);
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
+      return res.json();
+    })
+    .then(data => {
+      console.log('[LOAD_DISTRICTS_FILTER] Data:', data);
+      
+      if (data.success && data.data && Array.isArray(data.data)) {
+        console.log('[LOAD_DISTRICTS_FILTER] Got', data.data.length, 'items');
+        data.data.forEach(district => {
+          const option = document.createElement('option');
+          option.value = district.id;
+          option.textContent = district.name;
+          districtSelect.appendChild(option);
+        });
+        console.log('[LOAD_DISTRICTS_FILTER] Loaded successfully');
+      } else {
+        console.warn('[LOAD_DISTRICTS_FILTER] No data:', data);
+      }
+    })
+    .catch(err => {
+      console.error('[LOAD_DISTRICTS_FILTER] Error:', err);
+    });
+};
+
 window.loadCities = function () {
+  console.log("[LOAD_CITIES] Starting to load cities...");
+  
   fetch("../php/get_Cities.php")
     .then((response) => {
+      console.log("[LOAD_CITIES] Response status:", response.status);
       if (!response.ok) {
         throw new Error(`Failed to fetch cities: ${response.status}`);
       }
       return response.json();
     })
     .then((data) => {
+      console.log("[LOAD_CITIES] Data received:", data);
+      
       if (!data.success) {
         throw new Error(data.error || "Unknown error");
       }
+      
       const citySelect = document.getElementById("city-select");
       if (!citySelect) {
-        console.error("Element city-select not found");
+        console.error("[LOAD_CITIES] Element city-select not found");
         return;
       }
+      
+      console.log("[LOAD_CITIES] Found city-select, populating with", data.data.length, "cities");
+      
       citySelect.innerHTML = '<option value="">Chọn thành phố</option>';
       data.data.forEach((city) => {
         const option = document.createElement("option");
@@ -870,44 +927,15 @@ window.loadCities = function () {
         option.textContent = city.name;
         citySelect.appendChild(option);
       });
+      
+      console.log("[LOAD_CITIES] Cities loaded successfully");
     })
     .catch((error) => {
-      console.error("Error loading cities:", error);
+      console.error("[LOAD_CITIES] Error:", error);
       const citySelect = document.getElementById("city-select");
       if (citySelect) {
-        citySelect.innerHTML = '<option value="">Error loading cities</option>';
+        citySelect.innerHTML = '<option value="">Lỗi tải thành phố</option>';
       }
-    });
-};
-
-window.loadDistricts = function (provinceId) {
-  const districtSelect = document.getElementById("district-select");
-  if (!districtSelect) {
-    console.error("Element district-select not found");
-    return;
-  }
-
-  districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-
-  if (!provinceId) return;
-
-  fetch(`../php/get_District.php?province_id=${provinceId}`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.data) {
-        data.data.forEach((district) => {
-          const option = document.createElement("option");
-          option.value = district.id;
-          option.textContent = district.name;
-          districtSelect.appendChild(option);
-        });
-      }
-      // currentPage = 1; // Đặt lại về trang 1 khi tải danh sách quận/huyện
-      // filterOrders();
-    })
-    .catch((error) => {
-      console.error("Error loading districts:", error);
-      districtSelect.innerHTML = '<option value="">Lỗi tải quận/huyện</option>';
     });
 };
 
@@ -1012,6 +1040,7 @@ function showOrderDetailModal(orderId) {
       }
       
       const order = data.order;
+      console.log('[ORDER_DETAIL] Voucher:', order.voucher);
       
       // Build products table HTML
       let productsHTML = '';
@@ -1030,6 +1059,7 @@ function showOrderDetailModal(orderId) {
       // Update modal content
       const modalBody = document.querySelector('#orderDetailModal .modal-body');
       if (modalBody) {
+        
         modalBody.innerHTML = `
           <div style="padding: 20px;">
             <!-- Order Info Section -->
@@ -1098,6 +1128,37 @@ function showOrderDetailModal(orderId) {
                 </tbody>
               </table>
             </div>
+            
+            <!-- Voucher Section (if exists) -->
+            ${order.voucher ? `
+              <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 10px; border-left: 5px solid #667eea; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                  <span style="font-size: 24px;">🎁</span>
+                  <h5 style="margin: 0; color: #2c3e50; font-weight: 700; font-size: 16px;">Mã giảm giá đã áp dụng</h5>
+                  <span style="display: inline-block; padding: 4px 10px; background-color: #667eea; color: white; border-radius: 20px; font-size: 11px; font-weight: 600;">Đã dùng</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                  <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
+                    <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Mã voucher</label>
+                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #2c3e50; font-size: 15px;">${order.voucher.name}</p>
+                  </div>
+                  <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
+                    <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Tỷ lệ giảm</label>
+                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #e74c3c; font-size: 15px;">${order.voucher.discountPercent}%</p>
+                  </div>
+                  <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
+                    <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Số tiền giảm</label>
+                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #27ae60; font-size: 15px;">-${parseInt(order.voucher.discountAmount).toLocaleString('vi-VN')} VNĐ</p>
+                  </div>
+                </div>
+                ${order.voucher.conditions ? `
+                  <div style="margin-top: 12px; padding: 10px; background-color: rgba(100,150,200,0.1); border-radius: 6px; border-left: 3px solid #3498db;">
+                    <label style="color: #2c3e50; font-size: 11px; text-transform: uppercase; font-weight: 600;">Điều kiện áp dụng</label>
+                    <p style="margin: 6px 0 0 0; color: #555; font-size: 13px;">${order.voucher.conditions}</p>
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
             
             <!-- Total Section -->
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">

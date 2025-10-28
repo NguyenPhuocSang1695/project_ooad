@@ -22,7 +22,7 @@ class OrderService {
     /**
      * Create new order with details
      */
-    public function createOrder($username, $customerName, $phone, $paymentMethod, $products, $addressId = null, $status = 'execute') {
+    public function createOrder($username, $customerName, $phone, $paymentMethod, $products, $addressId = null, $status = 'execute', $voucherId = null) {
         try {
             $conn = $this->db->getConnection();
             $conn->begin_transaction();
@@ -35,6 +35,7 @@ class OrderService {
                 'PaymentMethod' => $paymentMethod,
                 'Status' => $status,
                 'address_id' => $addressId,
+                'voucher_id' => $voucherId,
                 'TotalAmount' => 0
             ]);
 
@@ -53,6 +54,20 @@ class OrderService {
                 $detail->calculateTotalPrice();
                 $this->orderDetailRepository->create($detail);
                 $totalAmount += $detail->getTotalPrice();
+            }
+
+            // Apply voucher discount if applicable
+            if ($voucherId) {
+                $voucherResult = $this->db->queryPrepared(
+                    "SELECT percen_decrease FROM vouchers WHERE id = ? AND status = 'active'",
+                    [$voucherId]
+                );
+                
+                if ($voucherResult && $voucherResult->num_rows > 0) {
+                    $voucher = $voucherResult->fetch_assoc();
+                    $discount = ($totalAmount * $voucher['percen_decrease']) / 100;
+                    $totalAmount = $totalAmount - $discount;
+                }
             }
 
             // Update total amount

@@ -13,6 +13,7 @@ class Order {
     private $addressId;
     private $dateGeneration;
     private $totalAmount;
+    private $voucherId;
     
     // Address details (from JOIN)
     private $addressDetail;
@@ -30,6 +31,7 @@ class Order {
         $this->addressId = $data['address_id'] ?? null;
         $this->dateGeneration = $data['DateGeneration'] ?? $data['date_generation'] ?? null;
         $this->totalAmount = $data['TotalAmount'] ?? $data['total_amount'] ?? 0;
+        $this->voucherId = $data['voucher_id'] ?? null;
         
         // Address details
         $this->addressDetail = $data['address_detail'] ?? null;
@@ -48,6 +50,7 @@ class Order {
     public function getAddressId() { return $this->addressId; }
     public function getDateGeneration() { return $this->dateGeneration; }
     public function getTotalAmount() { return $this->totalAmount; }
+    public function getVoucherId() { return $this->voucherId; }
     
     // Address detail getters
     public function getAddressDetail() { return $this->addressDetail; }
@@ -65,6 +68,7 @@ class Order {
     public function setAddressId($addressId) { $this->addressId = $addressId; }
     public function setDateGeneration($dateGeneration) { $this->dateGeneration = $dateGeneration; }
     public function setTotalAmount($totalAmount) { $this->totalAmount = $totalAmount; }
+    public function setVoucherId($voucherId) { $this->voucherId = $voucherId; }
 
     /**
      * Validate order data
@@ -111,6 +115,7 @@ class Order {
             'address_id' => $this->addressId,
             'DateGeneration' => $this->dateGeneration,
             'TotalAmount' => $this->totalAmount,
+            'voucher_id' => $this->voucherId,
             'address_detail' => $this->addressDetail,
             'ward_name' => $this->wardName,
             'district_name' => $this->districtName,

@@ -368,7 +368,14 @@ $orders = [];
             <p>Thống kê</p>
           </div>
         </a>
-
+            <a href="voucherManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Mã giảm giá</p>
+      </div>
+    </a>
         <a href="accountPage.php" style="text-decoration: none; color: black;">
           <div class="container-function-selection">
             <button class="button-function-selection">
@@ -425,6 +432,14 @@ $orders = [];
           <p>Thống kê</p>
         </div>
       </a>
+          <a href="voucherManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Mã giảm giá</p>
+      </div>
+    </a>
       <a href="accountPage.php" style="text-decoration: none; color: black;">
         <div class="container-function-selection">
           <button class="button-function-selection">
@@ -466,6 +481,14 @@ $orders = [];
                     <div class="col-md-6 mb-3">
                       <label for="customer-phone" class="form-label">Số điện thoại:</label>
                       <input type="tel" class="form-control" id="customer-phone" name="customer_phone" pattern="[0-9]*" maxlength="10" required>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <div id="customer-history" style="display: none; padding: 10px; background-color: #e7f3ff; border-left: 4px solid #2196F3; border-radius: 4px;">
+                      <h6 style="margin: 0; color: #1976D2;">Lịch sử mua hàng</h6>
+                      <p id="history-message" style="margin: 5px 0; color: #555; font-size: 14px;"></p>
+                      <small id="history-details" style="color: #999;"></small>
                     </div>
                   </div>
                   
@@ -514,6 +537,26 @@ $orders = [];
                         <option value="success">Hoàn thành</option>
                         <option value="fail">Đã hủy</option>
                       </select>
+                    </div>
+                  </div>
+
+             
+                  <div class="mb-3">
+                    <label for="voucher-select" class="form-label">Mã giảm giá (Voucher):</label>
+                    <select class="form-control" id="voucher-select" name="voucher_id">
+                      <option value="">-- Không dùng voucher --</option>
+                    </select>
+                    <small id="voucher-message" class="form-text" style="margin-top: 5px;"></small>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Tổng tiền gốc:</label>
+                      <input type="text" class="form-control" id="original-total" readonly style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Số tiền giảm:</label>
+                      <input type="text" class="form-control" id="discount-amount" readonly style="background-color: #fff3cd; color: #856404;">
                     </div>
                   </div>
 

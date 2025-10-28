@@ -171,8 +171,8 @@ class OrderRepository {
             $order->validate();
             
             $conn = $this->db->getConnection();
-            $query = "INSERT INTO orders (Username, CustomerName, Phone, PaymentMethod, Status, address_id, DateGeneration, TotalAmount) 
-                      VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)";
+            $query = "INSERT INTO orders (Username, CustomerName, Phone, PaymentMethod, Status, address_id, voucher_id, DateGeneration, TotalAmount) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
             
             $stmt = $conn->prepare($query);
             if (!$stmt) {
@@ -185,9 +185,10 @@ class OrderRepository {
             $paymentMethod = $order->getPaymentMethod();
             $status = $order->getStatus();
             $addressId = $order->getAddressId();
+            $voucherId = $order->getVoucherId();
             $totalAmount = $order->getTotalAmount();
             
-            $stmt->bind_param("sssssii", $username, $customerName, $phone, $paymentMethod, $status, $addressId, $totalAmount);
+            $stmt->bind_param("sssssiii", $username, $customerName, $phone, $paymentMethod, $status, $addressId, $voucherId, $totalAmount);
             
             if (!$stmt->execute()) {
                 throw new Exception("Insert failed: " . $stmt->error);

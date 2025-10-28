@@ -1,5 +1,8 @@
 <?php
-require_once '../php/check_session.php';
+// require_once '../php/check_session.php';
+// require_once '../php/connect.php';
+session_name('admin_session');
+session_start();
 require_once '../php/connect.php';
 $myconn = new DatabaseConnection();
 $myconn->connect();

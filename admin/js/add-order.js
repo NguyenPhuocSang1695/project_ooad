@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Load provinces and products when page loads
+    // Load provinces, products when page loads
     loadProvinces();
     loadProductsForAllSelects();
 
@@ -391,6 +391,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.classList.contains('product-select') || 
             e.target.classList.contains('product-quantity')) {
             updateTotalAmount();
+            // Re-check voucher eligibility when total changes
+            setTimeout(() => checkVoucherEligibility(), 100);
+        }
+        
+        // Voucher selection change
+        if (e.target.id === 'voucher-select') {
+            console.log('[VOUCHER] Selected:', e.target.value);
+            checkVoucherEligibility();
         }
     });
 
@@ -403,7 +411,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (row) {
                 row.remove();
                 updateTotalAmount();
+                // Re-check voucher eligibility when total changes
+                setTimeout(() => checkVoucherEligibility(), 100);
             }
+        }
+    });
+
+    // Customer phone change 
+    document.getElementById('customer-phone')?.addEventListener('change', function() {
+        console.log('[PHONE] Changed:', this.value);
+        if (this.value.length === 10) {
+            fetchCustomerHistory(this.value);
         }
     });
 });
@@ -444,12 +462,22 @@ function loadProvinces() {
 function loadDistricts(provinceId) {
     console.log('[LOAD_DISTRICTS] For province:', provinceId);
     
+    // Kiểm tra element từ form thêm đơn hàng
     const districtSelect = document.getElementById('add-district');
     const wardSelect = document.getElementById('add-ward');
     
-    if (!districtSelect) return;
+    // Kiểm tra element từ bộ lọc
+    const filterDistrictSelect = document.getElementById('district-select');
     
-    districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+    // Xác định element nào sẽ được update
+    const targetDistrictSelect = districtSelect || filterDistrictSelect;
+    
+    if (!targetDistrictSelect) {
+        console.error('[LOAD_DISTRICTS] No district select element found');
+        return;
+    }
+    
+    targetDistrictSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
     if (wardSelect) wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
     
     fetch(`../php/get_District.php?province_id=${encodeURIComponent(provinceId)}`)
@@ -467,13 +495,19 @@ function loadDistricts(provinceId) {
                     const option = document.createElement('option');
                     option.value = district.id;
                     option.textContent = district.name;
-                    districtSelect.appendChild(option);
+                    targetDistrictSelect.appendChild(option);
                 });
+                console.log('[DISTRICTS] Loaded successfully for element:', targetDistrictSelect.id);
+            } else {
+                console.warn('[DISTRICTS] No data or not success:', data);
             }
         })
         .catch(err => {
             console.error('[ERROR_DISTRICTS]', err);
-            showNotification('error', 'Lỗi khi tải danh sách quận/huyện');
+            // Chỉ show notification nếu được định nghĩa
+            if (typeof showNotification !== 'undefined') {
+                showNotification('error', 'Lỗi khi tải danh sách quận/huyện');
+            }
         });
 }
 
@@ -645,6 +679,12 @@ function updateTotalAmount() {
         totalElement.textContent = parseInt(total).toLocaleString('vi-VN');
     }
     
+    // Update original-total (Tổng tiền gốc) when products change
+    const originalTotalElement = document.getElementById('original-total');
+    if (originalTotalElement) {
+        originalTotalElement.value = parseInt(total).toLocaleString('vi-VN') + ' VNĐ';
+    }
+    
     console.log('[TOTAL] Updated to:', total);
 }
 
@@ -717,11 +757,15 @@ async function submitOrder() {
         console.log('[PRODUCTS] Total:', products.length);
         
         // Prepare payload
+        const voucherSelectElement = document.getElementById('voucher-select');
+        const voucherId = voucherSelectElement?.value ? parseInt(voucherSelectElement.value) : null;
+        
         const payload = {
             customer_name: customerName,
             customer_phone: customerPhone,
             payment_method: paymentMethod,
             status: status,
+            voucher_id: voucherId,
             products: products,
             address: {
                 ward_id: document.getElementById('add-ward')?.value || '',
@@ -730,6 +774,7 @@ async function submitOrder() {
         };
         
         console.log('[PAYLOAD] Ready to send');
+        console.log('[PAYLOAD] Voucher ID:', voucherId);
         console.log('[PAYLOAD] Data:', JSON.stringify(payload, null, 2));
         
         // Send to server
@@ -807,6 +852,12 @@ async function submitOrder() {
         const totalElement = document.getElementById('total-amount');
         if (totalElement) totalElement.textContent = '0';
         
+        const originalTotalElement = document.getElementById('original-total');
+        if (originalTotalElement) originalTotalElement.value = '0 VNĐ';
+        
+        const discountElement = document.getElementById('discount-amount');
+        if (discountElement) discountElement.value = '0 VNĐ';
+        
         console.log('[RELOAD] Reloading page in 2 seconds...');
         setTimeout(() => {
             window.location.reload();
@@ -818,3 +869,165 @@ async function submitOrder() {
         showNotification('error', 'Lỗi: ' + error.message);
     }
 }
+
+// ========== VOUCHER FUNCTIONS (History-Based) ==========
+
+// Fetch customer history and load eligible vouchers
+async function fetchCustomerHistory(phone) {
+    console.log('[FETCH_HISTORY] For phone:', phone);
+    
+    const historyDiv = document.getElementById('customer-history');
+    const messageElement = document.getElementById('history-message');
+    const detailsElement = document.getElementById('history-details');
+    const voucherSelect = document.getElementById('voucher-select');
+    
+    if (!historyDiv || !voucherSelect) {
+        console.error('[ERROR] Elements not found');
+        return;
+    }
+    
+    try {
+        // Get customer history
+        const historyResponse = await fetch('../php/get_customer_history.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customer_phone: phone
+            })
+        });
+        
+        const historyResult = await historyResponse.json();
+        console.log('[HISTORY_RESULT]', historyResult);
+        
+        // Get eligible vouchers
+        const voucherResponse = await fetch('../php/get_eligible_vouchers.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customer_phone: phone
+            })
+        });
+        
+        const voucherResult = await voucherResponse.json();
+        console.log('[ELIGIBLE_VOUCHERS]', voucherResult);
+        
+        // Update history display
+        if (historyResult.success && historyResult.has_purchased) {
+            historyDiv.style.display = 'block';
+            if (messageElement) {
+                messageElement.textContent = `✓ Khách hàng cũ - Tổng tiền lịch sử: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VNĐ`;
+                messageElement.style.color = '#28a745';
+            }
+            if (detailsElement) {
+                detailsElement.innerHTML = `${historyResult.order_count} đơn hàng thành công | Giá trị trung bình: ${Math.round(historyResult.total_spent / historyResult.order_count).toLocaleString('vi-VN')} VNĐ/đơn`;
+            }
+        } else {
+            historyDiv.style.display = 'block';
+            if (messageElement) {
+                messageElement.textContent = '⚠ Khách hàng mới - Chưa có lịch sử mua hàng';
+                messageElement.style.color = '#ff9800';
+            }
+            if (detailsElement) {
+                detailsElement.innerHTML = '';
+            }
+        }
+        
+        // Update voucher dropdown
+        voucherSelect.innerHTML = '<option value="">-- Không dùng voucher --</option>';
+        
+        if (voucherResult.success && voucherResult.eligible_vouchers.length > 0) {
+            voucherResult.eligible_vouchers.forEach(voucher => {
+                const option = document.createElement('option');
+                option.value = voucher.id;
+                option.textContent = `${voucher.name} - Giảm ${voucher.percen_decrease}% (Tối thiểu: ${voucher.conditions.toLocaleString('vi-VN')}đ)`;
+                option.dataset.discount = voucher.percen_decrease;
+                voucherSelect.appendChild(option);
+            });
+        }
+        
+    } catch (error) {
+        console.error('[ERROR_FETCH_HISTORY]', error);
+        historyDiv.style.display = 'none';
+        voucherSelect.innerHTML = '<option value="">-- Không dùng voucher --</option>';
+    }
+}
+
+// Check voucher eligibility and calculate discount (NO PERCENTAGE DIVISION)
+async function checkVoucherEligibility() {
+    const voucherSelect = document.getElementById('voucher-select');
+    const voucherId = voucherSelect?.value || null;
+    const totalAmountElement = document.getElementById('total-amount');
+    // Parse the total amount correctly (remove formatting)
+    const totalAmountText = totalAmountElement?.textContent || '0';
+    const originalTotal = parseInt(totalAmountText.replace(/\D/g, '')) || 0;
+    
+    const messageElement = document.getElementById('voucher-message');
+    const discountAmountElement = document.getElementById('discount-amount');
+    const originalTotalElement = document.getElementById('original-total');
+    
+    // Reset display
+    if (discountAmountElement) discountAmountElement.value = '0 VNĐ';
+    if (messageElement) messageElement.textContent = '';
+    
+    // Update original total field
+    if (originalTotalElement) {
+        originalTotalElement.value = originalTotal.toLocaleString('vi-VN') + ' VNĐ';
+    }
+    
+    // If no voucher selected, final total = original total
+    if (!voucherId) {
+        if (totalAmountElement) {
+            totalAmountElement.textContent = originalTotal.toLocaleString('vi-VN');
+        }
+        return;
+    }
+    
+    // If total is 0, don't check
+    if (originalTotal === 0) {
+        if (messageElement) messageElement.textContent = 'Vui lòng thêm sản phẩm';
+        if (messageElement) messageElement.style.color = '#ff6b6b';
+        return;
+    }
+    
+    try {
+        console.log('[CHECK_VOUCHER] voucherId:', voucherId, 'originalTotal:', originalTotal);
+        
+        // Find the selected option to get discount percentage
+        const selectedOption = voucherSelect.options[voucherSelect.selectedIndex];
+        const discountPercent = parseInt(selectedOption.dataset.discount || 0);
+        
+        // Calculate discount (percen_decrease is already a percentage, NOT divided by 100)
+        const discountAmount = Math.round((originalTotal * discountPercent) / 100);
+        const finalTotal = originalTotal - discountAmount;
+        
+        if (messageElement) {
+            messageElement.textContent = `✓ Áp dụng voucher "${selectedOption.textContent.split('-')[0].trim()}" - Giảm ${discountPercent}%`;
+            messageElement.style.color = '#28a745';
+        }
+        
+        if (discountAmountElement) {
+            discountAmountElement.value = discountAmount.toLocaleString('vi-VN') + ' VNĐ';
+            discountAmountElement.style.backgroundColor = '#d4edda';
+            discountAmountElement.style.color = '#155724';
+        }
+        
+        // Update total-amount to show FINAL total (original - discount)
+        if (totalAmountElement) {
+            totalAmountElement.textContent = finalTotal.toLocaleString('vi-VN');
+            console.log(`[DISCOUNT_CALC] Original: ${originalTotal}, Discount: ${discountAmount}, Final: ${finalTotal}`);
+        }
+        
+    } catch (error) {
+        console.error('[ERROR_CHECK_VOUCHER]', error);
+        if (messageElement) {
+            messageElement.textContent = '✗ Lỗi kiểm tra voucher';
+            messageElement.style.color = '#f44336';
+        }
+        if (discountAmountElement) discountAmountElement.value = '0 VNĐ';
+    }
+}
+
