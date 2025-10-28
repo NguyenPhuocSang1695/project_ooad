@@ -10,12 +10,12 @@ $db->connect();
 $myconn = $db->getConnection();
 
 // Kiểm tra session đăng nhập
-if (isset($_SESSION['Username'])) {
-    $username = $_SESSION['Username'];
+if (isset($_SESSION['Phone'])) {
+    $Phone = $_SESSION['Phone'];
 
     $result = $db->queryPrepared(
-        "SELECT Status FROM users WHERE Username = ? AND Role = 'admin'",
-        [$username]
+        "SELECT Status FROM users WHERE Phone = ? AND Role = 'admin'",
+        [$Phone]
     );
 
     if ($result && $result->num_rows > 0) {

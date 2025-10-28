@@ -1,5 +1,6 @@
 <?php
 require_once './php/connect.php';
+
 // Khởi tạo và kết nối
 $db = new DatabaseConnection();
 $db->connect(); // tạo kết nối MySQL
@@ -7,42 +8,43 @@ $myconn = $db->getConnection(); // lấy đối tượng mysqli thực sự đ�
 session_name('admin_session');
 session_start();
 
-if (isset($_SESSION['Username'])) {
+// Nếu đã đăng nhập rồi thì chuyển sang trang chính
+if (isset($_SESSION['Phone'])) {
     header("Location: ../admin/index/homePage.php");
     exit();
 }
 
 $errors = [
-    'username' => '',
+    'phone' => '',
     'password' => ''
 ];
 
 if (isset($_POST['submit'])) {
-    $username = trim($_POST['Username']);
+    $phone = trim($_POST['Phone']);
     $password = trim($_POST['PasswordHash']);
 
-    if (empty($username)) {
-        $errors['username'] = "Vui lòng nhập tên đăng nhập!";
+    if (empty($phone)) {
+        $errors['phone'] = "Vui lòng nhập số điện thoại!";
     }
     if (empty($password)) {
         $errors['password'] = "Vui lòng nhập mật khẩu!";
     }
 
-    if (empty($errors['username']) && empty($errors['password'])) {
-        $stmt = $myconn->prepare("SELECT Username, FullName, Role, PasswordHash, Status FROM users WHERE Username = ? AND Role = 'admin'");
-        $stmt->bind_param("s", $username);
+    if (empty($errors['phone']) && empty($errors['password'])) {
+        $stmt = $myconn->prepare("SELECT Phone, FullName, Role, PasswordHash, Status FROM users WHERE Phone = ? AND Role = 'admin'");
+        $stmt->bind_param("s", $phone);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
             $user = $result->fetch_assoc();
 
-            // Check if account is locked
+            // Kiểm tra trạng thái tài khoản
             if ($user['Status'] === 'Block') {
-                echo "<script>alert('Tài khoản của bạn đã bị khóa. 🔒 ');</script>";
+                echo "<script>alert('Tài khoản của bạn đã bị khóa 🔒');</script>";
                 session_unset();
-            } else if (password_verify($password, $user['PasswordHash'])) {
-                $_SESSION['Username'] = $user['Username'];
+            } elseif (password_verify($password, $user['PasswordHash'])) {
+                $_SESSION['Phone'] = $user['Phone'];
                 $_SESSION['FullName'] = $user['FullName'];
                 $_SESSION['Role'] = 'Nhân viên';
 
@@ -55,40 +57,54 @@ if (isset($_POST['submit'])) {
                 $errors['password'] = "Mật khẩu không đúng!";
             }
         } else {
-            $errors['username'] = "Tài khoản không tồn tại!";
+            $errors['phone'] = "Số điện thoại không tồn tại!";
         }
 
         $stmt->close();
     }
 }
-
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
-    <title>Login V1</title>
+    <title>Đăng nhập bằng số điện thoại</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!--===============================================================================================-->
     <link rel="icon" type="image/png" href="images/icons/favicon.ico" />
-    <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css">
-    <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="fonts/font-awesome-4.7.0/css/font-awesome.min.css">
-    <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="vendor/animate/animate.css">
-    <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="vendor/css-hamburgers/hamburgers.min.css">
-    <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="vendor/select2/select2.min.css">
-    <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="css/util.css">
     <link rel="stylesheet" type="text/css" href="css/main.css">
     <link rel="stylesheet" href="style/generall.css">
     <link rel="stylesheet" href="icon/css/all.css">
-    <!--===============================================================================================-->
     <style>
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+        }
+
+        .wrap-input100 {
+            position: relative;
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -98,16 +114,6 @@ if (isset($_POST['submit'])) {
             to {
                 opacity: 1;
                 transform: translate(-50%, -50%);
-            }
-        }
-
-        @keyframes overlayFadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
             }
         }
 
@@ -124,10 +130,8 @@ if (isset($_POST['submit'])) {
             text-align: center;
             z-index: 1000;
             animation: fadeIn 0.5s ease-in-out;
-            /* Thêm hiệu ứng */
         }
 
-        /* Áp dụng hiệu ứng cho nền mờ */
         .popup-overlay {
             display: none;
             position: fixed;
@@ -137,40 +141,16 @@ if (isset($_POST['submit'])) {
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 999;
-            animation: overlayFadeIn 0.5s ease-in-out;
-            /* Thêm hiệu ứng */
-        }
-
-        .error-message {
-            color: #dc3545;
-            font-size: 14px;
-            padding: 8px;
-            border-radius: 4px;
-            margin-top: -10px;
-            margin-bottom: 15px;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #666666;
-        }
-
-        .wrap-input100 {
-            position: relative;
         }
     </style>
+
     <script>
-        function showSuccessPopup(userName) {
-            console.log("Popup function triggered");
+        function showSuccessPopup(Fullname) {
             const overlay = document.getElementById('popupOverlay');
             const popup = document.getElementById('popupSuccess');
-            const userNameElement = document.getElementById('userName');
+            const FullnameElement = document.getElementById('Fullname');
 
-            userNameElement.textContent = userName;
+            FullnameElement.textContent = Fullname;
             overlay.style.display = 'block';
             popup.style.display = 'block';
 
@@ -184,11 +164,8 @@ if (isset($_POST['submit'])) {
             const passwordField = document.getElementById('passwordField');
 
             togglePassword.addEventListener('click', function() {
-                // Chuyển đổi kiểu input
                 const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordField.setAttribute('type', type);
-
-                // Chuyển đổi icon
                 this.querySelector('i').classList.toggle('fa-eye');
                 this.querySelector('i').classList.toggle('fa-eye-slash');
             });
@@ -207,19 +184,20 @@ if (isset($_POST['submit'])) {
 
                 <form class="login100-form validate-form" action="index.php" method="POST">
                     <span class="login100-form-title">
-                        Đăng nhập quản lý
+                        <h2> Đăng nhập</h2>
                     </span>
 
                     <div class="wrap-input100 validate-input">
-                        <input class="input100" type="text" name="Username" placeholder="Tên đăng nhập" value="<?php echo isset($_POST['Username']) ? htmlspecialchars($_POST['Username']) : ''; ?>">
+                        <input class="input100" type="text" name="Phone" placeholder="Số điện thoại"
+                            value="<?php echo isset($_POST['Phone']) ? htmlspecialchars($_POST['Phone']) : ''; ?>">
                         <span class="focus-input100"></span>
                         <span class="symbol-input100">
-                            <i class="fa-solid fa-user" aria-hidden="true"></i>
+                            <i class="fa fa-phone" aria-hidden="true"></i>
                         </span>
                     </div>
-                    <?php if (!empty($errors['username'])): ?>
+                    <?php if (!empty($errors['phone'])): ?>
                         <div class="error-message">
-                            <?php echo $errors['username']; ?>
+                            <?php echo $errors['phone']; ?>
                         </div>
                     <?php endif; ?>
 
@@ -230,7 +208,7 @@ if (isset($_POST['submit'])) {
                             <i class="fa fa-lock" aria-hidden="true"></i>
                         </span>
                         <span class="toggle-password">
-                            <i class="fa fa-eye" aria-hidden="true" style="display: none"></i>
+                            <i class="fa fa-eye" aria-hidden="true" style="display:none"></i>
                         </span>
                     </div>
                     <?php if (!empty($errors['password'])): ?>
@@ -253,9 +231,11 @@ if (isset($_POST['submit'])) {
     <div class="popup-overlay" id="popupOverlay"></div>
     <div class="popup-success" id="popupSuccess">
         <div class="icon">✔</div>
-        <h3>Xin chào, <span id="userName"></span>!</h3> <br>
-        <p>Đăng nhập thành công!</p>
-        <p>Chuyển hướng đến trang quản lý...</p>
+        <h3>Xin chào, <span id="Fullname"></span>!</h3>
+        <h4>
+            <p>Đăng nhập thành công!</p>
+        </h4>
+
     </div>
 
 </body>

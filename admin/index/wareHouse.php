@@ -1,10 +1,6 @@
 <?php
-// include '../php/check_session.php';
-// session_name('admin_session');
-// session_start();
 require_once '../php/connect.php';
 require_once '../php/ProductManager.php';
-
 $db = new DatabaseConnection();
 $db->connect();
 global $db;
@@ -232,6 +228,8 @@ global $mysqli;
           <i class="fa-solid fa-magnifying-glass"></i>
         </button>
       </form>
+
+      <p id="searchResultText" style="display: none; margin-top: 10px; font-style: italic; color: #555;"></p>
 
       <div class="filters-container">
         <div class="filters-row">
@@ -807,7 +805,7 @@ global $mysqli;
       const prevBtn = document.createElement('a');
       prevBtn.href = '#';
       prevBtn.className = `pagination-item ${pagination.currentPage === 1 ? 'disabled' : ''}`;
-      prevBtn.innerHTML = '&laquo;';
+      prevBtn.innerHTML = '&lt;';
       prevBtn.onclick = (e) => {
         e.preventDefault();
         if (pagination.currentPage > 1) {
@@ -877,7 +875,7 @@ global $mysqli;
       const nextBtn = document.createElement('a');
       nextBtn.href = '#';
       nextBtn.className = `pagination-item ${pagination.currentPage === pagination.totalPages ? 'disabled' : ''}`;
-      nextBtn.innerHTML = '&raquo;';
+      nextBtn.innerHTML = '&gt;';
       nextBtn.onclick = (e) => {
         e.preventDefault();
         if (pagination.currentPage < pagination.totalPages) {
