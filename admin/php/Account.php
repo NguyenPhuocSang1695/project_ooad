@@ -108,8 +108,8 @@ class Account
         }
 
         // Validate phone (10-11 số)
-        if (!preg_match('/^[0-9]{10,11}$/', $data['phone'])) {
-            return ['success' => false, 'message' => 'Số điện thoại không hợp lệ (phải từ 10-11 chữ số)'];
+        if (!preg_match('/^[0-9]{10}$/', $data['phone'])) {
+            return ['success' => false, 'message' => 'Số điện thoại không hợp lệ (số điện thoại phải có 10 chữ số)'];
         }
 
         // Validate họ tên (không chứa số và ký tự đặc biệt)

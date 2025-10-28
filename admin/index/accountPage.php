@@ -326,10 +326,10 @@ if ($result && $result->num_rows > 0) {
               <label>Email:</label>
               <span id="display-email"><?php echo $email ?></span>
             </div>
-            <div class="info-row">
+            <!-- <div class="info-row">
               <label>Địa chỉ:</label>
               <span id="display-address"><?php echo $address ?></span>
-            </div>
+            </div> -->
           </div>
 
           <button class="edit-btn" onclick="openEditModal()">
@@ -366,7 +366,7 @@ if ($result && $result->num_rows > 0) {
           <input type="email" id="email" name="email" value="<?php echo $email ?>" required>
         </div>
 
-        <div class="form-group">
+        <!-- <div class="form-group">
           <label for="province">Tỉnh/Thành phố</label>
           <select id="province" name="province" onchange="loadDistricts()">
             <option value="">-- Chọn Tỉnh/Thành phố --</option>
@@ -385,12 +385,12 @@ if ($result && $result->num_rows > 0) {
           <select id="ward" name="ward_id">
             <option value="">-- Chọn Phường/Xã --</option>
           </select>
-        </div>
+        </div> -->
 
-        <div class="form-group">
+        <!-- <div class="form-group">
           <label for="address_detail">Địa chỉ chi tiết</label>
           <input type="text" id="address_detail" name="address_detail" value="<?php echo $addressDetail ?>">
-        </div>
+        </div> -->
 
         <div class="form-actions">
           <button type="button" class="btn-cancel" onclick="closeEditModal()">Hủy</button>
@@ -570,7 +570,7 @@ if ($result && $result->num_rows > 0) {
           // Đóng modal sau 2 giây
           setTimeout(() => {
             closeEditModal();
-          }, 2000);
+          }, 100);
 
         } else {
           // Hiển thị thông báo lỗi
