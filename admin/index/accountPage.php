@@ -326,10 +326,10 @@ if ($result && $result->num_rows > 0) {
               <label>Email:</label>
               <span id="display-email"><?php echo $email ?></span>
             </div>
-            <div class="info-row">
+            <!-- <div class="info-row">
               <label>Địa chỉ:</label>
               <span id="display-address"><?php echo $address ?></span>
-            </div>
+            </div> -->
           </div>
 
           <button class="edit-btn" onclick="openEditModal()">
@@ -364,32 +364,6 @@ if ($result && $result->num_rows > 0) {
         <div class="form-group">
           <label for="email">Email <span style="color: red;">*</span></label>
           <input type="email" id="email" name="email" value="<?php echo $email ?>" required>
-        </div>
-
-        <div class="form-group">
-          <label for="province">Tỉnh/Thành phố</label>
-          <select id="province" name="province" onchange="loadDistricts()">
-            <option value="">-- Chọn Tỉnh/Thành phố --</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="district">Quận/Huyện</label>
-          <select id="district" name="district" onchange="loadWards()">
-            <option value="">-- Chọn Quận/Huyện --</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="ward">Phường/Xã</label>
-          <select id="ward" name="ward_id">
-            <option value="">-- Chọn Phường/Xã --</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="address_detail">Địa chỉ chi tiết</label>
-          <input type="text" id="address_detail" name="address_detail" value="<?php echo $addressDetail ?>">
         </div>
 
         <div class="form-actions">
@@ -427,100 +401,7 @@ if ($result && $result->num_rows > 0) {
       }
     }
 
-    // Load danh sách tỉnh/thành phố
-    async function loadProvinces() {
-      try {
-        const response = await fetch('../php/get_locations.php?action=provinces');
-        const data = await response.json();
 
-        if (data.success) {
-          const provinceSelect = document.getElementById('province');
-          provinceSelect.innerHTML = '<option value="">-- Chọn Tỉnh/Thành phố --</option>';
-
-          data.data.forEach(province => {
-            const option = document.createElement('option');
-            option.value = province.province_id;
-            option.textContent = province.name;
-            if (province.province_id === initialData.provinceId) {
-              option.selected = true;
-            }
-            provinceSelect.appendChild(option);
-          });
-
-          // Load quận/huyện nếu đã có tỉnh
-          if (initialData.provinceId) {
-            await loadDistricts();
-          }
-        }
-      } catch (error) {
-        console.error('Lỗi khi tải danh sách tỉnh:', error);
-      }
-    }
-
-    // Load danh sách quận/huyện
-    async function loadDistricts() {
-      const provinceId = document.getElementById('province').value;
-      const districtSelect = document.getElementById('district');
-      const wardSelect = document.getElementById('ward');
-
-      districtSelect.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
-      wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-
-      if (!provinceId) return;
-
-      try {
-        const response = await fetch(`../php/get_locations.php?action=districts&province_id=${provinceId}`);
-        const data = await response.json();
-
-        if (data.success) {
-          data.data.forEach(district => {
-            const option = document.createElement('option');
-            option.value = district.district_id;
-            option.textContent = district.name;
-            if (district.district_id === initialData.districtId) {
-              option.selected = true;
-            }
-            districtSelect.appendChild(option);
-          });
-
-          // Load phường/xã nếu đã có quận
-          if (initialData.districtId) {
-            await loadWards();
-          }
-        }
-      } catch (error) {
-        console.error('Lỗi khi tải danh sách quận/huyện:', error);
-      }
-    }
-
-    // Load danh sách phường/xã
-    async function loadWards() {
-      const districtId = document.getElementById('district').value;
-      const wardSelect = document.getElementById('ward');
-
-      wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-
-      if (!districtId) return;
-
-      try {
-        const response = await fetch(`../php/get_locations.php?action=wards&district_id=${districtId}`);
-        const data = await response.json();
-
-        if (data.success) {
-          data.data.forEach(ward => {
-            const option = document.createElement('option');
-            option.value = ward.ward_id;
-            option.textContent = ward.name;
-            if (ward.ward_id === initialData.wardId) {
-              option.selected = true;
-            }
-            wardSelect.appendChild(option);
-          });
-        }
-      } catch (error) {
-        console.error('Lỗi khi tải danh sách phường/xã:', error);
-      }
-    }
 
     // Xử lý submit form
     document.getElementById('editForm').addEventListener('submit', async function(e) {
@@ -549,14 +430,7 @@ if ($result && $result->num_rows > 0) {
           document.getElementById('display-email').textContent = formData.get('email');
 
           // Cập nhật địa chỉ nếu có thay đổi
-          const wardId = formData.get('ward_id');
-          const addressDetail = formData.get('address_detail');
-          if (wardId && addressDetail) {
-            const wardText = document.getElementById('ward').options[document.getElementById('ward').selectedIndex].text;
-            const districtText = document.getElementById('district').options[document.getElementById('district').selectedIndex].text;
-            const provinceText = document.getElementById('province').options[document.getElementById('province').selectedIndex].text;
-            document.getElementById('display-address').textContent = `${addressDetail}, ${wardText}, ${districtText}, ${provinceText}`;
-          }
+
 
           // Cập nhật tên ở header
           const nameElements = document.querySelectorAll('.name-employee p, .user-name, .offcanvas-title');
