@@ -165,7 +165,7 @@ $voucherResult = $myconn->query($sqlVouchers);
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-          <a href="" class="navbar_user">
+          <a href="accountPage.php" class="navbar_user">
             <i class="fa-solid fa-user"></i>
             <p>Thông tin cá nhân </p>
           </a>
@@ -692,7 +692,7 @@ $voucherResult = $myconn->query($sqlVouchers);
 
 
   <!-- POPUP CHỈNH SỬA VOUCHER -->
-  <div id="editVoucherModal" class="modal" style="display:none;">
+  <div id="editVoucherModal" class="modal_voucher" style="display:none;">
     <div class="modal-content">
       <h2>✏️ Chỉnh sửa Voucher</h2>
       <form id="editVoucherForm">
@@ -731,7 +731,7 @@ $voucherResult = $myconn->query($sqlVouchers);
 
   <style>
     /* Modal nền mờ */
-    .modal {
+    .modal_voucher {
       position: fixed;
       top: 0;
       left: 0;
