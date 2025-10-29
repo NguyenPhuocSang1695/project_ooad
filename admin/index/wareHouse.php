@@ -807,7 +807,7 @@ global $mysqli;
       const prevBtn = document.createElement('a');
       prevBtn.href = '#';
       prevBtn.className = `pagination-item ${pagination.currentPage === 1 ? 'disabled' : ''}`;
-      prevBtn.innerHTML = '&laquo;';
+      prevBtn.innerHTML = '&lt;';
       prevBtn.onclick = (e) => {
         e.preventDefault();
         if (pagination.currentPage > 1) {
@@ -877,7 +877,7 @@ global $mysqli;
       const nextBtn = document.createElement('a');
       nextBtn.href = '#';
       nextBtn.className = `pagination-item ${pagination.currentPage === pagination.totalPages ? 'disabled' : ''}`;
-      nextBtn.innerHTML = '&raquo;';
+      nextBtn.innerHTML = '&gt;';
       nextBtn.onclick = (e) => {
         e.preventDefault();
         if (pagination.currentPage < pagination.totalPages) {

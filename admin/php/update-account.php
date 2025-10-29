@@ -15,9 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = [
         'fullname' => $_POST['fullname'] ?? '',
         'phone' => $_POST['phone'] ?? '',
-        'email' => $_POST['email'] ?? '',
-        'address_detail' => $_POST['address_detail'] ?? '',
-        'ward_id' => $_POST['ward_id'] ?? ''
     ];
 
     $result = $account->updateAccount($data);
