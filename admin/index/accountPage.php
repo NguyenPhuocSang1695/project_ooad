@@ -7,7 +7,7 @@ require_once '../php/connect.php';
 $myconn = new DatabaseConnection();
 $myconn->connect();
 
-if (!isset($_SESSION['Username'])) {
+if (!isset($_SESSION['Phone'])) {
   header('Location: ../index.php');
   exit();
 }
@@ -16,11 +16,11 @@ $avatarPath = ($_SESSION['Role'] === 'admin')
   ? "../../assets/images/admin.jpg"
   : "../../assets/images/sang.jpg";
 
-$username = $email = $role = $phone = $address = $FullName = '';
+$Phone = $email = $role = $phone = $address = $FullName = '';
 $addressDetail = $wardId = $districtId = $provinceId = '';
 $wardName = $districtName = $provinceName = '';
 
-$sql = "SELECT u.Username, u.FullName, u.Email, u.Role, u.Phone, u.address_id, 
+$sql = "SELECT u.Phone, u.FullName, u.Email, u.Role, u.Phone, u.address_id, 
         a.address_detail, a.ward_id,
         pr.province_id, pr.name as province_name, 
         dr.district_id, dr.name as district_name, 
@@ -30,14 +30,14 @@ $sql = "SELECT u.Username, u.FullName, u.Email, u.Role, u.Phone, u.address_id,
         join ward w ON a.ward_id = w.ward_id
         JOIN district dr ON w.district_id = dr.district_id
         JOIN province pr ON dr.province_id = pr.province_id
-        WHERE u.Username = ?";
+        WHERE u.Phone = ?";
 
-$result = $myconn->queryPrepared($sql, [$_SESSION['Username']]);
+$result = $myconn->queryPrepared($sql, [$_SESSION['Phone']]);
 
 if ($result && $result->num_rows > 0) {
   $row = $result->fetch_assoc();
 
-  $username = $row['Username'];
+  $Phone = $row['Phone'];
   $FullName = $row['FullName'];
   $email = $row['Email'];
   $role = $row['Role'];
@@ -197,7 +197,7 @@ if ($result && $result->num_rows > 0) {
           <img class="avatar" src="<?php echo $avatarPath; ?>" alt="Avatar">
           <div class="admin">
             <h4 class="offcanvas-title" id="offcanvasWithBothOptionsLabel"><?php echo $_SESSION['FullName'] ?></h4>
-            <h5><?php echo $_SESSION['Username'] ?></h5>
+            <h5><?php echo $_SESSION['Phone'] ?></h5>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
@@ -304,7 +304,7 @@ if ($result && $result->num_rows > 0) {
           <div class="user-info">
             <span class="user-icon">NC</span>
             <div style="display: flex; flex-direction: column;">
-              <span class="user-name"><?php echo $username ?></span>
+              <span class="user-name"><?php echo $Phone ?></span>
               <span class="user-email">📧 <?php echo $email ?></span>
             </div>
           </div>
@@ -565,7 +565,7 @@ if ($result && $result->num_rows > 0) {
           const nameElements = document.querySelectorAll('.name-employee p, .user-name, .offcanvas-title');
           nameElements.forEach(el => {
             if (el.classList.contains('user-name')) {
-              return; // Username không đổi
+              return; // Phone không đổi
             }
             el.textContent = formData.get('fullname');
           });

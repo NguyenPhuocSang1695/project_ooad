@@ -1,9 +1,8 @@
 <?php
-session_name('admin_session');
-session_start();
-require_once '../php/connect.php';
 
-if (!isset($_SESSION['Username'])) {
+require_once '../php/check_session.php';
+require_once '../php/connect.php';
+if (!isset($_SESSION['Phone'])) {
   header('Location: ../index.php');
   exit();
 }
@@ -169,12 +168,12 @@ try {
           <img class="avatar" src="../../assets/images/sang.jpg" alt="Avatar">
           <div class="admin">
             <h4 class="offcanvas-title" id="offcanvasWithBothOptionsLabel"><?php echo $_SESSION['FullName'] ?></h4>
-            <h5><?php echo $_SESSION['Username'] ?></h5>
+            <h5><?php echo $_SESSION['Phone'] ?></h5>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-          <a href="" class="navbar_user">
+          <a href="./accountPage.php" class="navbar_user">
             <i class="fa-solid fa-user"></i>
             <p>Thông tin cá nhân </p>
           </a>
@@ -706,7 +705,7 @@ try {
 
 
   <!-- POPUP CHỈNH SỬA VOUCHER -->
-  <div id="editVoucherModal" class="modal" style="display:none;">
+  <div id="editVoucherModal" class="modal_voucher" style="display:none;">
     <div class="modal-content">
       <h2>✏️ Chỉnh sửa Voucher</h2>
       <form id="editVoucherForm">
@@ -745,7 +744,7 @@ try {
 
   <style>
     /* Modal nền mờ */
-    .modal {
+    .modal_voucher {
       position: fixed;
       top: 0;
       left: 0;
