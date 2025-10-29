@@ -240,7 +240,7 @@ $myconn = $connectDb->getConnection();
       <?php
       $sql = "SELECT o.*, u.FullName, a.address_detail, pr.name AS province_name, dr.name AS district_name
               FROM orders o
-              LEFT JOIN users u ON o.Username = u.Username
+              LEFT JOIN users u ON o.user_id = u.user_id
               join address a ON o.address_id = a.address_id
               join ward w ON a.ward_id = w.ward_id
               JOIN district dr ON w.district_id = dr.district_id
