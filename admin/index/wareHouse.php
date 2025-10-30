@@ -3,76 +3,14 @@
 // session_name('admin_session');
 // session_start();
 require_once '../php/connect.php';
-require_once '../php/ProductController.php';
+require_once '../php/ProductManager.php';
 
 $db = new DatabaseConnection();
 $db->connect();
 global $db;
 $mysqli = $db->getConnection();
 global $mysqli;
-// class AutoProductLoader
-// {
-//   private $productId;
-//   private $productData;
 
-//   public function __construct()
-//   {
-//     $this->productId = isset($_GET['product_id']) ? $_GET['product_id'] : null;
-//   }
-
-//   public function hasProductId()
-//   {
-//     return !empty($this->productId);
-//   }
-
-//   public function generateAutoLoadScript()
-//   {
-//     if (!$this->hasProductId()) return '';
-
-//     $productId = htmlspecialchars($this->productId, ENT_QUOTES, 'UTF-8');
-//     $script = "
-//         <script>
-//             document.addEventListener('DOMContentLoaded', function() {
-//                 fetch('../php/get-product.php?id={$productId}')
-//                     .then(response => response.json())
-//                     .then(data => {
-//                         if (data) {
-//                             const searchInput = document.querySelector('.search-input');
-//                             if (searchInput) {
-//                                 searchInput.value = data.ProductName;
-//                                 searchProducts(1, {$productId});
-//                             }
-//                         }
-//                     })
-//                     .catch(error => console.error('Error:', error));
-//             });
-//         </script>";
-
-//     return $script;
-//   }
-// }
-
-// $product_id = isset($_GET['product_id']) ? $_GET['product_id'] : null;
-
-// if ($product_id) {
-//   echo "<script>
-//     document.addEventListener('DOMContentLoaded', function() {
-//       // Tự động tìm kiếm sản phẩm với ID cụ thể
-//       fetch('../php/get-product.php?id=" . $product_id . "')
-//         .then(response => response.json())
-//         .then(data => {
-//           if (data) {
-//             const searchInput = document.querySelector('.search-input');
-//             if (searchInput) {
-//               searchInput.value = data.ProductName;
-//               searchProducts(1, " . $product_id . ");
-//             }
-//           }
-//         })
-//         .catch(error => console.error('Error:', error));
-//     });
-//   </script>";
-// }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -92,293 +30,9 @@ global $mysqli;
   <link href="asset/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../style/responsiveWareHouse.css">
   <link rel="stylesheet" href="../style/warehouse-pagination.css">
+  <link rel="stylesheet" href="../style/wareHouse.css">
+  <link rel="stylesheet" href="../style/wareHouseFilter.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
-    /* Popup overlay cho thêm sản phẩm */
-    .add-product-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      /* Nền mờ */
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      margin: auto;
-    }
-
-    .add-product-content {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-      width: 400px;
-      max-height: 80vh;
-      overflow-y: auto;
-      position: relative;
-    }
-
-    /* Popup overlay */
-    .product-details-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      /* Nền mờ */
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    /* .product-details-overlay.active {
-      display: flex;
-    } */
-
-    .product-details-content {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-      width: 400px;
-      max-height: 80vh;
-      overflow-y: auto;
-      position: relative;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #ff4444;
-      color: white;
-      border: none;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      z-index: 10000000;
-    }
-
-    .close-btn:hover {
-      background: #cc0000;
-    }
-
-    /* Đảm bảo nội dung trong popup không bị tràn */
-    .details-grid p,
-    .form-group label,
-    .form-group input {
-      font-size: 14px;
-    }
-
-    .form-grid {
-      grid-template-columns: 1fr 2fr;
-      gap: 15px;
-    }
-
-    .image-preview,
-    .edit-image-preview {
-      max-width: 150px;
-    }
-
-    /* Responsive */
-    @media only screen and (max-width: 29.9375em) {
-
-      .product-details-content,
-      .add-product-content {
-        width: 90%;
-        padding: 15px;
-      }
-
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .details-grid p,
-      .form-group label,
-      .form-group input {
-        font-size: 12px;
-      }
-
-      .image-preview,
-      .edit-image-preview {
-        max-width: 100px;
-      }
-    }
-
-    @media only screen and (min-width: 30em) and (max-width: 63.9375em) {
-      .product-details-content {
-        width: 70%;
-      }
-
-      .add-product-content {
-        padding: 20px;
-        width: 66%;
-      }
-    }
-
-    @media only screen and (min-width: 64em) {
-      .product-details-content {
-        width: 40%;
-      }
-
-      .add-product-content {
-        padding: 25px;
-        width: 550px;
-      }
-
-      .form-grid {
-        grid-template-columns: 1fr 2fr;
-        gap: 10px;
-      }
-    }
-
-    /* Form thêm sản phẩm  */
-    #add-product-btn {
-      width: 150px;
-    }
-
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      width: 350px;
-      max-width: 100%;
-      width: 100%;
-    }
-
-    /* Tiêu đề của form */
-    .card h2 {
-      text-align: center;
-      font-size: 24px;
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    /* Cài đặt khoảng cách cho các trường nhập liệu */
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    label {
-      font-weight: bold;
-      font-size: 14px;
-      color: #555;
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    input,
-    textarea,
-    select {
-      width: 100%;
-      padding: 10px;
-      font-size: 14px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      background-color: #f9f9f9;
-    }
-
-    /* Cải tiến textarea */
-    textarea {
-      resize: vertical;
-      height: 80px;
-    }
-
-    /* Hiển thị ảnh trước khi gửi */
-    .image-preview {
-      max-width: 200px;
-      margin-top: 10px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Nút gửi form */
-    .btn {
-      width: 100%;
-
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    /* Các lỗi hoặc thông báo */
-    .alert {
-      padding: 10px;
-      margin-bottom: 15px;
-      background-color: #f44336;
-      color: white;
-      border-radius: 5px;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    .alert-success {
-      background-color: #4CAF50;
-    }
-
-    .image-preview {
-      max-width: 200px;
-      margin-top: 10px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Mobile responsive */
-
-
-    .category-note {
-      font-size: 12px;
-      color: #777;
-      margin-top: 5px;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 30px;
-      height: 30px;
-      background-color: #ff4444;
-      border: none;
-      border-radius: 50%;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1002;
-      transition: background-color 0.2s;
-    }
-
-    .close-btn:hover {
-      background-color: #cc0000;
-    }
-
-    .product-details-overlay {
-      /* // ...existing code... */
-    }
-  </style>
 </head>
 
 <body>
@@ -431,6 +85,14 @@ global $mysqli;
                 <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
               </button>
               <p>Thống kê</p>
+            </div>
+          </a>
+          <a href="voucherManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Mã giảm giá</p>
             </div>
           </a>
           <a href="accountPage.php" style="text-decoration: none; color: black;">
@@ -543,6 +205,14 @@ global $mysqli;
         <p>Thống kê</p>
       </div>
     </a>
+    <a href="voucherManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Mã giảm giá</p>
+      </div>
+    </a>
     <a href="accountPage.php" style="text-decoration: none; color: black;">
       <div class="container-function-selection">
         <button class="button-function-selection">
@@ -563,6 +233,73 @@ global $mysqli;
         </button>
       </form>
 
+      <div class="filters-container">
+        <div class="filters-row">
+          <!-- Danh mục -->
+          <div class="filter-group">
+            <label for="categoryFilter">Danh mục:</label>
+            <select id="categoryFilter" class="filter-select">
+              <option value="all">Tất cả</option>
+              <?php
+              $sql = "SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryName ASC";
+              $result = $mysqli->query($sql);
+              if ($result) {
+                while ($row = $result->fetch_assoc()) {
+                  echo "<option value='{$row['CategoryID']}'>{$row['CategoryName']}</option>";
+                }
+              }
+              ?>
+            </select>
+          </div>
+
+          <!-- Trạng thái -->
+          <div class="filter-group">
+            <label for="statusFilter">Trạng thái:</label>
+            <select id="statusFilter" class="filter-select">
+              <option value="all">Tất cả</option>
+              <option value="appear">Đang hiện</option>
+              <option value="hidden">Đã ẩn</option>
+            </select>
+          </div>
+
+          <!-- Giá từ -->
+          <div class="filter-group">
+            <label for="priceMin">Giá từ:</label>
+            <input type="number" id="priceMin" class="filter-input" placeholder="0" min="0" step="1000">
+          </div>
+
+          <!-- Giá đến -->
+          <div class="filter-group">
+            <label for="priceMax">Giá đến:</label>
+            <input type="number" id="priceMax" class="filter-input" placeholder="0" min="0" step="1000">
+          </div>
+
+          <!-- Sắp xếp -->
+          <div class="filter-group">
+            <label for="sortBy">Sắp xếp:</label>
+            <select id="sortBy" class="filter-select">
+              <option value="name_asc">Tên A-Z</option>
+              <option value="name_desc">Tên Z-A</option>
+              <option value="price_asc">Giá tăng dần</option>
+              <option value="price_desc">Giá giảm dần</option>
+              <option value="newest">Mới nhất</option>
+              <option value="oldest">Cũ nhất</option>
+            </select>
+          </div>
+
+          <!-- Nút reset -->
+          <div class="filter-group">
+            <button id="resetFilters" class="btn-reset-filters">
+              <i class="fa-solid fa-rotate-right"></i> Reset
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <style>
+
+      </style>
+
       <div class="management-content">
         <div class="products-section">
           <div class="section-header">
@@ -581,17 +318,9 @@ global $mysqli;
               </tr>
             </thead>
 
-            <style>
-              #productsTable td:nth-child(2),
-              td:nth-child(3),
-              td:nth-child(4) {
-                text-align: center;
-              }
-            </style>
-
             <!-- Body + pagination do renderProducts() xuất ra -->
             <?php
-            $controller = new ProductController();
+            $controller = new ProductManager();
             $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
             echo $controller->renderProducts($page);
             ?>
@@ -601,7 +330,9 @@ global $mysqli;
             </tbody>
           </table>
 
-          <!-- Main pagination (server-rendered by ProductController->renderProducts) -->
+          <!-- <div id="pagination" class="pagination" style="display: none"></div> -->
+
+          <!-- Main pagination (server-rendered by ProductManager->renderProducts) -->
           <div id="pagination-search" style="text-align:center; margin-top:20px;"></div>
 
         </div>
@@ -609,10 +340,10 @@ global $mysqli;
     </div>
 
 
-    <!-- Popup overlay cho thông tin sản phẩm -->
+    <!-- Popup overlay cho thông tin sản phẩm
     <div class="product-details-overlay" id="productDetailsOverlay">
       <div class="product-details-content" id="productDetailsContent"></div>
-    </div>
+    </div> -->
 
     <!-- Popup overlay cho add product-->
     <div class="add-product-overlay" id="addProductOverlay">
@@ -635,12 +366,9 @@ global $mysqli;
               <label for="categoryID">Danh mục(*)</label>
               <select id="categoryID" name="categoryID" required>
                 <?php
-                require_once '../../php-api/connectdb.php'; // Kết nối tới CSDL
-                $conn = connect_db();
-
                 // Truy vấn lấy danh mục
                 $sql = "SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryID ASC";
-                $result = $conn->query($sql);
+                $result = $mysqli->query($sql);
 
                 if ($result && $result->num_rows > 0) {
                   // Lặp qua từng danh mục và hiển thị
@@ -653,10 +381,35 @@ global $mysqli;
                   // Nếu không có danh mục
                   echo "<option value=''>Không có danh mục</option>";
                 }
-
-                $conn->close();
                 ?>
               </select>
+            </div>
+
+            <!-- Nhà cung cấp  -->
+            <div class="form-group">
+              <label for="SupplierAddProduct" class="form-label">Nhà cung cấp(*)</label>
+              <select class="form-control" id="SupplierAddProduct" name="SupplierAddProduct" required>
+                <option value="" disabled>-- Chọn nhà cung cấp --</option>
+                <?php
+                $sql = "select supplier_id, supplier_name from suppliers";
+                $result = $mysqli->query($sql);
+                $suppliers = [];
+                while ($row = $result->fetch_assoc()) {
+                  $suppliers[] = $row;
+                }
+                ?>
+                <?php foreach ($suppliers as $supplier): ?>
+                  <option value="<?= $supplier['supplier_id'] ?>">
+                    <?= htmlspecialchars($supplier['supplier_name']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <!-- Số Lượng  -->
+            <div class="form-group">
+              <label for="priceAddProduct">Số lượng(*)</label>
+              <input type="number" id="priceAddProduct" name="priceAddProduct" required placeholder="Nhập giá sản phẩm" min="0">
             </div>
 
             <div class="form-group">
@@ -675,10 +428,6 @@ global $mysqli;
               <p class="category-note">Chọn ảnh sản phẩm (PNG, JPG, JPEG, GIF)</p> <br>
               <p class="category-note">Kích thước tối đa: 2MB</p><br>
               <p class="category-note">Kích thước tối thiểu: 300x300px</p><br>
-              <!-- <p class="category-note"></p><br> -->
-              <!-- <p class="category-note">Chọn ảnh sản phẩm (PNG, JPG, JPEG)</p><br>
-              <p class="category-note">Kích thước tối đa: 2MB</p><br>
-              <p class="category-note">Kích thước tối thiểu: 300x300px</p><br> -->
               <img id="imagePreview" class="image-preview" src="#" alt="Preview image" style="display:none;">
             </div>
 
@@ -686,6 +435,7 @@ global $mysqli;
           </form>
 
 
+          <!-- Hiển thị ảnh trước khi upload   -->
           <script>
             document.getElementById('imageURL').addEventListener('change', function(event) {
               const file = event.target.files[0];
@@ -765,10 +515,22 @@ global $mysqli;
                   <div class="col-md-6 mb-3">
                     <label for="editCategoryID" class="form-label">Danh mục</label>
                     <select class="form-control" id="editCategoryID" name="categoryID" required>
-                      <option value="1">Cây văn phòng</option>
-                      <option value="2">Cây dưới nước</option>
-                      <option value="3">Cây dễ chăm</option>
-                      <option value="4">Cây để bàn</option>
+                      <option value="" disabled>-- Chọn danh mục --</option>
+                      <?php
+                      // Truy vấn danh sách category
+                      $sql = "SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryID ASC";
+                      $result = $mysqli->query($sql);
+
+                      if ($result) {
+                        while ($row = $result->fetch_assoc()) {
+                          // Nếu muốn chọn sẵn category đang có của sản phẩm
+                          $selected = (isset($product) && $product['CategoryID'] == $row['CategoryID']) ? 'selected' : '';
+                          echo '<option value="' . $row['CategoryID'] . '" ' . $selected . '>' . htmlspecialchars($row['CategoryName']) . '</option>';
+                        }
+                      } else {
+                        echo '<option value="">Không có danh mục</option>';
+                      }
+                      ?>
                     </select>
                   </div>
                 </div>
@@ -784,6 +546,35 @@ global $mysqli;
                       <option value="appear">Hiện</option>
                       <option value="hidden">Ẩn</option>
                     </select>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <!-- Nhà cung cấp -->
+                  <div class="col-md-6 mb-3">
+                    <label for="editSupplier" class="form-label">Nhà cung cấp</label>
+                    <select class="form-control" id="editSupplier" name="supplierID" required>
+                      <option value="" disabled>-- Chọn nhà cung cấp --</option>
+                      <?php
+                      $sql = "select supplier_id, supplier_name from suppliers";
+                      $result = $mysqli->query($sql);
+                      $suppliers = [];
+                      while ($row = $result->fetch_assoc()) {
+                        $suppliers[] = $row;
+                      }
+                      ?>
+                      <?php foreach ($suppliers as $supplier): ?>
+                        <option value="<?= $supplier['supplier_id'] ?>">
+                          <?= htmlspecialchars($supplier['supplier_name']) ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
+                  </div>
+
+                  <!-- Số lượng sản phẩm -->
+                  <div class="col-md-6 mb-3">
+                    <label for="editQuantity" class="form-label">Số lượng</label>
+                    <input type="number" class="form-control" id="editQuantity" name="quantity" value="<?= htmlspecialchars($product['Quantity']) ?>" min="0">
                   </div>
                 </div>
 
@@ -810,17 +601,20 @@ global $mysqli;
   <script src="../js/checklog.js"></script>
 
   <script>
-    // Function to show edit product overlay
+    // Hiện phần chỉnh sửa sản phẩm
     function editProduct(productId) {
       fetch(`../php/get-product.php?id=${productId}`)
         .then(response => response.json())
         .then(product => {
+          //Hiển thị thông tin của sản phẩm từ database lên popup chỉnh sửa (placeholder)
           document.getElementById('editProductId').value = product.ProductID;
           document.getElementById('editProductName').value = product.ProductName;
           document.getElementById('editCategoryID').value = product.CategoryID;
           document.getElementById('editPrice').value = product.Price;
           document.getElementById('editDescription').value = product.Description;
           document.getElementById('editStatus').value = product.Status;
+          document.getElementById('editQuantity').value = product.quantity_in_stock;
+          document.getElementById('editSupplier').value = product.Supplier_id;
 
           const currentImage = document.getElementById('currentImage');
           currentImage.src = '../../' + product.ImageURL;
@@ -930,152 +724,209 @@ global $mysqli;
       }
     });
 
-
-
-
-
-
     // Initialize currentPage from server (so server-side ?page=X is respected)
-    let currentPage = <?php echo isset($page) ? (int)$page : 1; ?>;
-
     function loadProducts(page = 1) {
       const keyword = (document.getElementById('search-input') || {
         value: ''
       }).value.trim();
+      const category = document.getElementById('categoryFilter').value;
+      const status = document.getElementById('statusFilter').value;
+      const priceMin = document.getElementById('priceMin').value;
+      const priceMax = document.getElementById('priceMax').value;
+      const sortBy = document.getElementById('sortBy').value;
 
-      // Toggle visibility: when searching, hide server tfoot and main pagination, show pagination-search
+      let url = `../php/filter-sort-product.php?page=${page}`;
+      if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+      if (category && category !== 'all') url += `&category=${category}`;
+      if (status && status !== 'all') url += `&status=${status}`;
+      if (priceMin) url += `&price_min=${priceMin}`;
+      if (priceMax) url += `&price_max=${priceMax}`;
+      url += `&sort_by=${sortBy}`;
+
+      const hasFilters = keyword || (category && category !== 'all') ||
+        (status && status !== 'all') || priceMin || priceMax;
+
+      // Ẩn server-side pagination khi có filter
       const tfoot = document.querySelector('#productsTable tfoot');
-      const paginationMain = document.getElementById('pagination');
-      const paginationSearch = document.getElementById('pagination-search');
-
-      if (keyword) {
-        if (tfoot) tfoot.style.display = 'none';
-        if (paginationMain) paginationMain.style.display = 'none';
-        if (paginationSearch) paginationSearch.style.display = '';
-      } else {
-        if (tfoot) tfoot.style.display = '';
-        if (paginationMain) paginationMain.style.display = '';
-        if (paginationSearch) paginationSearch.style.display = 'none';
+      if (tfoot) {
+        tfoot.style.display = hasFilters ? 'none' : '';
       }
 
-      fetch(`../php/search-products.php?page=${page}&keyword=${encodeURIComponent(keyword)}`)
+      fetch(url)
         .then(res => res.json())
         .then(data => {
           const tbody = document.getElementById('productsBody');
           tbody.innerHTML = '';
 
-          if (data && data.products && data.products.length > 0) {
+          if (data.success && data.products && data.products.length > 0) {
             data.products.forEach(p => {
+
+
               const tr = document.createElement('tr');
               tr.innerHTML = `
-                        <td><img src="../..${p.ImageURL}" style="width:100px;height:100px;object-fit:cover;"></td>
-                        <td style="text-align:center;">${p.ProductName}</td>
-                        <td style="text-align:center;">${p.CategoryName}</td>
-                        <td style="text-align:center;">${p.Price.toLocaleString()}</td>
-                        <td style="text-align:center;">
-                            <button class="btn btn-warning btn-sm" onclick="editProduct(${p.ProductID})">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
-                        </td>
-                    `;
+            <td><img src="../..${p.ImageURL}" style="width:100px;height:100px;object-fit:cover;border-radius:4px;"></td>
+            <td style="text-align:center;">
+              ${p.ProductName}
+            </td>
+            <td style="text-align:center;">${p.CategoryName}</td>
+            <td style="text-align:center;">${p.Price.toLocaleString()} VND</td>
+            <td style="text-align:center;">
+              <button class="btn btn-warning btn-sm" onclick="editProduct(${p.ProductID})">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+            </td>
+          `;
               tbody.appendChild(tr);
             });
           } else {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Không có sản phẩm nào</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;">
+          <i class="fa-solid fa-box-open" style="font-size:48px;color:#ccc;margin-bottom:10px;"></i>
+          <p>Không tìm thấy sản phẩm nào</p>
+        </td></tr>`;
           }
 
-          // Render pagination into the appropriate container
-          const targetPagination = keyword ? document.getElementById('pagination-search') : document.getElementById('pagination');
-          if (targetPagination) targetPagination.innerHTML = '';
+          // Chỉ render pagination khi có filter
+          const paginationSearch = document.getElementById('pagination-search');
+          if (paginationSearch) {
+            paginationSearch.innerHTML = '';
 
-          if (data && data.pagination && data.pagination.totalPages > 1) {
-            // Previous button
-            const prevBtn = document.createElement('a');
-            prevBtn.href = '#';
-            prevBtn.className = `pagination-item ${data.pagination.currentPage === 1 ? 'disabled' : ''}`;
-            prevBtn.innerHTML = '&laquo;';
-            prevBtn.onclick = (e) => {
-              e.preventDefault();
-              if (data.pagination.currentPage > 1) {
-                currentPage = data.pagination.currentPage - 1;
-                loadProducts(currentPage);
-              }
-            };
-            targetPagination.appendChild(prevBtn);
-
-            // First page
-            if (data.pagination.currentPage > 2) {
-              const firstBtn = document.createElement('a');
-              firstBtn.href = '#';
-              firstBtn.className = 'pagination-item';
-              firstBtn.textContent = '1';
-              firstBtn.onclick = (e) => {
-                e.preventDefault();
-                currentPage = 1;
-                loadProducts(1);
-              };
-              targetPagination.appendChild(firstBtn);
-
-              if (data.pagination.currentPage > 3) {
-                const ellipsis = document.createElement('span');
-                ellipsis.className = 'pagination-ellipsis';
-                ellipsis.textContent = '...';
-                targetPagination.appendChild(ellipsis);
-              }
+            if (hasFilters && data.pagination && data.pagination.totalPages > 1) {
+              renderPagination(paginationSearch, data.pagination);
             }
-
-            // Page numbers
-            for (let i = Math.max(1, data.pagination.currentPage - 1); i <= Math.min(data.pagination.totalPages, data.pagination.currentPage + 1); i++) {
-              const btn = document.createElement('a');
-              btn.href = '#';
-              btn.className = `pagination-item ${i === data.pagination.currentPage ? 'active' : ''}`;
-              btn.textContent = i;
-              btn.onclick = (e) => {
-                e.preventDefault();
-                currentPage = i;
-                loadProducts(i);
-              };
-              targetPagination.appendChild(btn);
-            }
-
-            // Last page
-            if (data.pagination.currentPage < data.pagination.totalPages - 1) {
-              if (data.pagination.currentPage < data.pagination.totalPages - 2) {
-                const ellipsis = document.createElement('span');
-                ellipsis.className = 'pagination-ellipsis';
-                ellipsis.textContent = '...';
-                targetPagination.appendChild(ellipsis);
-              }
-
-              const lastBtn = document.createElement('a');
-              lastBtn.href = '#';
-              lastBtn.className = 'pagination-item';
-              lastBtn.textContent = data.pagination.totalPages;
-              lastBtn.onclick = (e) => {
-                e.preventDefault();
-                currentPage = data.pagination.totalPages;
-                loadProducts(data.pagination.totalPages);
-              };
-              targetPagination.appendChild(lastBtn);
-            }
-
-            // Next button
-            const nextBtn = document.createElement('a');
-            nextBtn.href = '#';
-            nextBtn.className = `pagination-item ${data.pagination.currentPage === data.pagination.totalPages ? 'disabled' : ''}`;
-            nextBtn.innerHTML = '&raquo;';
-            nextBtn.onclick = (e) => {
-              e.preventDefault();
-              if (data.pagination.currentPage < data.pagination.totalPages) {
-                currentPage = data.pagination.currentPage + 1;
-                loadProducts(currentPage);
-              }
-            };
-            targetPagination.appendChild(nextBtn);
           }
         })
-        .catch(err => console.error(err));
+        .catch(err => {
+          console.error('Error loading products:', err);
+          alert('Có lỗi xảy ra khi tải sản phẩm!');
+        });
     }
+
+    // Tách hàm render pagination ra để code gọn hơn
+    function renderPagination(container, pagination) {
+      // Previous button
+      const prevBtn = document.createElement('a');
+      prevBtn.href = '#';
+      prevBtn.className = `pagination-item ${pagination.currentPage === 1 ? 'disabled' : ''}`;
+      prevBtn.innerHTML = '&lt;';
+      prevBtn.onclick = (e) => {
+        e.preventDefault();
+        if (pagination.currentPage > 1) {
+          currentPage = pagination.currentPage - 1;
+          loadProducts(currentPage);
+        }
+      };
+      container.appendChild(prevBtn);
+
+      // First page
+      if (pagination.currentPage > 2) {
+        const firstBtn = document.createElement('a');
+        firstBtn.href = '#';
+        firstBtn.className = 'pagination-item';
+        firstBtn.textContent = '1';
+        firstBtn.onclick = (e) => {
+          e.preventDefault();
+          currentPage = 1;
+          loadProducts(1);
+        };
+        container.appendChild(firstBtn);
+
+        if (pagination.currentPage > 3) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          container.appendChild(ellipsis);
+        }
+      }
+
+      // Page numbers
+      for (let i = Math.max(1, pagination.currentPage - 1); i <= Math.min(pagination.totalPages, pagination.currentPage + 1); i++) {
+        const btn = document.createElement('a');
+        btn.href = '#';
+        btn.className = `pagination-item ${i === pagination.currentPage ? 'active' : ''}`;
+        btn.textContent = i;
+        btn.onclick = (e) => {
+          e.preventDefault();
+          currentPage = i;
+          loadProducts(i);
+        };
+        container.appendChild(btn);
+      }
+
+      // Last page
+      if (pagination.currentPage < pagination.totalPages - 1) {
+        if (pagination.currentPage < pagination.totalPages - 2) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'pagination-ellipsis';
+          ellipsis.textContent = '...';
+          container.appendChild(ellipsis);
+        }
+
+        const lastBtn = document.createElement('a');
+        lastBtn.href = '#';
+        lastBtn.className = 'pagination-item';
+        lastBtn.textContent = pagination.totalPages;
+        lastBtn.onclick = (e) => {
+          e.preventDefault();
+          currentPage = pagination.totalPages;
+          loadProducts(pagination.totalPages);
+        };
+        container.appendChild(lastBtn);
+      }
+
+      // Next button
+      const nextBtn = document.createElement('a');
+      nextBtn.href = '#';
+      nextBtn.className = `pagination-item ${pagination.currentPage === pagination.totalPages ? 'disabled' : ''}`;
+      nextBtn.innerHTML = '&gt;';
+      nextBtn.onclick = (e) => {
+        e.preventDefault();
+        if (pagination.currentPage < pagination.totalPages) {
+          currentPage = pagination.currentPage + 1;
+          loadProducts(currentPage);
+        }
+      };
+      container.appendChild(nextBtn);
+    }
+
+
+
+    // Event listeners cho các bộ lọc
+    document.getElementById('categoryFilter').addEventListener('change', () => {
+      currentPage = 1;
+      loadProducts(1);
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', () => {
+      currentPage = 1;
+      loadProducts(1);
+    });
+
+    document.getElementById('priceMin').addEventListener('change', () => {
+      currentPage = 1;
+      loadProducts(1);
+    });
+
+    document.getElementById('priceMax').addEventListener('change', () => {
+      currentPage = 1;
+      loadProducts(1);
+    });
+
+    document.getElementById('sortBy').addEventListener('change', () => {
+      currentPage = 1;
+      loadProducts(1);
+    });
+
+    // Reset filters
+    document.getElementById('resetFilters').addEventListener('click', () => {
+      document.getElementById('search-input').value = '';
+      document.getElementById('categoryFilter').value = 'all';
+      document.getElementById('statusFilter').value = 'all';
+      document.getElementById('priceMin').value = '';
+      document.getElementById('priceMax').value = '';
+      document.getElementById('sortBy').value = 'newest';
+      currentPage = 1;
+      loadProducts(1);
+    });
 
     // Prevent the search form from performing a full page submit and wire up search
     (function() {
@@ -1112,125 +963,7 @@ global $mysqli;
     })();
     // Load lần đầu (respect currentPage)
     loadProducts(currentPage);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // document.addEventListener('DOMContentLoaded', function() {
-    //   const searchInput = document.querySelector('.search-input');
-    //   const searchBtn = document.querySelector('.search-btn');
-
-    //   // Nhấn Enter trong ô input
-    //   searchInput.addEventListener('keypress', function(e) {
-    //     if (e.key === 'Enter') searchProducts(1);
-    //   });
-
-    //   // Nhấn nút tìm kiếm
-    //   searchBtn.addEventListener('click', function() {
-    //     searchProducts(1);
-    //   });
-    // });
-
-    // // Gọi ngay khi trang load
-    // document.addEventListener('DOMContentLoaded', () => {
-    //   searchProducts(1);
-
-    //   // Cho phép tìm kiếm khi người dùng gõ phím
-    //   const searchInput = document.querySelector('.search-input');
-    //   searchInput.addEventListener('keyup', () => searchProducts(1));
-    // });
-
-
-    // // Thêm debounce để tránh gọi API quá nhiều
-    // let searchTimeout;
-    // document.querySelector('.search-input').addEventListener('input', function() {
-    //   clearTimeout(searchTimeout);
-    //   searchTimeout = setTimeout(() => searchProducts(1), 300); // Giảm thời gian delay xuống 300ms
-    // });
-
-    // // Xử lý khi nhấn Enter
-    // document.querySelector('.search-input').addEventListener('keypress', function(e) {
-    //   if (e.key === 'Enter') {
-    //     clearTimeout(searchTimeout);
-    //     searchProducts(1);
-    //   }
-    // });
-
-    // // Xử lý khi nhấn nút tìm kiếm
-    // document.querySelector('.search-btn').addEventListener('click', function() {
-    //   clearTimeout(searchTimeout);
-    //   searchProducts(1);
-    // });
-
-    // // Load tất cả sản phẩm khi trang được tải
-    // document.addEventListener('DOMContentLoaded', function() {
-    //   searchProducts(1);
-    // });
   </script>
-
-  <style>
-    .product-details-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    .product-details-content {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 800px;
-      max-height: 90vh;
-      overflow-y: auto;
-      position: relative;
-    }
-
-    .image-preview-container img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 4px;
-    }
-
-    .form-actions {
-      border-top: 1px solid #dee2e6;
-      padding-top: 1rem;
-    }
-
-    .category-note {
-      font-size: 12px;
-      color: #777;
-      margin-top: 5px;
-    }
-  </style>
 </body>
 
 </html>

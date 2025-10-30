@@ -238,11 +238,14 @@ $myconn = $connectDb->getConnection();
       <p class="section-title">Đơn hàng chờ xác nhận</p>
       <a href="orderPage.php?order_status=execute"><button class="button-handle" style="white-space:nowrap;">Xem thêm</button></a>
       <?php
-      $sql = "SELECT o.*, u.FullName, u.Address, pr.name AS province_name, dr.name AS district_name
+      $sql = "SELECT o.*, u.FullName, a.address_detail, pr.name AS province_name, dr.name AS district_name
               FROM orders o
-              LEFT JOIN users u ON o.Username = u.Username
-              LEFT JOIN province pr ON o.Province = pr.province_id
-              LEFT JOIN district dr ON o.District = dr.district_id
+              LEFT JOIN users u ON o.user_id = u.user_id
+              join address a ON o.address_id = a.address_id
+              join ward w ON a.ward_id = w.ward_id
+              JOIN district dr ON w.district_id = dr.district_id
+              JOIN province pr ON dr.province_id = pr.province_id
+              
               WHERE o.Status = 'execute'
               ORDER BY o.DateGeneration DESC
               LIMIT 5";

@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/ProductController.php';
+require_once __DIR__ . '/ProductManager.php';
 
-$controller = new ProductController();
+$controller = new ProductManager();
 
 // Accept both GET and POST and multiple param names for compatibility with different callers
 $page = 1;
