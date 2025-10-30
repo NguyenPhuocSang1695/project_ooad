@@ -1,5 +1,8 @@
 <?php
-require_once '../php/check_session.php'; // Đã khởi tạo $myconn sẵn
+require_once '../php/check_session.php';
+require_once '../php/connect.php';
+$myconn = new DatabaseConnection();
+$myconn->connect();
 
 if (!isset($_SESSION['Username'])) {
   header('Location: ../index.php');
@@ -10,37 +13,27 @@ $avatarPath = ($_SESSION['Role'] === 'admin')
   ? "../../assets/images/admin.jpg"
   : "../../assets/images/sang.jpg";
 
-$username = $email = $role = $phone = $address = $FullName = '';
+$username = $role = $phone = $FullName = $dategeneration = '';
 
-$sql = "SELECT u.Username, u.FullName, u.Email, u.Role, u.Phone, u.Address, 
-        p.name as province_name, d.name as district_name, w.name as ward_name
+$sql = "SELECT u.Username, u.FullName, u.Role, u.Phone, u.DateGeneration
         FROM users u
-        JOIN province p ON u.Province = p.province_id
-        JOIN district d ON u.District = d.district_id
-        JOIN wards w ON u.Ward = w.wards_id
         WHERE u.Username = ?";
 
-$stmt = $myconn->prepare($sql);
-$stmt->bind_param("s", $_SESSION['Username']);
-$stmt->execute();
-$result = $stmt->get_result();
+$result = $myconn->queryPrepared($sql, [$_SESSION['Username']]);
 
-if ($result->num_rows > 0) {
-  while ($row = $result->fetch_assoc()) {
-    $username = $row['Username'];
-    $FullName = $row['FullName'];
-    $email = $row['Email'];
-    $role = $row['Role'];
-    $phone = $row['Phone'];
-    $address = $row['Address'] . ', ' . $row['district_name'] . ', ' . $row['ward_name'] . ', ' . $row['province_name'];
-  }
+if ($result && $result->num_rows > 0) {
+  $row = $result->fetch_assoc();
+
+  $username = $row['Username'];
+  $FullName = $row['FullName'];
+  $role = $row['Role'];
+  $phone = $row['Phone'];
+  $dategeneration = $row['DateGeneration'];
 } else {
-  echo "0 results";
+  echo "Không tìm thấy thông tin người dùng.";
   exit();
 }
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -56,11 +49,11 @@ if ($result->num_rows > 0) {
   <link rel="stylesheet" href="../style/generall.css">
   <link rel="stylesheet" href="../style/main1.css">
   <link rel="stylesheet" href="../style/accountStyle.css">
+  <link rel="stylesheet" href="../style/account.css">
   <link rel="stylesheet" href="./asset/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="../style/LogInfo.css">
   <link rel="stylesheet" href="../style/reponsiveAccount.css">
 </head>
-
 
 <body>
   <div class="header">
@@ -288,7 +281,7 @@ if ($result->num_rows > 0) {
             <span class="user-icon">NC</span>
             <div style="display: flex; flex-direction: column;">
               <span class="user-name"><?php echo $username ?></span>
-              <span class="user-email">📧 <?php echo $email ?></span>
+
             </div>
           </div>
         </div>
@@ -301,28 +294,227 @@ if ($result->num_rows > 0) {
           <div class="info-container">
             <div class="info-row">
               <label>Họ và tên:</label>
-              <span><?php echo $FullName ?></span>
+              <span id="display-fullname"><?php echo $FullName ?></span>
             </div>
 
             <div class="info-row">
               <label>Số điện thoại:</label>
-              <span><?php echo $phone ?></span>
+              <span id="display-phone"><?php echo $phone ?></span>
             </div>
+
             <div class="info-row">
-              <label>Email:</label>
-              <span><?php echo $email ?></span>
-            </div>
-            <div class="info-row">
-              <label>Địa chỉ:</label>
-              <span><?php echo $address ?></span>
+              <label>Ngày tạo tài khoản:</label>
+              <span><?php echo $dategeneration ?></span>
             </div>
           </div>
+
+          <button class="edit-btn" onclick="openEditModal()">
+            <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa thông tin
+          </button>
+
+          <button class="edit-btn" onclick="openChangePasswordModal()">
+            <i class="fa-solid fa-lock"></i> Đổi mật khẩu
+          </button>
+
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Modal chỉnh sửa thông tin -->
+  <div id="editModal" class="modal">
+    <div class="modal-content-edit">
+      <div class="modal-header">
+        <h2>Chỉnh sửa thông tin cá nhân</h2>
+        <button class="close" onclick="closeEditModal()">&times;</button>
+      </div>
+
+      <div id="alert" class="alert"></div>
+
+      <form id="editForm">
+        <div class="form-group">
+          <label for="fullname">Họ và tên <span style="color: red;">*</span></label>
+          <input type="text" id="fullname" name="fullname" value="<?php echo $FullName ?>" required>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Số điện thoại <span style="color: red;">*</span></label>
+          <input type="tel" id="phone" name="phone" value="<?php echo $phone ?>" required>
+        </div>
+
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" onclick="closeEditModal()">Hủy</button>
+          <button type="submit" class="btn-save">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal đổi mật khẩu -->
+  <div id="changePasswordModal" class="modal">
+    <div class="modal-content-edit">
+      <div class="modal-header">
+        <h2>Đổi mật khẩu</h2>
+        <button class="close" onclick="closeChangePasswordModal()">&times;</button>
+      </div>
+
+      <div id="alert-password" class="alert"></div>
+
+      <form id="changePasswordForm">
+        <div class="form-group">
+          <label for="old_password">Mật khẩu hiện tại <span style="color: red;">*</span></label>
+          <input type="password" id="old_password" name="old_password" required>
+        </div>
+
+        <div class="form-group">
+          <label for="new_password">Mật khẩu mới <span style="color: red;">*</span></label>
+          <input type="password" id="new_password" name="new_password" required>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password">Xác nhận mật khẩu mới <span style="color: red;">*</span></label>
+          <input type="password" id="confirm_password" name="confirm_password" required>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" onclick="closeChangePasswordModal()">Hủy</button>
+          <button type="submit" class="btn-save">Đổi mật khẩu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
   <script src="./asset/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function openEditModal() {
+      document.getElementById('editModal').style.display = 'block';
+      loadProvinces();
+    }
 
-</body>
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+      document.getElementById('alert').style.display = 'none';
+    }
 
-</html>
+    // Đóng modal khi click bên ngoài
+    window.onclick = function(event) {
+      const modal = document.getElementById('editModal');
+      if (event.target === modal) {
+        closeEditModal();
+      }
+    }
+
+    // Xử lý submit form
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const alertDiv = document.getElementById('alert');
+      const formData = new FormData(this);
+
+      try {
+        const response = await fetch('../php/update-account.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Hiển thị thông báo thành công
+          alertDiv.className = 'alert alert-success';
+          alertDiv.textContent = result.message;
+          alertDiv.style.display = 'block';
+
+          // Cập nhật hiển thị trên trang
+          document.getElementById('display-fullname').textContent = formData.get('fullname');
+          document.getElementById('display-phone').textContent = formData.get('phone');
+
+
+          // Cập nhật tên ở header
+          const nameElements = document.querySelectorAll('.name-employee p, .user-name, .offcanvas-title');
+          nameElements.forEach(el => {
+            if (el.classList.contains('user-name')) {
+              return; // Username không đổi
+            }
+            el.textContent = formData.get('fullname');
+          });
+
+          // Đóng modal sau 2 giây
+          setTimeout(() => {
+            closeEditModal();
+          }, 100);
+
+        } else {
+          // Hiển thị thông báo lỗi
+          alertDiv.className = 'alert alert-error';
+          alertDiv.textContent = result.message;
+          alertDiv.style.display = 'block';
+        }
+      } catch (error) {
+        alertDiv.className = 'alert alert-error';
+        alertDiv.textContent = 'Có lỗi xảy ra: ' + error.message;
+        alertDiv.style.display = 'block';
+      }
+    });
+
+
+
+    function openChangePasswordModal() {
+      document.getElementById('changePasswordModal').style.display = 'block';
+    }
+
+    function closeChangePasswordModal() {
+      document.getElementById('changePasswordModal').style.display = 'none';
+      document.getElementById('alert-password').style.display = 'none';
+    }
+
+    // Đóng modal khi click bên ngoài
+    window.onclick = function(event) {
+      const modal1 = document.getElementById('editModal');
+      const modal2 = document.getElementById('changePasswordModal');
+      if (event.target === modal1) closeEditModal();
+      if (event.target === modal2) closeChangePasswordModal();
+    }
+
+    // Xử lý submit đổi mật khẩu
+    document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const alertDiv = document.getElementById('alert-password');
+      const formData = new FormData(this);
+
+      // Kiểm tra xác nhận mật khẩu
+      if (formData.get('new_password') !== formData.get('confirm_password')) {
+        alertDiv.className = 'alert alert-error';
+        alertDiv.textContent = 'Mật khẩu xác nhận không khớp!';
+        alertDiv.style.display = 'block';
+        return;
+      }
+
+      try {
+        const response = await fetch('../php/change-password.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alertDiv.className = 'alert alert-success';
+          alertDiv.textContent = result.message;
+          alertDiv.style.display = 'block';
+          setTimeout(() => closeChangePasswordModal(), 1500);
+        } else {
+          alertDiv.className = 'alert alert-error';
+          alertDiv.textContent = result.message;
+          alertDiv.style.display = 'block';
+        }
+      } catch (error) {
+        alertDiv.className = 'alert alert-error';
+        alertDiv.textContent = 'Lỗi: ' + error.message;
+        alertDiv.style.display = 'block';
+      }
+    });
+  </script>

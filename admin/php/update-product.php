@@ -1,156 +1,100 @@
 <?php
-// Ensure no errors are output in the response
-error_reporting(0);
-ini_set('display_errors', 0);
-
+require_once './connect.php';
 header('Content-Type: application/json');
 
 try {
-    // Database connection
-    $conn = new mysqli("localhost", "root", "", "c01db");
+    $db = new DatabaseConnection();
+    $db->connect();
+    $conn = $db->getConnection();
 
-    if ($conn->connect_error) {
-        throw new Exception('Connection failed: ' . $conn->connect_error);
+    // Validate POST data
+    $requiredFields = ['productId', 'productName', 'categoryID', 'price', 'description'];
+    foreach ($requiredFields as $field) {
+        if (empty($_POST[$field])) {
+            throw new Exception("Missing required field: $field");
+        }
     }
 
-    // Get and validate form data
-    if (
-        !isset($_POST['productId']) || !isset($_POST['productName']) || !isset($_POST['categoryID']) ||
-        !isset($_POST['price']) || !isset($_POST['description'])
-    ) {
-        throw new Exception('Missing required fields');
-    }
-
-    $productId = (int)$_POST['productId'];
+    $productId   = (int)$_POST['productId'];
     $productName = trim($_POST['productName']);
-    $categoryId = (int)$_POST['categoryID'];
-    $price = (float)$_POST['price'];
+    $categoryID  = (int)$_POST['categoryID'];
+    $price       = (float)$_POST['price'];
     $description = trim($_POST['description']);
-    $status = $_POST['status'] ?? 'appear';
+    $status      = $_POST['status'] ?? 'appear';
+    $quantity    = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 0;
+    $supplierID  = isset($_POST['supplierID']) ? (int)$_POST['supplierID'] : 0;
 
-    if (empty($productName)) {
-        throw new Exception('Tên sản phẩm không được để trống');
-    }
+    if ($price <= 0) throw new Exception("Giá sản phẩm phải lớn hơn 0");
+    if (!in_array($status, ['appear', 'hidden'])) throw new Exception("Trạng thái không hợp lệ");
 
-    if ($price <= 0) {
-        throw new Exception('Giá phải lớn hơn 0');
-    }
+    // Lấy ảnh hiện tại
+    $currentImage = '';
+    $result = $db->queryPrepared("SELECT ImageURL FROM products WHERE ProductID = ?", [$productId], "i");
+    $row = $result->fetch_assoc();
+    if (!$row) throw new Exception("Sản phẩm không tồn tại");
+    $currentImage = $row['ImageURL'];
 
-    if (!in_array($status, ['hidden', 'appear'])) {
-        throw new Exception('Trạng thái không hợp lệ');
-    }
+    $newImageURL = $currentImage;
 
-    // First, get the current image URL
-    $currentImageQuery = "SELECT ImageURL FROM products WHERE ProductID = ?";
-    $stmt = $conn->prepare($currentImageQuery);
-    if (!$stmt) {
-        throw new Exception('Không thể xử lý truy vấn hình ảnh hiện tại: ' . $conn->error);
-    }
-
-    $stmt->bind_param("i", $productId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $currentImageData = $result->fetch_assoc();
-
-    if (!$currentImageData) {
-        throw new Exception('Product not found');
-    }
-
-    $currentImageURL = $currentImageData['ImageURL'];
-    $stmt->close();
-
-    $newImageURL = $currentImageURL; // Default to current image if no new one is uploaded
-
-    // Handle new image upload if provided
-    if (isset($_FILES['imageURL']) && $_FILES['imageURL']['error'] === 0) {
+    // Xử lý ảnh mới nếu có upload
+    if (isset($_FILES['imageURL']) && $_FILES['imageURL']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['imageURL'];
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        $maxSize = 2 * 1024 * 1024;
 
-        // Validate file
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-        $maxSize = 2 * 1024 * 1024; // 2MB
+        if (!in_array($file['type'], $allowedTypes)) throw new Exception("Định dạng file không hợp lệ");
+        if ($file['size'] > $maxSize) throw new Exception("Kích thước file quá lớn (max 2MB)");
 
-        if (!in_array($file['type'], $allowedTypes)) {
-            throw new Exception('Định dạng file không hợp lệ. Chỉ chấp nhận JPG, JPEG và PNG.');
-        }
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'product_' . uniqid() . '.' . $ext;
+        $uploadDir = '../../assets/images/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+        $uploadPath = $uploadDir . $filename;
 
-        if ($file['size'] > $maxSize) {
-            throw new Exception('Kích thước file quá lớn. Tối đa 2MB.');
-        }
-
-        // Generate unique filename
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = 'product_' . uniqid() . '.' . $extension;
-        $uploadPath = '../../assets/images/' . $filename;
-
-        // Make sure the directory exists
-        $uploadDir = dirname($uploadPath);
-        if (!is_dir($uploadDir)) {
-            if (!mkdir($uploadDir, 0777, true)) {
-                throw new Exception('Failed to create upload directory');
-            }
-        }
-
-        // Move uploaded file
         if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            throw new Exception('Không thể tải lên hình ảnh');
+            throw new Exception("Không thể tải lên hình ảnh");
         }
 
         $newImageURL = '/assets/images/' . $filename;
 
-        // Delete old image if it exists and is different
-        if ($currentImageURL && $currentImageURL !== $newImageURL) {
-            $oldImagePath = '../../' . $currentImageURL;
-            if (file_exists($oldImagePath)) {
-                unlink($oldImagePath);
-            }
+        // Xóa ảnh cũ nếu khác
+        if ($currentImage && $currentImage !== $newImageURL) {
+            $oldImagePath = '../../' . $currentImage;
+            if (file_exists($oldImagePath)) unlink($oldImagePath);
         }
     }
 
-    // Update product in database
+    // Cập nhật sản phẩm
     $sql = "UPDATE products SET 
-            ProductName = ?,
-            CategoryID = ?,
-            Price = ?,
-            Description = ?,
-            Status = ?,
-            ImageURL = ?
+                ProductName = ?, 
+                CategoryID = ?, 
+                Price = ?, 
+                Description = ?, 
+                Status = ?, 
+                Supplier_id = ?, 
+                quantity_in_stock = ?, 
+                ImageURL = ?
             WHERE ProductID = ?";
 
-    $stmt = $conn->prepare($sql);
-    if (!$stmt) {
-        throw new Exception('Không thể chuẩn bị truy vấn cập nhật: ' . $conn->error);
-    }
+    $params = [$productName, $categoryID, $price, $description, $status, $supplierID, $quantity, $newImageURL, $productId];
+    $types  = "sidssissi";
 
-    $stmt->bind_param("sidsssi", $productName, $categoryId, $price, $description, $status, $newImageURL, $productId);
+    $success = $db->queryPrepared($sql, $params, $types);
 
-    if (!$stmt->execute()) {
-        throw new Exception('Không thể cập nhật sản phẩm: ' . $stmt->error);
-    }
-
-    if ($stmt->affected_rows === 0) {
+    if ($success) {
         echo json_encode([
             'success' => true,
-            'message' => 'Không có thay đổi nào được thực hiện',
+            'message' => 'Cập nhật sản phẩm thành công',
             'productId' => $productId
         ]);
-        exit;
+    } else {
+        throw new Exception("Không có thay đổi hoặc lỗi khi cập nhật sản phẩm");
     }
-
-    echo json_encode([
-        'success' => true,
-        'message' => 'Cập nhật sản phẩm thành công',
-        'productId' => $productId
-    ]);
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
     ]);
 } finally {
-    if (isset($stmt)) {
-        $stmt->close();
-    }
-    if (isset($conn)) {
-        $conn->close();
-    }
+    $db->close();
 }
