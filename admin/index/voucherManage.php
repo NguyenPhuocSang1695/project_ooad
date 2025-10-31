@@ -1,8 +1,10 @@
 <?php
 
-require_once '../php/check_session.php';
+// require_once '../php/check_session.php';
+session_name('admin_session');
+session_start();
 require_once '../php/connect.php';
-if (!isset($_SESSION['Phone'])) {
+if (!isset($_SESSION['Username'])) {
   header('Location: ../index.php');
   exit();
 }

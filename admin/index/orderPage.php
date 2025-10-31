@@ -202,7 +202,7 @@ $orders = [];
     }
 
     #orderDetailModal .modal-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #667eea;
       color: white;
       border-radius: 12px 12px 0 0;
       border: none;

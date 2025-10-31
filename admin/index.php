@@ -9,30 +9,30 @@ session_name('admin_session');
 session_start();
 
 // Nếu đã đăng nhập rồi thì chuyển sang trang chính
-if (isset($_SESSION['Phone'])) {
+if (isset($_SESSION['Username'])) {
     header("Location: ../admin/index/homePage.php");
     exit();
 }
 
 $errors = [
-    'phone' => '',
+    'Username' => '',
     'password' => ''
 ];
 
 if (isset($_POST['submit'])) {
-    $phone = trim($_POST['Phone']);
+    $username = trim($_POST['Username']);
     $password = trim($_POST['PasswordHash']);
 
-    if (empty($phone)) {
-        $errors['phone'] = "Vui lòng nhập số điện thoại!";
+    if (empty($username)) {
+        $errors['Username'] = "Vui lòng nhập tên đăng nhập!";
     }
     if (empty($password)) {
         $errors['password'] = "Vui lòng nhập mật khẩu!";
     }
 
-    if (empty($errors['phone']) && empty($errors['password'])) {
-        $stmt = $myconn->prepare("SELECT Phone, FullName, Role, PasswordHash, Status FROM users WHERE Phone = ? AND Role = 'admin'");
-        $stmt->bind_param("s", $phone);
+    if (empty($errors['Username']) && empty($errors['password'])) {
+        $stmt = $myconn->prepare("SELECT Username, FullName, Role, PasswordHash, Status FROM users WHERE Username = ? AND Role = 'admin'");
+        $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -44,7 +44,7 @@ if (isset($_POST['submit'])) {
                 echo "<script>alert('Tài khoản của bạn đã bị khóa 🔒');</script>";
                 session_unset();
             } elseif (password_verify($password, $user['PasswordHash'])) {
-                $_SESSION['Phone'] = $user['Phone'];
+                $_SESSION['Username'] = $user['Username'];
                 $_SESSION['FullName'] = $user['FullName'];
                 $_SESSION['Role'] = 'Nhân viên';
 
@@ -57,7 +57,7 @@ if (isset($_POST['submit'])) {
                 $errors['password'] = "Mật khẩu không đúng!";
             }
         } else {
-            $errors['phone'] = "Số điện thoại không tồn tại!";
+            $errors['Username'] = "Tên đăng nhập không tồn tại!";
         }
 
         $stmt->close();
@@ -68,7 +68,7 @@ if (isset($_POST['submit'])) {
 <html lang="vi">
 
 <head>
-    <title>Đăng nhập bằng số điện thoại</title>
+    <title>Đăng nhập</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!--===============================================================================================-->
@@ -188,16 +188,16 @@ if (isset($_POST['submit'])) {
                     </span>
 
                     <div class="wrap-input100 validate-input">
-                        <input class="input100" type="text" name="Phone" placeholder="Số điện thoại"
-                            value="<?php echo isset($_POST['Phone']) ? htmlspecialchars($_POST['Phone']) : ''; ?>">
+                        <input class="input100" type="text" name="Username" placeholder="Tên đăng nhập"
+                            value="<?php echo isset($_POST['Username']) ? htmlspecialchars($_POST['Username']) : ''; ?>">
                         <span class="focus-input100"></span>
                         <span class="symbol-input100">
-                            <i class="fa fa-phone" aria-hidden="true"></i>
+                            <i class="fa fa-user" aria-hidden="true"></i>
                         </span>
                     </div>
-                    <?php if (!empty($errors['phone'])): ?>
+                    <?php if (!empty($errors['Username'])): ?>
                         <div class="error-message">
-                            <?php echo $errors['phone']; ?>
+                            <?php echo $errors['Username']; ?>
                         </div>
                     <?php endif; ?>
 
