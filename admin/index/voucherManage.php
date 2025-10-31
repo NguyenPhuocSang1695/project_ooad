@@ -1,29 +1,19 @@
 <?php
-
-// require_once '../php/check_session.php';
-session_name('admin_session');
-session_start();
+require_once '../php/check_session.php';
 require_once '../php/connect.php';
+$myconn = new DatabaseConnection();
+$myconn->connect();
+
 if (!isset($_SESSION['Username'])) {
   header('Location: ../index.php');
   exit();
 }
 
-$myconn = new DatabaseConnection();
-try {
-  $myconn->connect();
-  
-  // Lấy danh sách voucher
-  $sqlVouchers = "SELECT * FROM vouchers ORDER BY id DESC";
-  $voucherResult = $myconn->query($sqlVouchers);
-} catch (Exception $e) {
-  // Log lỗi
-  error_log("Lỗi voucherManage: " . $e->getMessage());
-  $voucherResult = null;
-  $errorMessage = $e->getMessage();
-}
-?> 
- 
+// Lấy danh sách voucher
+$sqlVouchers = "SELECT * FROM vouchers ORDER BY id DESC";
+$voucherResult = $myconn->query($sqlVouchers);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -170,12 +160,12 @@ try {
           <img class="avatar" src="../../assets/images/sang.jpg" alt="Avatar">
           <div class="admin">
             <h4 class="offcanvas-title" id="offcanvasWithBothOptionsLabel"><?php echo $_SESSION['FullName'] ?></h4>
-            <h5><?php echo $_SESSION['Phone'] ?></h5>
+            <h5><?php echo $_SESSION['Username'] ?></h5>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-          <a href="./accountPage.php" class="navbar_user">
+          <a href="accountPage.php" class="navbar_user">
             <i class="fa-solid fa-user"></i>
             <p>Thông tin cá nhân </p>
           </a>
@@ -283,11 +273,6 @@ try {
       <!-- FORM THÊM VOUCHER -->
       <div class="voucher-form-container">
         <h2>🎟️ Thêm Voucher Mới</h2>
-        <?php if (isset($errorMessage)): ?>
-          <div style="background: #fee; color: #c33; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-            <strong>❌ Lỗi:</strong> <?php echo htmlspecialchars($errorMessage); ?>
-          </div>
-        <?php endif; ?>
         <form class="voucher-form">
           <div class="form-group">
             <label for="name">Tên voucher:</label>

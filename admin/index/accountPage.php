@@ -1,7 +1,5 @@
 <?php
-// require_once '../php/check_session.php';
-session_name('admin_session');
-session_start();
+require_once '../php/check_session.php';
 require_once '../php/connect.php';
 $myconn = new DatabaseConnection();
 $myconn->connect();
@@ -15,20 +13,10 @@ $avatarPath = ($_SESSION['Role'] === 'admin')
   ? "../../assets/images/admin.jpg"
   : "../../assets/images/sang.jpg";
 
-$Username = $email = $role = $phone = $address = $FullName = '';
-$addressDetail = $wardId = $districtId = $provinceId = '';
-$wardName = $districtName = $provinceName = '';
+$username = $role = $phone = $FullName = $dategeneration = '';
 
-$sql = "SELECT u.Username, u.FullName, u.Email, u.Role, u.Phone, u.address_id, 
-        a.address_detail, a.ward_id,
-        pr.province_id, pr.name as province_name, 
-        dr.district_id, dr.name as district_name, 
-        w.ward_id, w.name as ward_name
+$sql = "SELECT u.Username, u.FullName, u.Role, u.Phone, u.DateGeneration
         FROM users u
-        join address a ON u.address_id = a.address_id
-        join ward w ON a.ward_id = w.ward_id
-        JOIN district dr ON w.district_id = dr.district_id
-        JOIN province pr ON dr.province_id = pr.province_id
         WHERE u.Username = ?";
 
 $result = $myconn->queryPrepared($sql, [$_SESSION['Username']]);
@@ -36,22 +24,11 @@ $result = $myconn->queryPrepared($sql, [$_SESSION['Username']]);
 if ($result && $result->num_rows > 0) {
   $row = $result->fetch_assoc();
 
-  $Username = $row['Username'];
+  $username = $row['Username'];
   $FullName = $row['FullName'];
-  $email = $row['Email'];
   $role = $row['Role'];
   $phone = $row['Phone'];
-
-  $addressDetail = $row['address_detail'];
-  $wardId = $row['ward_id'];
-  $districtId = $row['district_id'];
-  $provinceId = $row['province_id'];
-
-  $wardName = $row['ward_name'];
-  $districtName = $row['district_name'];
-  $provinceName = $row['province_name'];
-
-  $address = $addressDetail . ', ' . $wardName . ', ' . $districtName . ', ' . $provinceName;
+  $dategeneration = $row['DateGeneration'];
 } else {
   echo "Không tìm thấy thông tin người dùng.";
   exit();
@@ -303,8 +280,8 @@ if ($result && $result->num_rows > 0) {
           <div class="user-info">
             <span class="user-icon">NC</span>
             <div style="display: flex; flex-direction: column;">
-              <span class="user-name"><?php echo $Username ?></span>
-              <span class="user-email">📧 <?php echo $email ?></span>
+              <span class="user-name"><?php echo $username ?></span>
+
             </div>
           </div>
         </div>
@@ -324,19 +301,21 @@ if ($result && $result->num_rows > 0) {
               <label>Số điện thoại:</label>
               <span id="display-phone"><?php echo $phone ?></span>
             </div>
+
             <div class="info-row">
-              <label>Email:</label>
-              <span id="display-email"><?php echo $email ?></span>
+              <label>Ngày tạo tài khoản:</label>
+              <span><?php echo $dategeneration ?></span>
             </div>
-            <!-- <div class="info-row">
-              <label>Địa chỉ:</label>
-              <span id="display-address"><?php echo $address ?></span>
-            </div> -->
           </div>
 
           <button class="edit-btn" onclick="openEditModal()">
             <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa thông tin
           </button>
+
+          <button class="edit-btn" onclick="openChangePasswordModal()">
+            <i class="fa-solid fa-lock"></i> Đổi mật khẩu
+          </button>
+
         </div>
       </div>
     </div>
@@ -363,36 +342,6 @@ if ($result && $result->num_rows > 0) {
           <input type="tel" id="phone" name="phone" value="<?php echo $phone ?>" required>
         </div>
 
-        <div class="form-group">
-          <label for="email">Email <span style="color: red;">*</span></label>
-          <input type="email" id="email" name="email" value="<?php echo $email ?>" required>
-        </div>
-
-        <!-- <div class="form-group">
-          <label for="province">Tỉnh/Thành phố</label>
-          <select id="province" name="province" onchange="loadDistricts()">
-            <option value="">-- Chọn Tỉnh/Thành phố --</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="district">Quận/Huyện</label>
-          <select id="district" name="district" onchange="loadWards()">
-            <option value="">-- Chọn Quận/Huyện --</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="ward">Phường/Xã</label>
-          <select id="ward" name="ward_id">
-            <option value="">-- Chọn Phường/Xã --</option>
-          </select>
-        </div> -->
-
-        <!-- <div class="form-group">
-          <label for="address_detail">Địa chỉ chi tiết</label>
-          <input type="text" id="address_detail" name="address_detail" value="<?php echo $addressDetail ?>">
-        </div> -->
 
         <div class="form-actions">
           <button type="button" class="btn-cancel" onclick="closeEditModal()">Hủy</button>
@@ -402,15 +351,43 @@ if ($result && $result->num_rows > 0) {
     </div>
   </div>
 
+  <!-- Modal đổi mật khẩu -->
+  <div id="changePasswordModal" class="modal">
+    <div class="modal-content-edit">
+      <div class="modal-header">
+        <h2>Đổi mật khẩu</h2>
+        <button class="close" onclick="closeChangePasswordModal()">&times;</button>
+      </div>
+
+      <div id="alert-password" class="alert"></div>
+
+      <form id="changePasswordForm">
+        <div class="form-group">
+          <label for="old_password">Mật khẩu hiện tại <span style="color: red;">*</span></label>
+          <input type="password" id="old_password" name="old_password" required>
+        </div>
+
+        <div class="form-group">
+          <label for="new_password">Mật khẩu mới <span style="color: red;">*</span></label>
+          <input type="password" id="new_password" name="new_password" required>
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password">Xác nhận mật khẩu mới <span style="color: red;">*</span></label>
+          <input type="password" id="confirm_password" name="confirm_password" required>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" onclick="closeChangePasswordModal()">Hủy</button>
+          <button type="submit" class="btn-save">Đổi mật khẩu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
   <script src="./asset/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Dữ liệu ban đầu
-    const initialData = {
-      provinceId: '<?php echo $provinceId ?>',
-      districtId: '<?php echo $districtId ?>',
-      wardId: '<?php echo $wardId ?>'
-    };
-
     function openEditModal() {
       document.getElementById('editModal').style.display = 'block';
       loadProvinces();
@@ -426,101 +403,6 @@ if ($result && $result->num_rows > 0) {
       const modal = document.getElementById('editModal');
       if (event.target === modal) {
         closeEditModal();
-      }
-    }
-
-    // Load danh sách tỉnh/thành phố
-    async function loadProvinces() {
-      try {
-        const response = await fetch('../php/get_locations.php?action=provinces');
-        const data = await response.json();
-
-        if (data.success) {
-          const provinceSelect = document.getElementById('province');
-          provinceSelect.innerHTML = '<option value="">-- Chọn Tỉnh/Thành phố --</option>';
-
-          data.data.forEach(province => {
-            const option = document.createElement('option');
-            option.value = province.province_id;
-            option.textContent = province.name;
-            if (province.province_id === initialData.provinceId) {
-              option.selected = true;
-            }
-            provinceSelect.appendChild(option);
-          });
-
-          // Load quận/huyện nếu đã có tỉnh
-          if (initialData.provinceId) {
-            await loadDistricts();
-          }
-        }
-      } catch (error) {
-        console.error('Lỗi khi tải danh sách tỉnh:', error);
-      }
-    }
-
-    // Load danh sách quận/huyện
-    async function loadDistricts() {
-      const provinceId = document.getElementById('province').value;
-      const districtSelect = document.getElementById('district');
-      const wardSelect = document.getElementById('ward');
-
-      districtSelect.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
-      wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-
-      if (!provinceId) return;
-
-      try {
-        const response = await fetch(`../php/get_locations.php?action=districts&province_id=${provinceId}`);
-        const data = await response.json();
-
-        if (data.success) {
-          data.data.forEach(district => {
-            const option = document.createElement('option');
-            option.value = district.district_id;
-            option.textContent = district.name;
-            if (district.district_id === initialData.districtId) {
-              option.selected = true;
-            }
-            districtSelect.appendChild(option);
-          });
-
-          // Load phường/xã nếu đã có quận
-          if (initialData.districtId) {
-            await loadWards();
-          }
-        }
-      } catch (error) {
-        console.error('Lỗi khi tải danh sách quận/huyện:', error);
-      }
-    }
-
-    // Load danh sách phường/xã
-    async function loadWards() {
-      const districtId = document.getElementById('district').value;
-      const wardSelect = document.getElementById('ward');
-
-      wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-
-      if (!districtId) return;
-
-      try {
-        const response = await fetch(`../php/get_locations.php?action=wards&district_id=${districtId}`);
-        const data = await response.json();
-
-        if (data.success) {
-          data.data.forEach(ward => {
-            const option = document.createElement('option');
-            option.value = ward.ward_id;
-            option.textContent = ward.name;
-            if (ward.ward_id === initialData.wardId) {
-              option.selected = true;
-            }
-            wardSelect.appendChild(option);
-          });
-        }
-      } catch (error) {
-        console.error('Lỗi khi tải danh sách phường/xã:', error);
       }
     }
 
@@ -548,23 +430,13 @@ if ($result && $result->num_rows > 0) {
           // Cập nhật hiển thị trên trang
           document.getElementById('display-fullname').textContent = formData.get('fullname');
           document.getElementById('display-phone').textContent = formData.get('phone');
-          document.getElementById('display-email').textContent = formData.get('email');
 
-          // Cập nhật địa chỉ nếu có thay đổi
-          const wardId = formData.get('ward_id');
-          const addressDetail = formData.get('address_detail');
-          if (wardId && addressDetail) {
-            const wardText = document.getElementById('ward').options[document.getElementById('ward').selectedIndex].text;
-            const districtText = document.getElementById('district').options[document.getElementById('district').selectedIndex].text;
-            const provinceText = document.getElementById('province').options[document.getElementById('province').selectedIndex].text;
-            document.getElementById('display-address').textContent = `${addressDetail}, ${wardText}, ${districtText}, ${provinceText}`;
-          }
 
           // Cập nhật tên ở header
           const nameElements = document.querySelectorAll('.name-employee p, .user-name, .offcanvas-title');
           nameElements.forEach(el => {
             if (el.classList.contains('user-name')) {
-              return; // Phone không đổi
+              return; // Username không đổi
             }
             el.textContent = formData.get('fullname');
           });
@@ -583,6 +455,65 @@ if ($result && $result->num_rows > 0) {
       } catch (error) {
         alertDiv.className = 'alert alert-error';
         alertDiv.textContent = 'Có lỗi xảy ra: ' + error.message;
+        alertDiv.style.display = 'block';
+      }
+    });
+
+
+
+    function openChangePasswordModal() {
+      document.getElementById('changePasswordModal').style.display = 'block';
+    }
+
+    function closeChangePasswordModal() {
+      document.getElementById('changePasswordModal').style.display = 'none';
+      document.getElementById('alert-password').style.display = 'none';
+    }
+
+    // Đóng modal khi click bên ngoài
+    window.onclick = function(event) {
+      const modal1 = document.getElementById('editModal');
+      const modal2 = document.getElementById('changePasswordModal');
+      if (event.target === modal1) closeEditModal();
+      if (event.target === modal2) closeChangePasswordModal();
+    }
+
+    // Xử lý submit đổi mật khẩu
+    document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const alertDiv = document.getElementById('alert-password');
+      const formData = new FormData(this);
+
+      // Kiểm tra xác nhận mật khẩu
+      if (formData.get('new_password') !== formData.get('confirm_password')) {
+        alertDiv.className = 'alert alert-error';
+        alertDiv.textContent = 'Mật khẩu xác nhận không khớp!';
+        alertDiv.style.display = 'block';
+        return;
+      }
+
+      try {
+        const response = await fetch('../php/change-password.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alertDiv.className = 'alert alert-success';
+          alertDiv.textContent = result.message;
+          alertDiv.style.display = 'block';
+          setTimeout(() => closeChangePasswordModal(), 1500);
+        } else {
+          alertDiv.className = 'alert alert-error';
+          alertDiv.textContent = result.message;
+          alertDiv.style.display = 'block';
+        }
+      } catch (error) {
+        alertDiv.className = 'alert alert-error';
+        alertDiv.textContent = 'Lỗi: ' + error.message;
         alertDiv.style.display = 'block';
       }
     });
