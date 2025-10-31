@@ -231,14 +231,13 @@ class AnalyzePage {
             <th>STT</th>
             <th>Tên khách hàng</th>
             <th>Số lượng đơn đã mua</th>
-            <th>Ngày tạo</th>
             <th class="total-amount">Tổng tiền (VND)</th>
             <th>Chi tiết đơn</th>
           </tr>
         </thead>
         <tbody id="customer-table">
           <tr>
-            <td colspan="6" style="text-align: center;">Vui lòng chọn khoảng thời gian phù hợp</td>
+            <td colspan="5" style="text-align: center;">Vui lòng chọn khoảng thời gian phù hợp</td>
           </tr>
         </tbody>
       </table>

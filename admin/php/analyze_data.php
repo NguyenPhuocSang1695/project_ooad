@@ -53,39 +53,38 @@ class Analyzer {
         return floatval($result['total'] ?? 0);
     }
 
-    private function getTopCustomers(): array {
-        $sql = "SELECT o.Username, u.FullName, COUNT(o.OrderID) AS order_count,
-                       MAX(o.DateGeneration) AS latest_order_date,
-                       SUM(o.TotalAmount) AS total_amount
-                FROM orders o
-                JOIN users u ON o.Username = u.Username
-                WHERE o.DateGeneration BETWEEN ? AND ?
-                GROUP BY o.Username
-                ORDER BY total_amount DESC
-                LIMIT 20";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param('ss', $this->startDate, $this->endDate);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        $customers = [];
-        while ($r = $res->fetch_assoc()) {
-            $customers[] = [
-                'customer_name' => $r['FullName'],
-                'order_count' => (int)$r['order_count'],
-                'latest_order_date' => $r['latest_order_date'],
-                'total_amount' => floatval($r['total_amount']),
-                'order_links' => $this->getOrdersByUser($r['Username'])
-            ];
-        }
-        return $customers;
+  private function getTopCustomers(): array {
+    $sql = "SELECT o.user_id, u.FullName, COUNT(o.OrderID) AS order_count,
+                   SUM(o.TotalAmount) AS total_amount
+            FROM orders o
+            JOIN users u ON o.user_id = u.user_id
+            WHERE o.DateGeneration BETWEEN ? AND ?
+            GROUP BY o.user_id
+            ORDER BY total_amount DESC
+            LIMIT 5";
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bind_param('ss', $this->startDate, $this->endDate);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $customers = [];
+    while ($r = $res->fetch_assoc()) {
+        $customers[] = [
+            'customer_name' => $r['FullName'],
+            'order_count' => (int)$r['order_count'],
+            'total_amount' => floatval($r['total_amount']),
+            'order_links' => $this->getOrdersByUser((int)$r['user_id'])
+        ];
     }
+    return $customers;
+}
 
-    private function getOrdersByUser(string $username): array {
+
+    private function getOrdersByUser(int $userId): array {
         $sql = "SELECT OrderID FROM orders 
-                WHERE Username = ? AND DateGeneration BETWEEN ? AND ?
+                WHERE user_id = ? AND DateGeneration BETWEEN ? AND ?
                 ORDER BY DateGeneration DESC";
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param('sss', $username, $this->startDate, $this->endDate);
+        $stmt->bind_param('iss', $userId, $this->startDate, $this->endDate);
         $stmt->execute();
         $res = $stmt->get_result();
         $orders = [];
@@ -187,7 +186,7 @@ class Analyzer {
     }
 }
 
-// ========== CHẠY ==========
+// === CHẠY ===
 try {
     $db = new DatabaseConnection();
     $db->connect();

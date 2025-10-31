@@ -251,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${index + 1}</td>
                         <td>${customer.customer_name}</td> 
                         <td>${customer.order_count}</td>
-                        <td>${formatDate(customer.latest_order_date)}</td>
                         <td class="total-amount">${formatCurrency(customer.total_amount)}</td>
                         <td class="order-detail-link">
                             <button class="btn btn-info order-view-button" 
