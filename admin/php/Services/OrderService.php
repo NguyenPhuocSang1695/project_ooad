@@ -22,14 +22,14 @@ class OrderService {
     /**
      * Create new order with details
      */
-    public function createOrder($username, $customerName, $phone, $paymentMethod, $products, $addressId = null, $status = 'execute', $voucherId = null) {
+    public function createOrder($userId, $customerName, $phone, $paymentMethod, $products, $addressId = null, $status = 'execute', $voucherId = null) {
         try {
             $conn = $this->db->getConnection();
             $conn->begin_transaction();
 
             // Create order
             $order = new Order([
-                'Username' => $username,
+                'user_id' => $userId,
                 'CustomerName' => $customerName,
                 'Phone' => $phone,
                 'PaymentMethod' => $paymentMethod,
@@ -156,6 +156,21 @@ class OrderService {
             // Convert Order objects to array format for API response
             $ordersData = [];
             foreach ($result['orders'] as $order) {
+                $addressParts = [];
+                if ($order->getAddressDetail()) {
+                    $addressParts[] = $order->getAddressDetail();
+                }
+                if ($order->getWardName()) {
+                    $addressParts[] = $order->getWardName();
+                }
+                if ($order->getDistrictName()) {
+                    $addressParts[] = $order->getDistrictName();
+                }
+                if ($order->getProvinceName()) {
+                    $addressParts[] = $order->getProvinceName();
+                }
+                $fullAddress = implode(', ', $addressParts);
+
                 $ordersData[] = [
                     'madonhang' => $order->getOrderId(),
                     'ngaytao' => $order->getDateGeneration(),
@@ -164,7 +179,7 @@ class OrderService {
                     'giatien' => $order->getTotalAmount(),
                     'receiver_name' => $order->getCustomerName(),
                     'receiver_phone' => $order->getPhone(),
-                    'receiver_address' => $order->getFullAddress()
+                    'receiver_address' => $fullAddress
                 ];
             }
 

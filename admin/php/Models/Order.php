@@ -5,6 +5,7 @@
  */
 class Order {
     private $orderId;
+    private $userId;
     private $username;
     private $customerName;
     private $phone;
@@ -23,6 +24,7 @@ class Order {
 
     public function __construct($data = []) {
         $this->orderId = $data['OrderID'] ?? $data['order_id'] ?? null;
+        $this->userId = $data['user_id'] ?? null;
         $this->username = $data['Username'] ?? $data['username'] ?? null;
         $this->customerName = $data['CustomerName'] ?? $data['customer_name'] ?? null;
         $this->phone = $data['Phone'] ?? $data['phone'] ?? null;
@@ -42,6 +44,7 @@ class Order {
 
     // Getters
     public function getOrderId() { return $this->orderId; }
+    public function getUserId() { return $this->userId; }
     public function getUsername() { return $this->username; }
     public function getCustomerName() { return $this->customerName; }
     public function getPhone() { return $this->phone; }
@@ -60,6 +63,7 @@ class Order {
 
     // Setters
     public function setOrderId($orderId) { $this->orderId = $orderId; }
+    public function setUserId($userId) { $this->userId = $userId; }
     public function setUsername($username) { $this->username = $username; }
     public function setCustomerName($customerName) { $this->customerName = $customerName; }
     public function setPhone($phone) { $this->phone = $phone; }
@@ -107,6 +111,7 @@ class Order {
     public function toArray() {
         return [
             'OrderID' => $this->orderId,
+            'user_id' => $this->userId,
             'Username' => $this->username,
             'CustomerName' => $this->customerName,
             'Phone' => $this->phone,

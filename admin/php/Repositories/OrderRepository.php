@@ -171,7 +171,7 @@ class OrderRepository {
             $order->validate();
             
             $conn = $this->db->getConnection();
-            $query = "INSERT INTO orders (Username, CustomerName, Phone, PaymentMethod, Status, address_id, voucher_id, DateGeneration, TotalAmount) 
+            $query = "INSERT INTO orders (user_id, CustomerName, Phone, PaymentMethod, Status, address_id, voucher_id, DateGeneration, TotalAmount) 
                       VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
             
             $stmt = $conn->prepare($query);
@@ -179,7 +179,7 @@ class OrderRepository {
                 throw new Exception("Prepare failed: " . $conn->error);
             }
             
-            $username = $order->getUsername();
+            $userId = $order->getUserId();
             $customerName = $order->getCustomerName();
             $phone = $order->getPhone();
             $paymentMethod = $order->getPaymentMethod();
@@ -188,7 +188,7 @@ class OrderRepository {
             $voucherId = $order->getVoucherId();
             $totalAmount = $order->getTotalAmount();
             
-            $stmt->bind_param("sssssiii", $username, $customerName, $phone, $paymentMethod, $status, $addressId, $voucherId, $totalAmount);
+            $stmt->bind_param("isssssii", $userId, $customerName, $phone, $paymentMethod, $status, $addressId, $voucherId, $totalAmount);
             
             if (!$stmt->execute()) {
                 throw new Exception("Insert failed: " . $stmt->error);

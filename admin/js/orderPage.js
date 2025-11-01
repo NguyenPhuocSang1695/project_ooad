@@ -115,12 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const row = document.createElement("tr");
             row.style.cursor = "pointer";
             row.addEventListener("click", function (e) {
-              if (
-                !e.target.closest(".status-btn") &&
-                !e.target.closest(".action-btn")
-              ) {
-                showOrderDetailModal(order.madonhang);
-              }
+              showOrderDetailModal(order.madonhang);
             });
 
             row.innerHTML = `
@@ -132,34 +127,13 @@ document.addEventListener("DOMContentLoaded", function () {
               <td class="hide-index-mobile">${formatCurrency(
                 order.giatien || 0
               )}</td>
-              <td>
-                <button class="${
-                  getStatusInfo(order.trangthai || "unknown").class
-                } status-btn" 
-                        data-order-id="${order.madonhang}"
-                        data-status="${order.trangthai || "unknown"}">
-                  ${getStatusInfo(order.trangthai || "unknown").text}
-                </button>
-              </td>
-              <td>${order.receiver_address}</td>
-              <td class="detail-info">
-                <a href="orderDetail2.php?code_Product=${
-                  order.madonhang
-                }" class="action-btn view-btn">
-                  <i class="fa-solid fa-circle-info"></i>
-                </a>
-                <a class="update-status-btn action-btn edit-btn" data-order-id="${
-                  order.madonhang
-                }" data-status="${order.trangthai}">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </a>
-              </td>
+              <td>${order.receiver_address || ""}</td>
             `;
             orderTableBody.appendChild(row);
           });
         } else {
           orderTableBody.innerHTML =
-            '<tr><td colspan="8" class="no-data">Không có đơn hàng nào phù hợp</td></tr>';
+            '<tr><td colspan="5" class="no-data">Không có đơn hàng nào phù hợp</td></tr>';
         }
         const totalPages =
           data.total_pages !== undefined ? data.total_pages : 1;
@@ -168,7 +142,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => {
         console.error("Error fetching orders:", error);
         if (orderTableBody) {
-          orderTableBody.innerHTML = `<tr><td colspan="7" class="error-message">Đã xảy ra lỗi: ${error.message}</td></tr>`;
+          orderTableBody.innerHTML = `<tr><td colspan="5" class="error-message">Đã xảy ra lỗi: ${error.message}</td></tr>`;
         }
       });
   };
@@ -407,47 +381,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function getStatusInfo(status) {
-    switch (status) {
-      case "execute":
-        return {
-          text: "Chờ xác nhận",
-          class: "status-btn status-pending",
-          tooltip: "Đơn hàng đang chờ xác nhận",
-        };
-      case "confirmed":
-        return {
-          text: "Đã xác nhận",
-          class: "status-btn status-confirmed",
-          tooltip: "Đơn hàng đã được xác nhận",
-        };
-      case "ship":
-        return {
-          text: "Đang giao",
-          class: "status-btn status-shipping",
-          tooltip: "Đơn hàng đang được giao",
-        };
-      case "success":
-        return {
-          text: "Hoàn thành",
-          class: "status-btn status-success",
-          tooltip: "Đơn hàng đã giao thành công",
-        };
-      case "fail":
-        return {
-          text: "Đã hủy",
-          class: "status-btn status-failed",
-          tooltip: "Đơn hàng đã bị hủy",
-        };
-      default:
-        return {
-          text: "Không xác định",
-          class: "status-btn status-unknown",
-          tooltip: "Trạng thái không xác newStatus định",
-        };
-    }
-  }
-
   function showUpdateStatusPopup(orderId, currentStatus) {
     const overlay = document.getElementById("updateStatusOverlay");
     if (!overlay) return;
@@ -649,28 +582,6 @@ document.addEventListener("DOMContentLoaded", function () {
         filterModal.hide();
       });
     }
-
-    // Thêm event delegation cho nút cập nhật trạng thái
-    document.addEventListener("click", function (e) {
-      const updateBtn = e.target.closest(".update-status-btn");
-      if (updateBtn) {
-        const orderId = updateBtn.dataset.orderId;
-        const currentStatus = updateBtn.dataset.status;
-        showUpdateStatusPopup(orderId, currentStatus);
-      }
-    });
-
-    // Thêm event listener cho tất cả các nút status-btn
-    document.addEventListener("click", function (e) {
-      const statusBtn = e.target.closest(".status-btn");
-      if (statusBtn) {
-        const orderId = statusBtn.getAttribute("data-order-id");
-        const currentStatus = statusBtn.getAttribute("data-status");
-        if (orderId && currentStatus) {
-          showUpdateStatusPopup(orderId, currentStatus);
-        }
-      }
-    });
 
     // Thêm sự kiện cho dropdown order-status
     const orderStatusSelect = document.getElementById("order-status");
@@ -1073,14 +984,6 @@ function showOrderDetailModal(orderId) {
                 <div>
                   <label style="color: #666; font-size: 12px; text-transform: uppercase;">Ngày tạo</label>
                   <p style="margin: 5px 0; font-weight: 600; color: #333;">${new Date(order.orderDate).toLocaleString('vi-VN')}</p>
-                </div>
-                <div>
-                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Trạng thái</label>
-                  <p style="margin: 5px 0;">
-                    <span style="display: inline-block; padding: 5px 12px; border-radius: 20px; background-color: #28a745; color: white; font-weight: 600; font-size: 12px;">
-                      ${order.status}
-                    </span>
-                  </p>
                 </div>
                 <div>
                   <label style="color: #666; font-size: 12px; text-transform: uppercase;">Phương thức TT</label>

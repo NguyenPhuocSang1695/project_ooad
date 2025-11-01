@@ -25,6 +25,7 @@ try {
     }
 
 
+    // Validate required fields
     if (empty($data['customer_name'])) {
         throw new Exception('Missing customer_name');
     }
@@ -38,12 +39,37 @@ try {
         throw new Exception('No products in order');
     }
 
+    // Format customer phone - ensure it starts with 0
+    $customerPhone = $data['customer_phone'];
+    if (!empty($customerPhone) && $customerPhone[0] !== '0') {
+        $customerPhone = '0' . $customerPhone;
+    }
+
     // Connect to database
     $db = new DatabaseConnection();
     $db->connect();
 
     // Get username from session
     $username = isset($_SESSION['Username']) ? $_SESSION['Username'] : null;
+    
+    if (!$username) {
+        throw new Exception('User not authenticated - Username not found in session');
+    }
+    
+    // Get user_id from username
+    $myconn = $db->getConnection();
+    $userStmt = $myconn->prepare("SELECT user_id FROM users WHERE Username = ?");
+    $userStmt->bind_param("s", $username);
+    $userStmt->execute();
+    $userResult = $userStmt->get_result();
+    
+    if ($userResult->num_rows === 0) {
+        throw new Exception('User not found in database');
+    }
+    
+    $userData = $userResult->fetch_assoc();
+    $userId = $userData['user_id'];
+    $userStmt->close();
 
     // Handle address if provided
     $addressId = null;
@@ -69,16 +95,15 @@ try {
 
     // Use OrderService to create order
     $orderService = new OrderService($db);
-    
-    $status = $data['status'] ?? 'execute';
+    $status = 'execute';
     $voucherId = $data['voucher_id'] ?? null;
     
     error_log("[ADD_ORDER] Creating order with status: " . $status . ", voucher_id: " . ($voucherId ?? 'null'));
     
     $orderId = $orderService->createOrder(
-        $username,
+        $userId,
         $data['customer_name'],
-        $data['customer_phone'],
+        $customerPhone,
         $data['payment_method'],
         $data['products'],
         $addressId,

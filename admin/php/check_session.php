@@ -1,5 +1,4 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/connect.php'; // luôn dùng đường dẫn tuyệt đối
 session_name('admin_session');
 session_start();

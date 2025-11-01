@@ -528,16 +528,6 @@ $orders = [];
                         <option value="VNPAY">VNPay</option>
                       </select>
                     </div>
-                    <div class="col-md-6 mb-3">
-                      <label for="order-status" class="form-label">Trạng thái:</label>
-                      <select class="form-control" id="add-order-status" name="status" required>
-                        <option value="execute">Chờ xác nhận</option>
-                        <option value="confirmed">Đã xác nhận</option>
-                        <option value="ship">Đang giao</option>
-                        <option value="success">Hoàn thành</option>
-                        <option value="fail">Đã hủy</option>
-                      </select>
-                    </div>
                   </div>
 
              
@@ -620,17 +610,6 @@ $orders = [];
                     <input type="date" id="date-to" name="date_to" class="form-control">
                   </div>
                   <div class="mb-3">
-                    <label for="order-status" class="form-label">Trạng thái:</label>
-                    <select id="order-status" name="order_status" class="form-control">
-                      <option value="all">Tất cả</option>
-                      <option value="execute">Chờ xác nhận</option>
-                      <option value="confirmed">Đã xác nhận</option>
-                      <option value="ship">Đang giao</option>
-                      <option value="success">Hoàn thành</option>
-                      <option value="fail">Đã hủy</option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
                     <label for="city-select" class="form-label">Tỉnh/Thành phố:</label>
                     <select id="city-select" name="city" class="form-control">
                       <option value="">Chọn thành phố</option>
@@ -676,9 +655,7 @@ $orders = [];
                 <th class="hide-index-tablet ">Người mua</th>
                 <th>Ngày tạo</th>
                 <th class="hide-index-mobile">Giá tiền (VND)</th>
-                <th>Trạng thái</th>
                 <th>Địa chỉ giao hàng</th>
-                <th></th>
               </tr>
             </thead>
             <tbody id="order-table-body">
@@ -690,13 +667,11 @@ $orders = [];
                       echo '<td class="hide-index-tablet">' . htmlspecialchars($o['CustomerName']) . '</td>';
                       echo '<td>' . htmlspecialchars($o['DateGeneration']) . '</td>';
                       echo '<td class="hide-index-mobile">' . number_format($o['TotalAmount']) . '</td>';
-                      echo '<td>' . htmlspecialchars($o['Status']) . '</td>';
                       echo '<td>' . htmlspecialchars($o['Province'] . ', ' . $o['District'] . ', ' . $o['Ward']) . '</td>';
-                      echo '<td><button class="btn btn-sm btn-info view-order-btn" data-order-id="' . htmlspecialchars($o['OrderID']) . '"><i class="fas fa-eye"></i></button></td>';
                       echo '</tr>';
                   }
               } else {
-                  echo '<tr><td colspan="7">Không có đơn hàng</td></tr>';
+                  echo '<tr><td colspan="5">Không có đơn hàng</td></tr>';
               }
               ?>
             </tbody>
