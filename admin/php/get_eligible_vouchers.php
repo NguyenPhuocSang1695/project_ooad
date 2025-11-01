@@ -61,10 +61,9 @@ try {
         exit();
     }
     
-    // Get customer's total historical spending
+    // Get customer's total spending from all orders (any status)
     $historyResult = $db->queryPrepared(
-        "SELECT SUM(TotalAmount) as total_spent, COUNT(*) as order_count 
-         FROM orders WHERE Phone = ? AND Status = 'success'",
+        "SELECT SUM(TotalAmount) as total_spent, COUNT(*) as order_count FROM orders WHERE Phone = ?",
         [$customerPhone]
     );
     
@@ -75,10 +74,10 @@ try {
     // Filter eligible vouchers
     $eligibleVouchers = [];
     
-    // Only show vouchers to repeat customers
+    // Show vouchers to repeat customers if their total spending meets condition
     if ($previousOrderCount > 0) {
         while ($voucher = $voucherResult->fetch_assoc()) {
-            // Check if customer spending meets condition
+            // Check if customer total spending meets voucher condition
             if ($totalHistoricalSpent >= $voucher['conditions']) {
                 $eligibleVouchers[] = [
                     'id' => (int)$voucher['id'],
@@ -98,7 +97,7 @@ try {
         'total_spent' => (int)$totalHistoricalSpent,
         'message' => $previousOrderCount === 0 
             ? 'Khách hàng mới - Chưa có voucher phù hợp'
-            : ($eligibleVouchers ? 'Có ' . count($eligibleVouchers) . ' voucher thỏa điều kiện' : 'Không có voucher thỏa điều kiện')
+            : ($eligibleVouchers ? 'Có ' . count($eligibleVouchers) . ' voucher thỏa điều kiện' : 'Không có voucher thỏa điều kiện (tổng tiền chưa đủ)')
     ], JSON_UNESCAPED_UNICODE);
     
 } catch (Exception $e) {

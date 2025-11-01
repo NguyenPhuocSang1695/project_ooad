@@ -43,10 +43,10 @@ try {
     $db = new DatabaseConnection();
     $db->connect();
     
-    // Get all orders (successful only) for this phone number
+
     $result = $db->queryPrepared(
         "SELECT OrderID, TotalAmount, DateGeneration, Status FROM orders 
-         WHERE Phone = ? AND Status = 'success' 
+         WHERE Phone = ? 
          ORDER BY DateGeneration DESC",
         [$customerPhone]
     );

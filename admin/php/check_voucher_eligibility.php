@@ -75,54 +75,34 @@ try {
         exit();
     }
     
-    // 3. Calculate TOTAL HISTORICAL SPENDING (all successful orders)
+    // 3. Check if customer has ANY purchase history (regardless of status)
     $historyResult = $db->queryPrepared(
-        "SELECT SUM(TotalAmount) as total_spent, COUNT(*) as order_count 
-         FROM orders WHERE Phone = ? AND Status = 'success'",
+        "SELECT COUNT(*) as order_count FROM orders WHERE Phone = ?",
         [$customerPhone]
     );
     
     $historyData = $historyResult->fetch_assoc();
-    $totalHistoricalSpent = $historyData['total_spent'] ?? 0;
     $previousOrderCount = $historyData['order_count'] ?? 0;
     
-    // 4. Check if customer has any purchase history
+    // 4. Check if customer has any purchase history (any order exists)
     if ($previousOrderCount === 0) {
         echo json_encode([
             'success' => true,
             'eligible' => false,
             'message' => 'Voucher này chỉ dành cho khách hàng cũ (đã mua hàng trước đó)',
-            'voucher' => $voucher,
-            'customer_total_spent' => 0,
-            'required_amount' => $voucher['conditions']
+            'voucher' => $voucher
         ], JSON_UNESCAPED_UNICODE);
         exit();
     }
     
-    // 5. Check if HISTORICAL total meets condition
-    if ($totalHistoricalSpent < $voucher['conditions']) {
-        $needed = $voucher['conditions'] - $totalHistoricalSpent;
-        echo json_encode([
-            'success' => true,
-            'eligible' => false,
-            'message' => 'Tổng tiền lịch sử mua hàng của khách (' . number_format($totalHistoricalSpent, 0, ',', '.') . ' VNĐ) chưa đạt yêu cầu. Cần thêm ' . number_format($needed, 0, ',', '.') . ' VNĐ',
-            'voucher' => $voucher,
-            'customer_total_spent' => $totalHistoricalSpent,
-            'required_amount' => $voucher['conditions'],
-            'needed_amount' => $needed
-        ], JSON_UNESCAPED_UNICODE);
-        exit();
-    }
-    
-    // 6. All conditions met - customer eligible
+    // 5. All conditions met - customer eligible 
     $estimatedDiscount = ($currentOrderTotal * $voucher['percen_decrease']) / 100;
     
     echo json_encode([
         'success' => true,
         'eligible' => true,
-        'message' => 'Khách hàng đủ điều kiện áp dụng voucher (tổng tiền lịch sử: ' . number_format($totalHistoricalSpent, 0, ',', '.') . ' VNĐ)',
+        'message' => 'Khách hàng đủ điều kiện áp dụng voucher (đã có lịch sử mua hàng)',
         'voucher' => $voucher,
-        'customer_total_spent' => $totalHistoricalSpent,
         'previous_order_count' => $previousOrderCount,
         'estimated_discount' => $estimatedDiscount
     ], JSON_UNESCAPED_UNICODE);
