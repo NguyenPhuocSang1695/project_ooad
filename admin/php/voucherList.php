@@ -4,7 +4,7 @@ $db = new DatabaseConnection();
 $db->connect();
 $conn = $db->getConnection();
 
-$result = $conn->query("SELECT * FROM voucher");
+$result = $conn->query("SELECT * FROM vouchers");
 ?>
 <h2>Danh sách Voucher</h2>
 <a href="addVoucher.php">+ Thêm voucher mới</a>
@@ -22,7 +22,7 @@ $result = $conn->query("SELECT * FROM voucher");
             <td><?= $row['id'] ?></td>
             <td><?= $row['name'] ?></td>
             <td><?= $row['percen_decrease'] ?>%</td>
-            <td><?= $row['condition'] ?></td>
+            <td><?= $row['conditions'] ?></td>
             <td><?= $row['status'] ?></td>
             <td>
                 <a href="editVoucher.php?id=<?= $row['id'] ?>">Sửa</a> |

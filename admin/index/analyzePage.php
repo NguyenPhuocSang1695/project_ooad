@@ -1,4 +1,13 @@
-<?php include '../php/check_session.php'; ?>
+<?php 
+// Đơn giản kiểm tra session
+session_name('admin_session');
+session_start();
+
+if (!isset($_SESSION['Username'])) {
+    header('Location: ../index.php');
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
