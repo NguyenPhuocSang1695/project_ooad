@@ -199,7 +199,7 @@ class UserManager
         }
         if ($role === 'admin') {
             // Admin must have username and password
-            if ($username === '' || !preg_match('/^[A-Za-z0-9_\-.]{3,32}$/', $username)) {
+            if ($username === '' || !preg_match('/^[A-Za-z0-9_\-.]{3,30}$/', $username)) {
                 return ['success' => false, 'message' => 'Tên đăng nhập (admin) không hợp lệ.'];
             }
             if ($password === '' || $password !== $confirm) {
@@ -210,7 +210,7 @@ class UserManager
             }
         } else {
             // Customer: username/password optional; if provided, validate
-            if ($username !== '' && !preg_match('/^[A-Za-z0-9_\-.]{3,32}$/', $username)) {
+            if ($username !== '' && !preg_match('/^[A-Za-z0-9_\-.]{3,30}$/', $username)) {
                 return ['success' => false, 'message' => 'Tên đăng nhập không hợp lệ.'];
             }
             if ($password !== '' || $confirm !== '') {
@@ -233,7 +233,7 @@ class UserManager
 
         // Duplicate check: only when username provided
         if ($username !== '') {
-            $checkSql = 'SELECT 1 FROM users WHERE UserName = ? LIMIT 1';
+            $checkSql = 'SELECT 1 FROM users WHERE Username = ? LIMIT 1';
             $stmt = $conn->prepare($checkSql);
             if (!$stmt) return ['success' => false, 'message' => 'Lỗi prepare kiểm tra trùng: ' . $conn->error];
             $stmt->bind_param('s', $username);
@@ -293,7 +293,7 @@ class UserManager
         }
 
         // Build dynamic INSERT for users
-        $fields = ['UserName','FullName','Phone','Role','Status','PasswordHash'];
+    $fields = ['Username','FullName','Phone','Role','Status','PasswordHash'];
         $placeholders = ['?','?','?','?','?','?'];
         $types = 'ssssss';
         // When role is customer and username empty, insert NULL username
@@ -394,7 +394,7 @@ class UserManager
         $data = null;
 
         if ($schema['hasAddressId'] && $schema['addressIdColumn']) {
-            $sql = "SELECT u.user_id, u.UserName, u.FullName, u.Phone, u.Role, u.Status,
+            $sql = "SELECT u.user_id, u.Username, u.FullName, u.Phone, u.Role, u.Status,
                            u.".$schema['addressIdColumn']." AS address_id,
                            a.address_detail, a.ward_id,
                            w.district_id, d.province_id
@@ -414,7 +414,7 @@ class UserManager
             $stmt->close();
         } else {
             // Fallback: if inline address columns do not exist, select only existing base fields
-            $sql = "SELECT u.user_id, u.UserName, u.FullName, u.Phone, u.Role, u.Status FROM users u WHERE u.UserName = ?";
+            $sql = "SELECT u.user_id, u.Username, u.FullName, u.Phone, u.Role, u.Status FROM users u WHERE u.Username = ?";
             $stmt = $conn->prepare($sql);
             if (!$stmt) return ['success' => false, 'message' => 'Lỗi chuẩn bị truy vấn: ' . $conn->error];
             $stmt->bind_param('s', $username);
@@ -433,7 +433,7 @@ class UserManager
         // Normalize payload
         $payload = [
             'user_id' => isset($data['user_id']) ? (int)$data['user_id'] : null,
-            'username' => $data['UserName'] ?? '',
+            'username' => $data['Username'] ?? '',
             'fullname' => $data['FullName'] ?? '',
             'email'    => $data['Email'] ?? '',
             'phone'    => $data['Phone'] ?? '',
@@ -464,7 +464,7 @@ class UserManager
         $data = null;
 
         if ($schema['hasAddressId'] && $schema['addressIdColumn']) {
-            $sql = "SELECT u.user_id, u.UserName, u.FullName, u.Phone, u.Role, u.Status,
+            $sql = "SELECT u.user_id, u.Username, u.FullName, u.Phone, u.Role, u.Status,
                            u.".$schema['addressIdColumn']." AS address_id,
                            a.address_detail, a.ward_id,
                            w.district_id, d.province_id
@@ -483,7 +483,7 @@ class UserManager
             }
             $stmt->close();
         } else {
-            $sql = "SELECT u.user_id, u.UserName, u.FullName, u.Phone, u.Role, u.Status FROM users u WHERE u.user_id = ?";
+            $sql = "SELECT u.user_id, u.Username, u.FullName, u.Phone, u.Role, u.Status FROM users u WHERE u.user_id = ?";
             $stmt = $conn->prepare($sql);
             if (!$stmt) return ['success' => false, 'message' => 'Lỗi chuẩn bị truy vấn: ' . $conn->error];
             $stmt->bind_param('i', $userId);
@@ -499,7 +499,7 @@ class UserManager
 
         $payload = [
             'user_id' => isset($data['user_id']) ? (int)$data['user_id'] : null,
-            'username' => $data['UserName'] ?? '',
+            'username' => $data['Username'] ?? '',
             'fullname' => $data['FullName'] ?? '',
             'email'    => $data['Email'] ?? '',
             'phone'    => $data['Phone'] ?? '',
@@ -557,11 +557,11 @@ class UserManager
 
         // check user exists
         if ($userId > 0) {
-            $stmt = $conn->prepare('SELECT user_id, UserName, Role FROM users WHERE user_id = ?');
+            $stmt = $conn->prepare('SELECT user_id, Username, Role FROM users WHERE user_id = ?');
             if (!$stmt) return ['success' => false, 'message' => 'Lỗi truy vấn người dùng: ' . $conn->error];
             $stmt->bind_param('i', $userId);
         } else {
-            $stmt = $conn->prepare('SELECT user_id, UserName, Role FROM users WHERE UserName = ?');
+            $stmt = $conn->prepare('SELECT user_id, Username, Role FROM users WHERE Username = ?');
             if (!$stmt) return ['success' => false, 'message' => 'Lỗi truy vấn người dùng: ' . $conn->error];
             $stmt->bind_param('s', $username);
         }
@@ -574,7 +574,7 @@ class UserManager
         if (!$exists) return ['success' => false, 'message' => 'Người dùng không tồn tại'];
 
         $targetRole = (string)($rowUser['Role'] ?? 'customer');
-        $username = $rowUser['UserName'] ?? $username; // normalize current username from DB
+    $username = $rowUser['Username'] ?? $username; // normalize current username from DB
         $userId = (int)($rowUser['user_id'] ?? $userId);
 
         // Permission rules
@@ -592,7 +592,7 @@ class UserManager
                 return ['success' => false, 'message' => 'Tên đăng nhập mới không hợp lệ'];
             }
             // Check duplicate username
-            $stmtC = $conn->prepare('SELECT 1 FROM users WHERE UserName = ? LIMIT 1');
+            $stmtC = $conn->prepare('SELECT 1 FROM users WHERE Username = ? LIMIT 1');
             if (!$stmtC) return ['success' => false, 'message' => 'Lỗi kiểm tra username: ' . $conn->error];
             $stmtC->bind_param('s', $newUsername);
             $stmtC->execute();
@@ -666,7 +666,7 @@ class UserManager
                 }
 
                 // Update user non-address fields (no Email in schema)
-                $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, UserName = ? WHERE user_id = ?';
+                $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, Username = ? WHERE user_id = ?';
                 $stmtU = $conn->prepare($sqlU);
                 if (!$stmtU) throw new Exception('Lỗi prepare cập nhật người dùng: ' . $conn->error);
                 $stmtU->bind_param('sssssi', $fullname, $phone, $role, $status, $newUsername, $userId);
@@ -674,7 +674,7 @@ class UserManager
                 $stmtU->close();
             } else {
                 // No users address columns in current schema -> update only base fields
-                $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, UserName = ? WHERE user_id = ?';
+                $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, Username = ? WHERE user_id = ?';
                 $stmtU = $conn->prepare($sqlU);
                 if (!$stmtU) throw new Exception('Lỗi prepare cập nhật người dùng: ' . $conn->error);
                 $stmtU->bind_param('sssssi', $fullname, $phone, $role, $status, $newUsername, $userId);
