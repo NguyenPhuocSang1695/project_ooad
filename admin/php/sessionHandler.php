@@ -7,7 +7,7 @@ if (isset($_SESSION['Username']) && isset($_SESSION['FullName']) && isset($_SESS
     if ($_SESSION['Role'] === 'admin') {
         $defaultAvatar = '../../assets/images/sang.jpg';
     }
-    
+
     echo json_encode([
         'status' => 'success',
         'username' => $_SESSION['Username'],
