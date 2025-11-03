@@ -2,7 +2,7 @@
 session_name('admin_session');
 session_start();
 
-if (isset($_SESSION['Phone']) && isset($_SESSION['FullName']) && isset($_SESSION['Role'])) {
+if (isset($_SESSION['Username']) && isset($_SESSION['FullName']) && isset($_SESSION['Role'])) {
     $defaultAvatar = '../../assets/images/admin.jpg';
     if ($_SESSION['Role'] === 'admin') {
         $defaultAvatar = '../../assets/images/sang.jpg';
@@ -10,7 +10,7 @@ if (isset($_SESSION['Phone']) && isset($_SESSION['FullName']) && isset($_SESSION
 
     echo json_encode([
         'status' => 'success',
-        'Phone' => $_SESSION['Phone'],
+        'username' => $_SESSION['Username'],
         'fullname' => $_SESSION['FullName'],
         'role' => $_SESSION['Role'],
         'avatar' => $defaultAvatar
@@ -21,3 +21,4 @@ if (isset($_SESSION['Phone']) && isset($_SESSION['FullName']) && isset($_SESSION
         'message' => 'Không tìm thấy thông tin đăng nhập'
     ]);
 }
+?>
