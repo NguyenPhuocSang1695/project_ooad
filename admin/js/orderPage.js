@@ -1,8 +1,24 @@
+// Global variable để theo dõi trang hiện tại
+let currentPage = 1;
+
 document.addEventListener("DOMContentLoaded", function () {
   const filterForm = document.getElementById("filter-form");
   const filterModal = new bootstrap.Modal(
     document.getElementById("filterModal")
   );
+
+  // Event listener cho nút "Xem chi tiết" đơn hàng (view-btn)
+  document.addEventListener("click", function (e) {
+    if (e.target.closest(".view-btn")) {
+      e.preventDefault();
+      const row = e.target.closest("tr");
+      const orderId = row?.querySelector("td:first-child")?.textContent?.trim();
+      if (orderId) {
+        console.log('[VIEW_ORDER] Order ID:', orderId);
+        showOrderDetailModal(orderId);
+      }
+    }
+  });
 
   if (filterForm) {
     filterForm.addEventListener("submit", function (e) {
@@ -13,8 +29,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // // Khởi tạo lần đầu hiển thị dữ liệu không lọc
-  // filterOrders();
   const orderTableBody = document.getElementById("order-table-body");
   const districtInput = document.getElementById("district-input");
   const districtSuggestions = document.getElementById("district-suggestions");
@@ -25,8 +39,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const nextPageButton = document.getElementById("nextPage");
 
   const limit = 5;
-  let currentPage =
-    parseInt(new URLSearchParams(window.location.search).get("page")) || 1;
+  // Get current page from URL (currentPage is already declared as global variable)
+  const urlParams = new URLSearchParams(window.location.search);
+  currentPage = parseInt(urlParams.get("page")) || 1;
 
   window.applyFilters = function () {
     currentPage = 1;
@@ -100,12 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const row = document.createElement("tr");
             row.style.cursor = "pointer";
             row.addEventListener("click", function (e) {
-              if (
-                !e.target.closest(".status-btn") &&
-                !e.target.closest(".action-btn")
-              ) {
-                window.location.href = `orderDetail2.php?code_Product=${order.madonhang}`;
-              }
+              showOrderDetailModal(order.madonhang);
             });
 
             row.innerHTML = `
@@ -117,34 +127,13 @@ document.addEventListener("DOMContentLoaded", function () {
               <td class="hide-index-mobile">${formatCurrency(
                 order.giatien || 0
               )}</td>
-              <td>
-                <button class="${
-                  getStatusInfo(order.trangthai || "unknown").class
-                } status-btn" 
-                        data-order-id="${order.madonhang}"
-                        data-status="${order.trangthai || "unknown"}">
-                  ${getStatusInfo(order.trangthai || "unknown").text}
-                </button>
-              </td>
-              <td>${order.receiver_address}</td>
-              <td class="detail-info">
-                <a href="orderDetail2.php?code_Product=${
-                  order.madonhang
-                }" class="action-btn view-btn">
-                  <i class="fa-solid fa-circle-info"></i>
-                </a>
-                <a class="update-status-btn action-btn edit-btn" data-order-id="${
-                  order.madonhang
-                }" data-status="${order.trangthai}">
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </a>
-              </td>
+              <td>${order.receiver_address || ""}</td>
             `;
             orderTableBody.appendChild(row);
           });
         } else {
           orderTableBody.innerHTML =
-            '<tr><td colspan="8" class="no-data">Không có đơn hàng nào phù hợp</td></tr>';
+            '<tr><td colspan="5" class="no-data">Không có đơn hàng nào phù hợp</td></tr>';
         }
         const totalPages =
           data.total_pages !== undefined ? data.total_pages : 1;
@@ -153,7 +142,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => {
         console.error("Error fetching orders:", error);
         if (orderTableBody) {
-          orderTableBody.innerHTML = `<tr><td colspan="7" class="error-message">Đã xảy ra lỗi: ${error.message}</td></tr>`;
+          orderTableBody.innerHTML = `<tr><td colspan="5" class="error-message">Đã xảy ra lỗi: ${error.message}</td></tr>`;
         }
       });
   };
@@ -392,47 +381,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function getStatusInfo(status) {
-    switch (status) {
-      case "execute":
-        return {
-          text: "Chờ xác nhận",
-          class: "status-btn status-pending",
-          tooltip: "Đơn hàng đang chờ xác nhận",
-        };
-      case "confirmed":
-        return {
-          text: "Đã xác nhận",
-          class: "status-btn status-confirmed",
-          tooltip: "Đơn hàng đã được xác nhận",
-        };
-      case "ship":
-        return {
-          text: "Đang giao",
-          class: "status-btn status-shipping",
-          tooltip: "Đơn hàng đang được giao",
-        };
-      case "success":
-        return {
-          text: "Hoàn thành",
-          class: "status-btn status-success",
-          tooltip: "Đơn hàng đã giao thành công",
-        };
-      case "fail":
-        return {
-          text: "Đã hủy",
-          class: "status-btn status-failed",
-          tooltip: "Đơn hàng đã bị hủy",
-        };
-      default:
-        return {
-          text: "Không xác định",
-          class: "status-btn status-unknown",
-          tooltip: "Trạng thái không xác newStatus định",
-        };
-    }
-  }
-
   function showUpdateStatusPopup(orderId, currentStatus) {
     const overlay = document.getElementById("updateStatusOverlay");
     if (!overlay) return;
@@ -635,28 +583,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
 
-    // Thêm event delegation cho nút cập nhật trạng thái
-    document.addEventListener("click", function (e) {
-      const updateBtn = e.target.closest(".update-status-btn");
-      if (updateBtn) {
-        const orderId = updateBtn.dataset.orderId;
-        const currentStatus = updateBtn.dataset.status;
-        showUpdateStatusPopup(orderId, currentStatus);
-      }
-    });
-
-    // Thêm event listener cho tất cả các nút status-btn
-    document.addEventListener("click", function (e) {
-      const statusBtn = e.target.closest(".status-btn");
-      if (statusBtn) {
-        const orderId = statusBtn.getAttribute("data-order-id");
-        const currentStatus = statusBtn.getAttribute("data-status");
-        if (orderId && currentStatus) {
-          showUpdateStatusPopup(orderId, currentStatus);
-        }
-      }
-    });
-
     // Thêm sự kiện cho dropdown order-status
     const orderStatusSelect = document.getElementById("order-status");
     if (orderStatusSelect) {
@@ -723,6 +649,9 @@ function initFilters() {
       if (desktopForm) syncFormData(mobileForm, desktopForm);
     });
   }
+
+  // Khởi tạo lần đầu hiển thị dữ liệu không lọc
+  filterOrders();
 }
 
 // Khởi tạo khi trang đã load
@@ -754,26 +683,6 @@ window.resetFilter = function (formType) {
   showNotification("Đã đặt lại bộ lọc", "info");
   filterOrders();
 };
-
-document.addEventListener("DOMContentLoaded", function () {
-  const citySelect = document.getElementById("city-select");
-  if (citySelect) {
-    citySelect.addEventListener("change", function () {
-      const provinceId = this.value;
-      if (provinceId) {
-        loadDistricts(provinceId);
-      } else {
-        const districtSelect = document.getElementById("district-select");
-        if (districtSelect) {
-          districtSelect.innerHTML =
-            '<option value="">Chọn quận/huyện</option>';
-        }
-      }
-      currentPage = 1; // Đặt lại về trang 1 khi thay đổi thành phố
-      // filterOrders();
-    });
-  }
-});
 
 document.addEventListener("DOMContentLoaded", function () {
   const filterForm = document.getElementById("filter-form");
@@ -809,12 +718,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   loadCities();
 
-  const citySelect = document.getElementById("city-select");
-  if (citySelect) {
-    citySelect.addEventListener("change", function () {
-      const provinceId = this.value;
+  // Dùng event delegation để đảm bảo event listener hoạt động sau khi element được tạo
+  document.addEventListener("change", function (e) {
+    if (e.target && e.target.id === "city-select") {
+      const provinceId = e.target.value;
+      console.log("[CITY_CHANGE_DELEGATION] Province ID selected:", provinceId);
+      
       if (provinceId) {
-        loadDistricts(provinceId);
+        loadDistrictsForFilter(provinceId);
       } else {
         const districtSelect = document.getElementById("district-select");
         if (districtSelect) {
@@ -822,29 +733,104 @@ document.addEventListener("DOMContentLoaded", function () {
             '<option value="">Chọn quận/huyện</option>';
         }
       }
-      currentPage = 1; // Đặt lại về trang 1 khi thay đổi thành phố
-      // filterOrders();
+      currentPage = 1;
+    }
+  });
+  
+  // Backup: Direct event listener for city-select (nếu element đã có trong DOM)
+  const citySelect = document.getElementById("city-select");
+  if (citySelect) {
+    citySelect.addEventListener("change", function () {
+      const provinceId = this.value;
+      console.log("[CITY_CHANGE_DIRECT] Province ID selected:", provinceId);
+      
+      if (provinceId) {
+        loadDistrictsForFilter(provinceId);
+      } else {
+        const districtSelect = document.getElementById("district-select");
+        if (districtSelect) {
+          districtSelect.innerHTML =
+            '<option value="">Chọn quận/huyện</option>';
+        }
+      }
+      currentPage = 1;
     });
   }
 });
 
+// Hàm load districts riêng cho bộ lọc
+window.loadDistrictsForFilter = function (provinceId) {
+  console.log('[LOAD_DISTRICTS_FILTER] For province:', provinceId);
+  
+  const districtSelect = document.getElementById('district-select');
+  
+  if (!districtSelect) {
+    console.error('[LOAD_DISTRICTS_FILTER] district-select not found');
+    return;
+  }
+  
+  districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+  
+  if (!provinceId) {
+    console.log('[LOAD_DISTRICTS_FILTER] No province ID');
+    return;
+  }
+  
+  fetch(`../php/get_District.php?province_id=${encodeURIComponent(provinceId)}`)
+    .then(res => {
+      console.log('[LOAD_DISTRICTS_FILTER] Response status:', res.status);
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
+      return res.json();
+    })
+    .then(data => {
+      console.log('[LOAD_DISTRICTS_FILTER] Data:', data);
+      
+      if (data.success && data.data && Array.isArray(data.data)) {
+        console.log('[LOAD_DISTRICTS_FILTER] Got', data.data.length, 'items');
+        data.data.forEach(district => {
+          const option = document.createElement('option');
+          option.value = district.id;
+          option.textContent = district.name;
+          districtSelect.appendChild(option);
+        });
+        console.log('[LOAD_DISTRICTS_FILTER] Loaded successfully');
+      } else {
+        console.warn('[LOAD_DISTRICTS_FILTER] No data:', data);
+      }
+    })
+    .catch(err => {
+      console.error('[LOAD_DISTRICTS_FILTER] Error:', err);
+    });
+};
+
 window.loadCities = function () {
+  console.log("[LOAD_CITIES] Starting to load cities...");
+  
   fetch("../php/get_Cities.php")
     .then((response) => {
+      console.log("[LOAD_CITIES] Response status:", response.status);
       if (!response.ok) {
         throw new Error(`Failed to fetch cities: ${response.status}`);
       }
       return response.json();
     })
     .then((data) => {
+      console.log("[LOAD_CITIES] Data received:", data);
+      
       if (!data.success) {
         throw new Error(data.error || "Unknown error");
       }
+      
       const citySelect = document.getElementById("city-select");
       if (!citySelect) {
-        console.error("Element city-select not found");
+        console.error("[LOAD_CITIES] Element city-select not found");
         return;
       }
+      
+      console.log("[LOAD_CITIES] Found city-select, populating with", data.data.length, "cities");
+      
       citySelect.innerHTML = '<option value="">Chọn thành phố</option>';
       data.data.forEach((city) => {
         const option = document.createElement("option");
@@ -852,44 +838,15 @@ window.loadCities = function () {
         option.textContent = city.name;
         citySelect.appendChild(option);
       });
+      
+      console.log("[LOAD_CITIES] Cities loaded successfully");
     })
     .catch((error) => {
-      console.error("Error loading cities:", error);
+      console.error("[LOAD_CITIES] Error:", error);
       const citySelect = document.getElementById("city-select");
       if (citySelect) {
-        citySelect.innerHTML = '<option value="">Error loading cities</option>';
+        citySelect.innerHTML = '<option value="">Lỗi tải thành phố</option>';
       }
-    });
-};
-
-window.loadDistricts = function (provinceId) {
-  const districtSelect = document.getElementById("district-select");
-  if (!districtSelect) {
-    console.error("Element district-select not found");
-    return;
-  }
-
-  districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-
-  if (!provinceId) return;
-
-  fetch(`../php/get_District.php?province_id=${provinceId}`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success && data.data) {
-        data.data.forEach((district) => {
-          const option = document.createElement("option");
-          option.value = district.id;
-          option.textContent = district.name;
-          districtSelect.appendChild(option);
-        });
-      }
-      // currentPage = 1; // Đặt lại về trang 1 khi tải danh sách quận/huyện
-      // filterOrders();
-    })
-    .catch((error) => {
-      console.error("Error loading districts:", error);
-      districtSelect.innerHTML = '<option value="">Lỗi tải quận/huyện</option>';
     });
 };
 
@@ -978,3 +935,153 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
   initFilters();
 });
+
+
+function showOrderDetailModal(orderId) {
+  console.log('[SHOW_DETAIL] Loading order:', orderId);
+  
+  // Fetch order details from API
+  fetch(`../php/get_order_detail.php?orderId=${encodeURIComponent(orderId)}`)
+    .then(response => response.json())
+    .then(data => {
+      console.log('[ORDER_DETAIL] Data:', data);
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Không thể tải chi tiết đơn hàng');
+      }
+      
+      const order = data.order;
+      console.log('[ORDER_DETAIL] Voucher:', order.voucher);
+      
+      // Build products table HTML
+      let productsHTML = '';
+      order.products.forEach((product, index) => {
+        productsHTML += `
+          <tr>
+            <td style="text-align: center;">${index + 1}</td>
+            <td>${product.productName}</td>
+            <td style="text-align: center;">${product.quantity}</td>
+            <td style="text-align: right;">${parseInt(product.unitPrice).toLocaleString('vi-VN')} VNĐ</td>
+            <td style="text-align: right;">${parseInt(product.totalPrice).toLocaleString('vi-VN')} VNĐ</td>
+          </tr>
+        `;
+      });
+      
+      // Update modal content
+      const modalBody = document.querySelector('#orderDetailModal .modal-body');
+      if (modalBody) {
+        
+        modalBody.innerHTML = `
+          <div style="padding: 20px;">
+            <!-- Order Info Section -->
+            <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📋 Thông tin đơn hàng</h5>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Mã đơn hàng</label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">#${order.orderId}</p>
+                </div>
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Ngày tạo</label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${new Date(order.orderDate).toLocaleString('vi-VN')}</p>
+                </div>
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Phương thức TT</label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.paymentMethod}</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Customer Info Section -->
+            <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">👤 Thông tin khách hàng</h5>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên</label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerName}</p>
+                </div>
+                <div>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại</label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerPhone}</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Address Section -->
+            <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📍 Địa chỉ giao hàng</h5>
+              <p style="margin: 0; color: #333; line-height: 1.6;">${order.address}</p>
+            </div>
+            
+            <!-- Products Section -->
+            <div style="margin-bottom: 30px;">
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📦 Sản phẩm (${order.productCount})</h5>
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background-color: #f8f9fa; border-bottom: 2px solid #ddd;">
+                  <tr>
+                    <th style="padding: 12px; text-align: center; color: #666; font-weight: 600;">STT</th>
+                    <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Sản phẩm</th>
+                    <th style="padding: 12px; text-align: center; color: #666; font-weight: 600;">Số lượng</th>
+                    <th style="padding: 12px; text-align: right; color: #666; font-weight: 600;">Đơn giá</th>
+                    <th style="padding: 12px; text-align: right; color: #666; font-weight: 600;">Tổng</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${productsHTML}
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Voucher Section (if exists) -->
+            ${order.voucher ? `
+              <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 10px; border-left: 5px solid #667eea; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                  <span style="font-size: 24px;">🎁</span>
+                  <h5 style="margin: 0; color: #2c3e50; font-weight: 700; font-size: 16px;">Mã giảm giá đã áp dụng</h5>
+                  <span style="display: inline-block; padding: 4px 10px; background-color: #667eea; color: white; border-radius: 20px; font-size: 11px; font-weight: 600;">Đã dùng</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                  <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
+                    <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Mã voucher</label>
+                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #2c3e50; font-size: 15px;">${order.voucher.name}</p>
+                  </div>
+                  <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
+                    <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Tỷ lệ giảm</label>
+                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #e74c3c; font-size: 15px;">${order.voucher.discountPercent}%</p>
+                  </div>
+                  <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
+                    <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Số tiền giảm</label>
+                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #27ae60; font-size: 15px;">-${parseInt(order.voucher.discountAmount).toLocaleString('vi-VN')} VNĐ</p>
+                  </div>
+                </div>
+                ${order.voucher.conditions ? `
+                  <div style="margin-top: 12px; padding: 10px; background-color: rgba(100,150,200,0.1); border-radius: 6px; border-left: 3px solid #3498db;">
+                    <label style="color: #2c3e50; font-size: 11px; text-transform: uppercase; font-weight: 600;">Điều kiện áp dụng</label>
+                    <p style="margin: 6px 0 0 0; color: #555; font-size: 13px;">${order.voucher.conditions}</p>
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+            
+            <!-- Total Section -->
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 16px; font-weight: 600; color: #333;">Tổng cộng:</span>
+                <span style="font-size: 24px; font-weight: 700; color: #667eea;">${parseInt(order.totalAmount).toLocaleString('vi-VN')} VNĐ</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Show modal
+      const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+      modal.show();
+      
+      console.log('[ORDER_DETAIL] Modal displayed successfully');
+    })
+    .catch(error => {
+      console.error('[ERROR_DETAIL]', error);
+      alert('Lỗi khi tải chi tiết đơn hàng: ' + error.message);
+    });
+}

@@ -1,10 +1,6 @@
 <?php
-// include '../php/check_session.php';
-// session_name('admin_session');
-// session_start();
 require_once '../php/connect.php';
 require_once '../php/ProductManager.php';
-
 $db = new DatabaseConnection();
 $db->connect();
 global $db;
@@ -125,13 +121,13 @@ global $mysqli;
         </div>
       </div>
       <div>
-        <img class="avatar" src="../../assets/images/admin.jpg" alt="" data-bs-toggle="offcanvas"
+        <img class="avatar" src="../../assets/images/sang.jpg" alt="" data-bs-toggle="offcanvas"
           data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">
       </div>
       <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="offcanvasWithBothOptions"
         aria-labelledby="offcanvasWithBothOptionsLabel">
         <div style="border-bottom: 1px solid rgb(176, 176, 176);" class="offcanvas-header">
-          <img class="avatar" src="../../assets/images/admin.jpg" alt="">
+          <img class="avatar" src="../../assets/images/sang.jpg" alt="">
           <div class="admin">
             <h4 class="offcanvas-title" id="offcanvasWithBothOptionsLabel">Username</h4>
             <h5 id="employee-displayname">Họ tên</h5>
@@ -232,6 +228,8 @@ global $mysqli;
           <i class="fa-solid fa-magnifying-glass"></i>
         </button>
       </form>
+
+      <p id="searchResultText" style="display: none; margin-top: 10px; font-style: italic; color: #555;"></p>
 
       <div class="filters-container">
         <div class="filters-row">
