@@ -24,7 +24,7 @@ if (!class_exists('DatabaseConnection')) {
       );
 
       if ($this->connection->connect_error) {
-        die("Kết nối thất bại: " . $this->connection->connect_error);
+        throw new Exception("Kết nối thất bại: " . $this->connection->connect_error);
       }
 
       $this->connection->query("SET NAMES 'UTF8'");
@@ -33,13 +33,13 @@ if (!class_exists('DatabaseConnection')) {
     public function query($sql)
     {
       if (!$this->connection) {
-        die("Chưa kết nối đến cơ sở dữ liệu");
+        throw new Exception("Chưa kết nối đến cơ sở dữ liệu");
       }
 
       $result = $this->connection->query($sql);
 
       if ($result === false) {
-        die("Lỗi truy vấn: " . $this->connection->error);
+        throw new Exception("Lỗi truy vấn: " . $this->connection->error);
       }
 
       return $result;
@@ -57,12 +57,12 @@ if (!class_exists('DatabaseConnection')) {
     public function queryPrepared($sql, $params = [], $types = "")
     {
       if (!$this->connection) {
-        $this->connect();
+        throw new Exception("Chưa kết nối đến cơ sở dữ liệu");
       }
 
       $stmt = $this->connection->prepare($sql);
       if (!$stmt) {
-        die("Lỗi prepare: " . $this->connection->error);
+        throw new Exception("Lỗi prepare: " . $this->connection->error);
       }
 
       if (!empty($params)) {
@@ -90,3 +90,5 @@ if (!class_exists('DatabaseConnection')) {
     }
   }
 }
+
+?>

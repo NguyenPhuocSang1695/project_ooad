@@ -42,9 +42,27 @@ class SessionManager {
         echo json_encode($mgr->getUserInfo(), JSON_UNESCAPED_UNICODE);
         exit;
     }
+<<<<<<< HEAD
 }
 
 // Nếu file này được gọi trực tiếp (qua fetch / request), trả JSON
 if (basename(__FILE__) === basename($_SERVER['PHP_SELF'])) {
     SessionManager::handleRequest();
 }
+=======
+
+    echo json_encode([
+        'status' => 'success',
+        'username' => $_SESSION['Username'],
+        'fullname' => $_SESSION['FullName'],
+        'role' => $_SESSION['Role'],
+        'avatar' => $defaultAvatar
+    ]);
+} else {
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Không tìm thấy thông tin đăng nhập'
+    ]);
+}
+?>
+>>>>>>> develop

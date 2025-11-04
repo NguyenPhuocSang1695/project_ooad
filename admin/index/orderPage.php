@@ -1,5 +1,12 @@
 <?php
-include '../php/check_session.php';
+// include '../php/check_session.php';
+session_name('admin_session');
+
+$pagination = [
+    'currentPage' => 1,
+    'totalPages' => 1
+];
+$orders = [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +30,7 @@ include '../php/check_session.php';
       text-decoration: none;
 
     }
-
+ 
     .container-function-selection {
       cursor: pointer;
       font-size: 10px;
@@ -117,6 +124,44 @@ include '../php/check_session.php';
       animation: fadeOutScale 0.3s ease forwards;
     }
 
+    /* Filter and Add Order Section */
+    .filter-section {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #add-order-button {
+      background-color: #28a745;
+      border-color: #28a745;
+    }
+
+    #add-order-button:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
+
+    /* Add Order Form Styles */
+    .product-item {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .remove-product {
+      padding: 5px 8px;
+    }
+
+    .product-price {
+      background-color: #f8f9fa;
+    }
+
+    #total-amount {
+      font-weight: bold;
+      color: #28a745;
+    }
+
     /* Pagination Styles */
     .select_list {
       display: flex;
@@ -145,6 +190,45 @@ include '../php/check_session.php';
       cursor: not-allowed;
       opacity: 0.5;
     }
+
+    /* Order Detail Modal Styles */
+    #orderDetailModal .modal-dialog {
+      max-width: 700px;
+    }
+
+    #orderDetailModal .modal-content {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    #orderDetailModal .modal-header {
+      background: #667eea;
+      color: white;
+      border-radius: 12px 12px 0 0;
+      border: none;
+      padding: 20px;
+    }
+
+    #orderDetailModal .modal-header .modal-title {
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    #orderDetailModal .btn-close {
+      filter: brightness(0) invert(1);
+    }
+
+    #orderDetailModal .modal-body {
+      padding: 0;
+      background: white;
+    }
+
+    #orderDetailModal .modal-footer {
+      border-top: 1px solid #eee;
+      padding: 15px 20px;
+    }
+
 
     #pageNumbers {
       display: flex;
@@ -175,7 +259,6 @@ include '../php/check_session.php';
       color: #666;
     }
   </style>
-
 </head>
 
 <body>
@@ -286,7 +369,14 @@ include '../php/check_session.php';
             <p>Thống kê</p>
           </div>
         </a>
-
+            <a href="voucherManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Mã giảm giá</p>
+      </div>
+    </a>
         <a href="accountPage.php" style="text-decoration: none; color: black;">
           <div class="container-function-selection">
             <button class="button-function-selection">
@@ -343,6 +433,14 @@ include '../php/check_session.php';
           <p>Thống kê</p>
         </div>
       </a>
+          <a href="voucherManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Mã giảm giá</p>
+      </div>
+    </a>
       <a href="accountPage.php" style="text-decoration: none; color: black;">
         <div class="container-function-selection">
           <button class="button-function-selection">
@@ -361,6 +459,137 @@ include '../php/check_session.php';
           <button type="button" class="btn btn-primary" id="filter-button" data-bs-toggle="modal" data-bs-target="#filterModal">
             <i class="fas fa-filter"></i> Bộ lọc
           </button>
+          <button type="button" class="btn btn-success" id="add-order-button" data-bs-toggle="modal" data-bs-target="#addOrderModal">
+            <i class="fas fa-plus"></i> Thêm đơn hàng
+          </button>
+        </div>
+
+        <!-- Modal thêm đơn hàng mới -->
+        <div class="modal fade" id="addOrderModal" tabindex="-1" aria-labelledby="addOrderModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="addOrderModalLabel">Thêm đơn hàng mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <form id="add-order-form">
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label for="customer-name" class="form-label">Tên khách hàng:</label>
+                      <input type="text" class="form-control" id="customer-name" name="customer_name" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="customer-phone" class="form-label">Số điện thoại:</label>
+                      <input type="tel" class="form-control" id="customer-phone" name="customer_phone" pattern="[0-9]*" maxlength="10" required>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <div id="customer-history" style="display: none; padding: 10px; background-color: #e7f3ff; border-left: 4px solid #2196F3; border-radius: 4px;">
+                      <h6 style="margin: 0; color: #1976D2;">Lịch sử mua hàng</h6>
+                      <p id="history-message" style="margin: 5px 0; color: #555; font-size: 14px;"></p>
+                      <small id="history-details" style="color: #999;"></small>
+                    </div>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label class="form-label">Địa chỉ giao hàng:</label>
+                    <div class="row">
+                      <div class="col-md-4 mb-2">
+                        <select id="add-province" name="province" class="form-control" required>
+                          <option value="">Chọn tỉnh/thành</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4 mb-2">
+                        <select id="add-district" name="district" class="form-control" required>
+                          <option value="">Chọn quận/huyện</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4 mb-2">
+                        <select id="add-ward" name="ward" class="form-control" required>
+                          <option value="">Chọn phường/xã</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="mt-2">
+                      <input type="text" class="form-control" id="address-detail" name="address_detail" 
+                             placeholder="Số nhà, tên đường..." required>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label for="payment-method" class="form-label">Phương thức thanh toán:</label>
+                      <select class="form-control" id="payment-method" name="payment_method" required>
+                        <option value="">Chọn phương thức</option>
+                        <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+                        <option value="BANKING">Chuyển khoản ngân hàng</option>
+                        <option value="MOMO">Ví điện tử MoMo</option>
+                        <option value="VNPAY">VNPay</option>
+                      </select>
+                    </div>
+                  </div>
+
+             
+                  <div class="mb-3">
+                    <label for="voucher-select" class="form-label">Mã giảm giá (Voucher):</label>
+                    <select class="form-control" id="voucher-select" name="voucher_id">
+                      <option value="">-- Không dùng voucher --</option>
+                    </select>
+                    <small id="voucher-message" class="form-text" style="margin-top: 5px;"></small>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Tổng tiền gốc:</label>
+                      <input type="text" class="form-control" id="original-total" readonly style="background-color: #f8f9fa;">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Số tiền giảm:</label>
+                      <input type="text" class="form-control" id="discount-amount" readonly style="background-color: #fff3cd; color: #856404;">
+                    </div>
+                  </div>
+
+                  <div class="products-section mb-3">
+                    <h6 class="mb-3">Sản phẩm</h6>
+                    <div id="product-list">
+                      <div class="product-item row mb-2">
+                        <div class="col-md-5">
+                          <select class="form-control product-select" name="products[]" required>
+                            <option value="">Chọn sản phẩm</option>
+                          </select>
+                        </div>
+                        <div class="col-md-3">
+                          <input type="number" class="form-control product-quantity" name="quantities[]" 
+                                 placeholder="Số lượng" min="1" required>
+                        </div>
+                        <div class="col-md-3">
+                          <input type="text" class="form-control product-price" readonly>
+                        </div>
+                        <div class="col-md-1">
+                          <button type="button" class="btn btn-danger btn-sm remove-product">
+                            <i class="fas fa-times"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm mt-2" id="add-product">
+                      <i class="fas fa-plus"></i> Thêm sản phẩm
+                    </button>
+                  </div>
+
+                  <div class="mb-3">
+                    <h6>Tổng tiền: <span id="total-amount">0</span> VNĐ</h6>
+                  </div>
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="submit" form="add-order-form" class="btn btn-primary">Thêm đơn hàng</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Modal hiển thị thông tin cần lọc -->
@@ -380,17 +609,6 @@ include '../php/check_session.php';
                   <div class="mb-3">
                     <label for="date-to" class="form-label">Đến ngày:</label>
                     <input type="date" id="date-to" name="date_to" class="form-control">
-                  </div>
-                  <div class="mb-3">
-                    <label for="order-status" class="form-label">Trạng thái:</label>
-                    <select id="order-status" name="order_status" class="form-control">
-                      <option value="all">Tất cả</option>
-                      <option value="execute">Chờ xác nhận</option>
-                      <option value="confirmed">Đã xác nhận</option>
-                      <option value="ship">Đang giao</option>
-                      <option value="success">Hoàn thành</option>
-                      <option value="fail">Đã hủy</option>
-                    </select>
                   </div>
                   <div class="mb-3">
                     <label for="city-select" class="form-label">Tỉnh/Thành phố:</label>
@@ -438,13 +656,25 @@ include '../php/check_session.php';
                 <th class="hide-index-tablet ">Người mua</th>
                 <th>Ngày tạo</th>
                 <th class="hide-index-mobile">Giá tiền (VND)</th>
-                <th>Trạng thái</th>
                 <th>Địa chỉ giao hàng</th>
-                <th></th>
               </tr>
             </thead>
             <tbody id="order-table-body">
-              <!-- Dynamic content will be inserted here by JavaScript -->
+              <?php
+              if (!empty($orders)) {
+                  foreach ($orders as $o) {
+                      echo '<tr>';
+                      echo '<td>#' . htmlspecialchars($o['OrderID']) . '</td>';
+                      echo '<td class="hide-index-tablet">' . htmlspecialchars($o['CustomerName']) . '</td>';
+                      echo '<td>' . htmlspecialchars($o['DateGeneration']) . '</td>';
+                      echo '<td class="hide-index-mobile">' . number_format($o['TotalAmount']) . '</td>';
+                      echo '<td>' . htmlspecialchars($o['Province'] . ', ' . $o['District'] . ', ' . $o['Ward']) . '</td>';
+                      echo '</tr>';
+                  }
+              } else {
+                  echo '<tr><td colspan="5">Không có đơn hàng</td></tr>';
+              }
+              ?>
             </tbody>
           </table>
         </div>
@@ -455,17 +685,39 @@ include '../php/check_session.php';
             <button onclick="closeUpdateStatusPopup()" class="close-btn">Đóng</button>
           </div>
         </div>
+
+        <!-- Modal Chi tiết đơn hàng -->
+        <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailLabel">Chi tiết đơn hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div id="orderDetailContent" style="max-height: 600px; overflow-y: auto;">
+                  <!-- Chi tiết sẽ được load bằng JavaScript -->
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="select_list" id="pagination-container">
-          <button id="prevPage">
-            < </button>
-              <div id="pageNumbers"></div>
-              <button id="nextPage">></button>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="page-btn" id="prevPage">&lt;</button>
+            <div id="pageNumbers"></div>
+            <button class="page-btn" id="nextPage">&gt;</button>
+          </div>
         </div>
       </div>
     </div>
     <script src="../js/checklog.js"></script>
     <script src="./asset/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../js/orderPage.js"></script>
+    <script src="../js/add-order.js"></script>
 </body>
 
 </html>

@@ -1,24 +1,13 @@
-<?php
-include '../php/check_session.php';
+<?php 
+// Đơn giản kiểm tra session
+session_name('admin_session');
+session_start();
 
-class AnalyzePage {
-    private array $userInfo;
-
-    public function __construct() {
-        // Nếu check_session.php lưu thông tin user vào $_SESSION, dùng nó; nếu không thì dùng fallback
-        $this->userInfo = $_SESSION['user'] ?? [
-            'fullname' => 'Ẩn danh',
-            'role' => 'Chức vụ',
-            'avatar' => '../../assets/images/admin.jpg'
-        ];
-    }
-
-    public function render(): void {
-        $fullname = htmlspecialchars($this->userInfo['FullName'] ?? $this->userInfo['fullname']);
-        $role = htmlspecialchars($this->userInfo['Role'] ?? $this->userInfo['role']);
-        $avatar = htmlspecialchars($this->userInfo['Avatar'] ?? $this->userInfo['avatar']);
-
-        echo <<<HTML
+if (!isset($_SESSION['Username'])) {
+    header('Location: ../index.php');
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
