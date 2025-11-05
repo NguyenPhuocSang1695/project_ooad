@@ -3,30 +3,30 @@ header('Content-Type: application/json');
 require_once 'connect.php';
 
 try {
+    $db = new DatabaseConnection();
+    $db->connect();
+    
     $district_id = filter_input(INPUT_GET, 'district_id', FILTER_VALIDATE_INT);
     
     if (!$district_id) {
         throw new Exception('Invalid district ID');
     }
 
-    $sql = "SELECT wards_id as ward_id, name FROM wards WHERE district_id = ? ORDER BY name";
-    $stmt = $myconn->prepare($sql);
-    $stmt->bind_param("i", $district_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $sql = "SELECT ward_id, name FROM ward WHERE district_id = ? ORDER BY name";
+    $result = $db->queryPrepared($sql, [$district_id], 'i');
 
-    $wards = [];
+    $data = [];
     while ($row = $result->fetch_assoc()) {
-        $wards[] = $row;
+        $data[] = [
+            'id' => $row['ward_id'],
+            'name' => $row['name']
+        ];
     }
-
-    echo json_encode($wards);
+ 
+    $db->close();
+    echo json_encode(['success' => true, 'data' => $data]);
 } catch (Exception $e) {
-    http_response_code(400);
-    echo json_encode(['error' => $e->getMessage()]);
-} finally {
-    if (isset($myconn)) {
-        $myconn->close();
-    }
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 ?> 
