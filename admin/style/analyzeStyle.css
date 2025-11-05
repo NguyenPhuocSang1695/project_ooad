@@ -917,10 +917,10 @@ table tbody tr {
   justify-content: space-between;
 }
 
-#top-products-table, thead, tr, th {
-      background: #1c8e2e;
-    color: white;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+#top-products-table thead tr th {
+  background: #1c8e2e;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
