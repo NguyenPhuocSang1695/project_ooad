@@ -1,24 +1,27 @@
 <?php
 include '../php/check_session.php';
 
-class AnalyzePage {
-    private array $userInfo;
+class AnalyzePage
+{
+  private array $userInfo;
 
-    public function __construct() {
-        // Nếu check_session.php lưu thông tin user vào $_SESSION, dùng nó; nếu không thì dùng fallback
-        $this->userInfo = $_SESSION['user'] ?? [
-            'fullname' => 'Ẩn danh',
-            'role' => 'Chức vụ',
-            'avatar' => '../../assets/images/admin.jpg'
-        ];
-    }
+  public function __construct()
+  {
+    // Nếu check_session.php lưu thông tin user vào $_SESSION, dùng nó; nếu không thì dùng fallback
+    $this->userInfo = $_SESSION['user'] ?? [
+      'fullname' => 'Ẩn danh',
+      'role' => 'Chức vụ',
+      'avatar' => '../../assets/images/admin.jpg'
+    ];
+  }
 
-    public function render(): void {
-        $fullname = htmlspecialchars($this->userInfo['FullName'] ?? $this->userInfo['fullname']);
-        $role = htmlspecialchars($this->userInfo['Role'] ?? $this->userInfo['role']);
-        $avatar = htmlspecialchars($this->userInfo['Avatar'] ?? $this->userInfo['avatar']);
+  public function render(): void
+  {
+    $fullname = htmlspecialchars($this->userInfo['FullName'] ?? $this->userInfo['fullname']);
+    $role = htmlspecialchars($this->userInfo['Role'] ?? $this->userInfo['role']);
+    $avatar = htmlspecialchars($this->userInfo['Avatar'] ?? $this->userInfo['avatar']);
 
-        echo <<<HTML
+    echo <<<HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -214,7 +217,6 @@ class AnalyzePage {
 
     <!-- Container 1: Khách hàng -->
     <div class="container">
-      <h1>Thống Kê Khách Hàng Mua Hàng Nhiều Nhất</h1>
       <div class="filter-section">
         <form id="analyze-form" method="POST" action="">
           <label for="start-date">Từ ngày:</label>
@@ -224,7 +226,7 @@ class AnalyzePage {
           <button type="submit" name="submit">Lọc <i class="fa-solid fa-filter"></i></button>
         </form>
       </div>
-
+        <h2>Khách hàng mua hàng nhiều nhất</h2>
       <table>
         <thead>
           <tr style="text-align: center;">
@@ -241,6 +243,58 @@ class AnalyzePage {
           </tr>
         </tbody>
       </table>
+      
+    <h2 class="section-title">Sản phẩm bán chạy nhất</h2>
+<table class="table" id="top-products-table">
+  <thead>
+    <tr style="text-align: center;">
+      <th>STT</th>
+      <th>Tên sản phẩm</th>
+      <th>Số lượng bán</th>
+      <th>Tổng tiền (VND)</th>
+    </tr>
+  </thead>
+  <style>
+    #top-products-table thead tr th {
+      background: #1c8e2e;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+  </style>
+  <tbody id="top-products-body">
+    <tr><td colspan="4" style="text-align:center;">Đang tải...</td></tr>
+  </tbody>
+</table>
+
+<h2 class="section-title">Sản phẩm bán chậm nhất</h2>
+<table class="table" id="worst-products-table">
+  <thead>
+    <tr style="text-align: center;">
+      <th>STT</th>
+      <th>Tên sản phẩm</th>
+      <th>Số lượng bán</th>
+      <th>Tổng tiền (VND)</th>
+    </tr>
+  </thead>
+  <style>
+    #worst-products-table thead tr th {
+      background: #1c8e2e;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    
+}
+  </style>
+  <tbody id="worst-products-body">
+    <tr><td colspan="4" style="text-align:center;">Đang tải...</td></tr>
+  </tbody>
+</table>
+
+
+
 
       <div class="revenue-summary">
         <h2>Tổng quan doanh thu</h2>
@@ -340,7 +394,7 @@ class AnalyzePage {
 </body>
 </html>
 HTML;
-    }
+  }
 }
 
 // Instantiate and render page
