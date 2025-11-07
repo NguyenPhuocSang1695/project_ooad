@@ -112,8 +112,9 @@
 
 .order-section,
 .inventory-section {
-  margin-bottom: 30px;
+  margin: 0 0 30px 50px;
 }
+
 
 .section-title {
   font-size: 18px;
