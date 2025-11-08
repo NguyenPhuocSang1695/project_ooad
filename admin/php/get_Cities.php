@@ -1,25 +1,30 @@
 <?php
-header('Content-Type: application/json');
-include 'connect.php';
+header('Content-Type: application/json; charset=utf-8');
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
 
-if ($myconn->connect_error) {
-    echo json_encode(['success' => false, 'error' => 'Connection failed: ' . $myconn->connect_error]);
-    exit;
+require_once 'connect.php';
+
+try {
+    $db = new DatabaseConnection();
+    $db->connect();
+
+    $result = $db->queryPrepared('SELECT province_id, name FROM province ORDER BY name ASC');
+    $data = [];
+
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $data[] = [
+                'id' => intval($row['province_id']),
+                'name' => trim($row['name'])
+            ];
+        }
+    }
+
+    $db->close();
+    echo json_encode(['success' => true, 'data' => $data], JSON_UNESCAPED_UNICODE);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
 }
-$myconn->set_charset("utf8");
-
-$stmt = $myconn->prepare('SELECT province_id, name FROM province ORDER BY name ASC');
-$stmt->execute();
-$result = $stmt->get_result();
-$data = [];
-
-while ($row = $result->fetch_assoc()) {
-    $data[] = [
-        'id' => $row['province_id'],
-        'name' => $row['name']
-    ];
-}
-
-$stmt->close();
-echo json_encode(['success' => true, 'data' => $data]);
 ?>

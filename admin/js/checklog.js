@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     role: data.role,
                     avatar: data.role === 'admin' ? '../../assets/images/admin.jpg' : '../../assets/images/sang.jpg'
                 };
-                
+
                 // Lưu thông tin vào localStorage
                 localStorage.setItem('userInfo', JSON.stringify(userInfo));
                 updateUIWithUserInfo(userInfo);

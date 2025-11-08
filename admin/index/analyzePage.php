@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 include '../php/check_session.php';
 
@@ -22,6 +23,18 @@ class AnalyzePage
     $avatar = htmlspecialchars($this->userInfo['Avatar'] ?? $this->userInfo['avatar']);
 
     echo <<<HTML
+=======
+<?php 
+// Đơn giản kiểm tra session
+session_name('admin_session');
+session_start();
+
+if (!isset($_SESSION['Username'])) {
+    header('Location: ../index.php');
+    exit();
+}
+?>
+>>>>>>> b2faa1ab4ac6073e485f899cc26aa82a76fc2eb6
 <!DOCTYPE html>
 <html lang="en">
 <head>
