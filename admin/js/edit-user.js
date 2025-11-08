@@ -26,47 +26,19 @@
     catch(e){ console.error('Non-JSON response from', url, text); throw new Error('Phản hồi không hợp lệ'); }
   }
 
-  async function loadProvinces(selectEl){
-    if (!selectEl) return;
-    const data = await fetchJSON('../php/get_provinces.php');
-    selectEl.innerHTML = '<option value="">Chọn tỉnh/thành phố</option>';
-    (data||[]).forEach(p=>{
-      const o = document.createElement('option');
-      o.value = p.province_id; o.textContent = p.name; selectEl.appendChild(o);
-    });
-  }
-  async function loadDistricts(provinceId, selectEl){
-    if (!selectEl) return;
-    selectEl.innerHTML = '<option value="">Chọn quận/huyện</option>';
-    if (!provinceId) return;
-    const data = await fetchJSON('../php/get_districts.php?province_id=' + encodeURIComponent(provinceId));
-    (data||[]).forEach(d=>{ const o=document.createElement('option'); o.value=d.district_id; o.textContent=d.name; selectEl.appendChild(o); });
-  }
-  async function loadWards(districtId, selectEl){
-    if (!selectEl) return;
-    selectEl.innerHTML = '<option value="">Chọn phường/xã</option>';
-    if (!districtId) return;
-    const data = await fetchJSON('../php/get_wards.php?district_id=' + encodeURIComponent(districtId));
-    (data||[]).forEach(w=>{ const o=document.createElement('option'); o.value=w.ward_id; o.textContent=w.name; selectEl.appendChild(o); });
-  }
-
   // Expose function used by inline onclick
   window.showEditUserPopup = async function(username, userId){
     try{
       const modalEl = document.getElementById('editUserModal');
       if (!modalEl){ alert('Không tìm thấy form sửa người dùng'); return; }
       modalCtrl.open();
-      const provinceSel = document.getElementById('edit_province');
-      const districtSel = document.getElementById('edit_district');
-      const wardSel = document.getElementById('edit_ward');
-  const passRow = document.getElementById('edit_password_row');
-  const passInput = document.getElementById('edit_password');
-  const passConfirm = document.getElementById('edit_confirm_password');
+
+      const passRow = document.getElementById('edit_password_row');
+      const passInput = document.getElementById('edit_password');
+      const passConfirm = document.getElementById('edit_confirm_password');
       const usernameInput = document.getElementById('edit_username');
       const originalUsernameInput = document.getElementById('edit_original_username');
-  const usernameCol = document.getElementById('edit_username_col');
-
-      await loadProvinces(provinceSel);
+      const usernameCol = document.getElementById('edit_username_col');
 
       let query = '';
       if (username && username.trim() !== '') {
@@ -85,25 +57,12 @@
       }
       originalUsernameInput && (originalUsernameInput.value = u.username || '');
       usernameInput && (usernameInput.value = u.username || '');
-  var el;
-  if ((el = document.getElementById('edit_fullname'))) el.value = u.fullname || '';
-  if ((el = document.getElementById('edit_phone'))) el.value = u.phone || '';
-  if ((el = document.getElementById('edit_role'))) el.value = u.role || 'customer';
-  if ((el = document.getElementById('edit_status'))) el.value = u.status || 'Active';
-  if ((el = document.getElementById('edit_address'))) el.value = u.address_detail || '';
-
-      // Prefill address hierarchy
-      if (u.province_id){
-        provinceSel.value = String(u.province_id);
-        await loadDistricts(u.province_id, districtSel);
-      } else { districtSel.innerHTML = '<option value="">Chọn quận/huyện</option>'; }
-
-      if (u.district_id){
-        districtSel.value = String(u.district_id);
-        await loadWards(u.district_id, wardSel);
-      } else { wardSel.innerHTML = '<option value=\"\">Chọn phường/xã</option>'; }
-
-      if (u.ward_id){ wardSel.value = String(u.ward_id); }
+      
+      var el;
+      if ((el = document.getElementById('edit_fullname'))) el.value = u.fullname || '';
+      if ((el = document.getElementById('edit_phone'))) el.value = u.phone || '';
+      if ((el = document.getElementById('edit_role'))) el.value = u.role || 'customer';
+      if ((el = document.getElementById('edit_status'))) el.value = u.status || 'Active';
 
       // Determine session and permissions
       let canEditSelf = false;
@@ -147,15 +106,6 @@
           if (disabled){ passInput.value = ''; passConfirm.value = ''; }
         }
       }
-
-      // Cascades
-      provinceSel && (provinceSel.onchange = async (e)=>{
-        await loadDistricts(e.target.value, districtSel);
-        wardSel.innerHTML = '<option value="">Chọn phường/xã</option>';
-      });
-      districtSel && (districtSel.onchange = async (e)=>{
-        await loadWards(e.target.value, wardSel);
-      });
     } catch (e){
       console.error(e); alert(e.message || 'Lỗi mở form sửa người dùng'); modalCtrl.close();
     }
@@ -186,3 +136,4 @@
     }
   });
 })();
+
