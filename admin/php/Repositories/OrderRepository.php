@@ -19,7 +19,7 @@ class OrderRepository {
         try {
             $conn = $this->db->getConnection();
             
-            $query = "SELECT o.*, 
+            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod,
                              a.address_detail, 
                              w.name as ward_name, 
                              d.name as district_name, 
@@ -85,11 +85,6 @@ class OrderRepository {
                 $params[] = $filters['date_to'];
                 $types .= "s";
             }
-            if (!empty($filters['order_status']) && $filters['order_status'] !== 'all') {
-                $whereConditions[] = "o.Status = ?";
-                $params[] = $filters['order_status'];
-                $types .= "s";
-            }
             if (!empty($filters['province_id'])) {
                 $whereConditions[] = "p.province_id = ?";
                 $params[] = intval($filters['province_id']);
@@ -121,7 +116,7 @@ class OrderRepository {
             $stmt->close();
             
             // Get orders with pagination
-            $query = "SELECT o.OrderID, o.DateGeneration, o.Status, o.TotalAmount, o.CustomerName, o.Phone, 
+            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod,
                              a.address_detail, w.name as ward_name, d.name as district_name, p.name as province_name " 
                     . $baseQuery . $whereClause . " ORDER BY o.DateGeneration DESC LIMIT ? OFFSET ?";
             
@@ -171,8 +166,8 @@ class OrderRepository {
             $order->validate();
             
             $conn = $this->db->getConnection();
-            $query = "INSERT INTO orders (user_id, CustomerName, Phone, PaymentMethod, Status, address_id, voucher_id, DateGeneration, TotalAmount) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
+            $query = "INSERT INTO orders (user_id, CustomerName, Phone, PaymentMethod, address_id, voucher_id, DateGeneration, TotalAmount) 
+                      VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)";
             
             $stmt = $conn->prepare($query);
             if (!$stmt) {
@@ -183,12 +178,11 @@ class OrderRepository {
             $customerName = $order->getCustomerName();
             $phone = $order->getPhone();
             $paymentMethod = $order->getPaymentMethod();
-            $status = $order->getStatus();
             $addressId = $order->getAddressId();
             $voucherId = $order->getVoucherId();
             $totalAmount = $order->getTotalAmount();
             
-            $stmt->bind_param("isssssii", $userId, $customerName, $phone, $paymentMethod, $status, $addressId, $voucherId, $totalAmount);
+            $stmt->bind_param("issssii", $userId, $customerName, $phone, $paymentMethod, $addressId, $voucherId, $totalAmount);
             
             if (!$stmt->execute()) {
                 throw new Exception("Insert failed: " . $stmt->error);
@@ -200,43 +194,6 @@ class OrderRepository {
             return $orderId;
         } catch (Exception $e) {
             throw new Exception("Error creating order: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Update order status
-     */
-    public function updateStatus($orderId, $status) {
-        try {
-            $conn = $this->db->getConnection();
-            
-            $validStatuses = ['execute', 'confirmed', 'ship', 'success', 'fail'];
-            if (!in_array($status, $validStatuses)) {
-                throw new Exception("Invalid status: " . $status);
-            }
-            
-            $query = "UPDATE orders SET Status = ? WHERE OrderID = ?";
-            $stmt = $conn->prepare($query);
-            if (!$stmt) {
-                throw new Exception("Prepare failed: " . $conn->error);
-            }
-            
-            $stmt->bind_param("si", $status, $orderId);
-            
-            if (!$stmt->execute()) {
-                throw new Exception("Update failed: " . $stmt->error);
-            }
-            
-            $affectedRows = $stmt->affected_rows;
-            $stmt->close();
-            
-            if ($affectedRows <= 0) {
-                throw new Exception("Order not found: " . $orderId);
-            }
-            
-            return true;
-        } catch (Exception $e) {
-            throw new Exception("Error updating order status: " . $e->getMessage());
         }
     }
 
@@ -276,7 +233,7 @@ class OrderRepository {
             
             $conn = $this->db->getConnection();
             
-            $query = "UPDATE orders SET CustomerName = ?, Phone = ?, PaymentMethod = ?, Status = ?, TotalAmount = ? 
+            $query = "UPDATE orders SET CustomerName = ?, Phone = ?, PaymentMethod = ?, TotalAmount = ? 
                       WHERE OrderID = ?";
             
             $stmt = $conn->prepare($query);
@@ -288,10 +245,9 @@ class OrderRepository {
             $customerName = $order->getCustomerName();
             $phone = $order->getPhone();
             $paymentMethod = $order->getPaymentMethod();
-            $status = $order->getStatus();
             $totalAmount = $order->getTotalAmount();
             
-            $stmt->bind_param("ssssi", $customerName, $phone, $paymentMethod, $status, $totalAmount, $orderId);
+            $stmt->bind_param("sssii", $customerName, $phone, $paymentMethod, $totalAmount, $orderId);
             
             if (!$stmt->execute()) {
                 throw new Exception("Update failed: " . $stmt->error);
