@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </button>
                         </td>
                     </tr>`).join('')
-                : '<tr><td colspan="6" style="text-align:center;">Không có dữ liệu</td></tr>';
+                : '<tr><td colspan="5" style="text-align:center;">Không có dữ liệu</td></tr>';
         }
     }
 
@@ -190,6 +190,68 @@ function updateWorstProductsTable(worstProducts) {
         .join('')
     : '<tr><td colspan="4" style="text-align:center;">Không có dữ liệu</td></tr>';
 }
+
+window.showOrderList = function(customerOrProductName, orderLinks) {
+    const modal = document.getElementById('orderDetailModal');
+    const modalBody = document.getElementById('orderDetailBody');
+
+    if (!modal || !modalBody) {
+        alert("Không tìm thấy modal để hiển thị danh sách đơn hàng!");
+        return;
+    }
+
+    // Tạo danh sách đơn hàng
+const ordersHTML = orderLinks.length
+  ? orderLinks.map(link => `
+      <li>Đơn hàng ${link.id}</></li>
+    `).join('')
+  : '<li>Không có đơn hàng nào</li>';
+
+
+    // Cập nhật nội dung modal
+    modalBody.innerHTML = `
+        <h4>Đơn hàng của: ${customerOrProductName}</h4>
+        <ul>${ordersHTML}</ul>
+    `;
+
+    // Hiện modal (nếu bạn dùng Bootstrap)
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+};
+
+// window.showOrderList = function(customerName, orderList) {
+//     const modal = document.getElementById('orderDetailModal');
+//     const message = document.getElementById('orderMessage');
+
+//     if (!modal || !message) {
+//         alert("Không tìm thấy modal để hiển thị thông tin!");
+//         return;
+//     }
+
+//     console.log("Danh sách đơn hàng:", orderList);
+
+//     // Lấy danh sách ID đơn hàng
+//     let orderIds = "";
+//     if (Array.isArray(orderList)) {
+//         orderIds = orderList.map(o => o.OrderID).join(", ");
+//     } else {
+//         orderIds = orderList; // đề phòng chỉ có 1 đơn
+//     }
+
+//     // Hiển thị nội dung
+//     message.innerHTML = `<h3>${customerName} đã đặt các đơn hàng có ID: ${orderIds}.</h3>`;
+
+//     // Hiện modal
+//     modal.style.display = 'block';
+
+//     // Đóng modal khi bấm dấu × hoặc nền đen
+//     const closeBtn = modal.querySelector('.order-modal-close');
+//     closeBtn.onclick = () => modal.style.display = 'none';
+//     window.onclick = (event) => {
+//         if (event.target === modal) modal.style.display = 'none';
+//     };
+// };
+
 
     // === SUBMIT FORM ===
     form.addEventListener('submit', function(event) {
