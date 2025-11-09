@@ -169,7 +169,7 @@ class UserManager
 
     /**
      * Add a new user into database
-     * Expects keys: username, fullname, phone, password, role, status, province, district, ward, address
+     * Expects keys: username, fullname, phone, password, role, status
      * Rule: If role = customer, username and password are optional and will not be inserted when empty.
      * Returns [success=>bool, message=>string]
      */
@@ -185,10 +185,6 @@ class UserManager
         $statusIn = isset($data['status']) ? (string)$data['status'] : '1';
         // Map to DB enum: Active | Block
         $status   = (strtolower($statusIn) === 'block' || $statusIn === '0' || strtolower($statusIn) === 'inactive') ? 'Block' : 'Active';
-        $province = isset($data['province']) && $data['province'] !== '' ? (int)$data['province'] : 0;
-        $district = isset($data['district']) && $data['district'] !== '' ? (int)$data['district'] : 0;
-        $ward     = isset($data['ward']) && $data['ward'] !== '' ? (int)$data['ward'] : 0;
-        $address  = trim($data['address'] ?? '');
 
         // Validate
         if ($fullname === '') {
@@ -253,69 +249,13 @@ class UserManager
             $passwordHash = password_hash($password, PASSWORD_BCRYPT);
         }
 
-        // Detect users table columns to support either address_id or Province/District/Ward/Address schemas
-        $dbName = '';
-        if ($resDb = $conn->query('SELECT DATABASE() AS db')) {
-            $rowDb = $resDb->fetch_assoc();
-            $dbName = $rowDb['db'] ?? '';
-            $resDb->free();
-        }
-
-        $cols = [];
-        if ($dbName !== '') {
-            $safeDb = $conn->real_escape_string($dbName);
-            $resCols = $conn->query("SELECT LOWER(COLUMN_NAME) AS col FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='".$safeDb."' AND TABLE_NAME='users'");
-            if ($resCols) {
-                while ($r = $resCols->fetch_assoc()) { $cols[$r['col']] = true; }
-                $resCols->free();
-            }
-        }
-
-        $hasAddressId = isset($cols['addressid']) || isset($cols['address_id']);
-        $hasProvinceSchema = isset($cols['province']) && isset($cols['district']) && isset($cols['ward']) && isset($cols['address']);
-
-        // If schema uses address table, insert address first and get id
-        $addressId = 0;
-        if ($hasAddressId) {
-            $sqlAddr = 'INSERT INTO address (ward_id, address_detail) VALUES (?, ?)';
-            $stmtA = $conn->prepare($sqlAddr);
-            if (!$stmtA) {
-                return ['success' => false, 'message' => 'Lỗi prepare thêm địa chỉ: ' . $conn->error];
-            }
-            $stmtA->bind_param('is', $ward, $address);
-            $okA = $stmtA->execute();
-            $errA = $stmtA->error;
-            $addressId = $okA ? $conn->insert_id : 0;
-            $stmtA->close();
-            if (!$okA || $addressId <= 0) {
-                return ['success' => false, 'message' => 'Không thể thêm địa chỉ: ' . $errA];
-            }
-        }
-
-        // Build dynamic INSERT for users
-    $fields = ['Username','FullName','Phone','Role','Status','PasswordHash'];
+        // Build INSERT for users - only basic fields, no address
+        $fields = ['Username','FullName','Phone','Role','Status','PasswordHash'];
         $placeholders = ['?','?','?','?','?','?'];
         $types = 'ssssss';
         // When role is customer and username empty, insert NULL username
         $usernameValue = ($username === '') ? null : $username;
         $params = [&$usernameValue, &$fullname, &$phone, &$role, &$status, &$passwordHash];
-
-        if ($hasAddressId) {
-            // decide exact column name
-            $addrCol = isset($cols['addressid']) ? 'AddressID' : 'address_id';
-            $fields[] = $addrCol;
-            $placeholders[] = '?';
-            $types .= 'i';
-            $params[] = &$addressId;
-        } elseif ($hasProvinceSchema) {
-            $fields = array_merge($fields, ['Province','District','Ward','Address']);
-            $placeholders = array_merge($placeholders, ['?','?','?','?']);
-            $types .= 'iiis';
-            $params[] = &$province;
-            $params[] = &$district;
-            $params[] = &$ward;
-            $params[] = &$address;
-        }
 
         $sql = 'INSERT INTO users (' . implode(',', $fields) . ') VALUES (' . implode(',', $placeholders) . ')';
         $stmt = $conn->prepare($sql);
@@ -332,48 +272,11 @@ class UserManager
         if ($ok) {
             return ['success' => true, 'message' => 'Thêm người dùng thành công'];
         }
-        // Cleanup orphan address row if we created one and user insert failed
-        if ($hasAddressId && $addressId > 0) {
-            $conn->query('DELETE FROM address WHERE address_id=' . (int)$addressId);
-        }
         return ['success' => false, 'message' => 'Không thể thêm người dùng: ' . $err];
     }
 
     /**
-     * Detect users address schema and return details
-     */
-    private function detectAddressSchema(mysqli $conn): array
-    {
-        $result = [
-            'hasAddressId' => false,
-            'addressIdColumn' => null,
-            'hasProvinceSchema' => false,
-        ];
-
-        $dbName = '';
-        if ($resDb = $conn->query('SELECT DATABASE() AS db')) {
-            $rowDb = $resDb->fetch_assoc();
-            $dbName = $rowDb['db'] ?? '';
-            $resDb->free();
-        }
-        if ($dbName === '') return $result;
-
-        $safeDb = $conn->real_escape_string($dbName);
-        $cols = [];
-        $resCols = $conn->query("SELECT LOWER(COLUMN_NAME) AS col FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='".$safeDb."' AND TABLE_NAME='users'");
-        if ($resCols) {
-            while ($r = $resCols->fetch_assoc()) { $cols[$r['col']] = true; }
-            $resCols->free();
-        }
-
-        $result['hasAddressId'] = isset($cols['addressid']) || isset($cols['address_id']);
-        $result['addressIdColumn'] = isset($cols['addressid']) ? 'AddressID' : (isset($cols['address_id']) ? 'address_id' : null);
-        $result['hasProvinceSchema'] = isset($cols['province']) && isset($cols['district']) && isset($cols['ward']) && isset($cols['address']);
-        return $result;
-    }
-
-    /**
-     * Get full user details including address hierarchy for editing
+     * Get full user details for editing (basic info only, no address)
      */
     public function getUserDetails(string $username): array
     {
@@ -387,44 +290,21 @@ class UserManager
             return ['success' => false, 'message' => 'Không thể kết nối CSDL'];
         }
 
-        $schema = $this->detectAddressSchema($conn);
-
-        // Base select
         $username = trim($username);
-        $data = null;
 
-        if ($schema['hasAddressId'] && $schema['addressIdColumn']) {
-            $sql = "SELECT u.user_id, u.Username, u.FullName, u.Phone, u.Role, u.Status,
-                           u.".$schema['addressIdColumn']." AS address_id,
-                           a.address_detail, a.ward_id,
-                           w.district_id, d.province_id
-                    FROM users u
-                    LEFT JOIN address a ON a.address_id = u.".$schema['addressIdColumn']."
-                    LEFT JOIN ward w ON w.ward_id = a.ward_id
-                    LEFT JOIN district d ON d.district_id = w.district_id
-                    WHERE u.UserName = ?";
-            $stmt = $conn->prepare($sql);
-            if (!$stmt) return ['success' => false, 'message' => 'Lỗi chuẩn bị truy vấn: ' . $conn->error];
-            $stmt->bind_param('s', $username);
-            if ($stmt->execute()) {
-                $res = $stmt->get_result();
-                $data = $res->fetch_assoc();
-                $res->free();
-            }
+        // Get basic user info only
+        $sql = "SELECT user_id, Username, FullName, Phone, Role, Status FROM users WHERE Username = ?";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) return ['success' => false, 'message' => 'Lỗi chuẩn bị truy vấn: ' . $conn->error];
+        $stmt->bind_param('s', $username);
+        if (!$stmt->execute()) {
             $stmt->close();
-        } else {
-            // Fallback: if inline address columns do not exist, select only existing base fields
-            $sql = "SELECT u.user_id, u.Username, u.FullName, u.Phone, u.Role, u.Status FROM users u WHERE u.Username = ?";
-            $stmt = $conn->prepare($sql);
-            if (!$stmt) return ['success' => false, 'message' => 'Lỗi chuẩn bị truy vấn: ' . $conn->error];
-            $stmt->bind_param('s', $username);
-            if ($stmt->execute()) {
-                $res = $stmt->get_result();
-                $data = $res->fetch_assoc();
-                $res->free();
-            }
-            $stmt->close();
+            return ['success' => false, 'message' => 'Lỗi thực thi truy vấn: ' . $stmt->error];
         }
+        $res = $stmt->get_result();
+        $data = $res->fetch_assoc();
+        $res->free();
+        $stmt->close();
 
         if (!$data) {
             return ['success' => false, 'message' => 'Không tìm thấy người dùng'];
@@ -432,24 +312,18 @@ class UserManager
 
         // Normalize payload
         $payload = [
-            'user_id' => isset($data['user_id']) ? (int)$data['user_id'] : null,
+            'user_id' => (int)$data['user_id'],
             'username' => $data['Username'] ?? '',
             'fullname' => $data['FullName'] ?? '',
-            'email'    => $data['Email'] ?? '',
             'phone'    => $data['Phone'] ?? '',
             'role'     => (string)($data['Role'] ?? 'customer'),
             'status'   => (string)($data['Status'] ?? 'Active'),
-            'address_id' => isset($data['address_id']) ? (int)$data['address_id'] : null,
-            'address_detail' => $data['address_detail'] ?? '',
-            'ward_id'  => isset($data['ward_id']) ? (int)$data['ward_id'] : null,
-            'district_id' => isset($data['district_id']) ? (int)$data['district_id'] : null,
-            'province_id' => isset($data['province_id']) ? (int)$data['province_id'] : null,
         ];
         return ['success' => true, 'data' => $payload];
     }
 
     /**
-     * Get full user details by user_id
+     * Get full user details by user_id (basic info only, no address)
      */
     public function getUserDetailsById(int $userId): array
     {
@@ -460,56 +334,29 @@ class UserManager
         }
         if (!$conn) return ['success' => false, 'message' => 'Không thể kết nối CSDL'];
 
-        $schema = $this->detectAddressSchema($conn);
-        $data = null;
-
-        if ($schema['hasAddressId'] && $schema['addressIdColumn']) {
-            $sql = "SELECT u.user_id, u.Username, u.FullName, u.Phone, u.Role, u.Status,
-                           u.".$schema['addressIdColumn']." AS address_id,
-                           a.address_detail, a.ward_id,
-                           w.district_id, d.province_id
-                    FROM users u
-                    LEFT JOIN address a ON a.address_id = u.".$schema['addressIdColumn']."
-                    LEFT JOIN ward w ON w.ward_id = a.ward_id
-                    LEFT JOIN district d ON d.district_id = w.district_id
-                    WHERE u.user_id = ?";
-            $stmt = $conn->prepare($sql);
-            if (!$stmt) return ['success' => false, 'message' => 'Lỗi chuẩn bị truy vấn: ' . $conn->error];
-            $stmt->bind_param('i', $userId);
-            if ($stmt->execute()) {
-                $res = $stmt->get_result();
-                $data = $res->fetch_assoc();
-                $res->free();
-            }
+        // Get basic user info only
+        $sql = "SELECT user_id, Username, FullName, Phone, Role, Status FROM users WHERE user_id = ?";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) return ['success' => false, 'message' => 'Lỗi chuẩn bị truy vấn: ' . $conn->error];
+        $stmt->bind_param('i', $userId);
+        if (!$stmt->execute()) {
             $stmt->close();
-        } else {
-            $sql = "SELECT u.user_id, u.Username, u.FullName, u.Phone, u.Role, u.Status FROM users u WHERE u.user_id = ?";
-            $stmt = $conn->prepare($sql);
-            if (!$stmt) return ['success' => false, 'message' => 'Lỗi chuẩn bị truy vấn: ' . $conn->error];
-            $stmt->bind_param('i', $userId);
-            if ($stmt->execute()) {
-                $res = $stmt->get_result();
-                $data = $res->fetch_assoc();
-                $res->free();
-            }
-            $stmt->close();
+            return ['success' => false, 'message' => 'Lỗi thực thi truy vấn: ' . $stmt->error];
         }
+        $res = $stmt->get_result();
+        $data = $res->fetch_assoc();
+        $res->free();
+        $stmt->close();
 
         if (!$data) return ['success' => false, 'message' => 'Không tìm thấy người dùng'];
 
         $payload = [
-            'user_id' => isset($data['user_id']) ? (int)$data['user_id'] : null,
+            'user_id' => (int)$data['user_id'],
             'username' => $data['Username'] ?? '',
             'fullname' => $data['FullName'] ?? '',
-            'email'    => $data['Email'] ?? '',
             'phone'    => $data['Phone'] ?? '',
             'role'     => (string)($data['Role'] ?? 'customer'),
             'status'   => (string)($data['Status'] ?? 'Active'),
-            'address_id' => isset($data['address_id']) ? (int)$data['address_id'] : null,
-            'address_detail' => $data['address_detail'] ?? '',
-            'ward_id'  => isset($data['ward_id']) ? (int)$data['ward_id'] : null,
-            'district_id' => isset($data['district_id']) ? (int)$data['district_id'] : null,
-            'province_id' => isset($data['province_id']) ? (int)$data['province_id'] : null,
         ];
         return ['success' => true, 'data' => $payload];
     }
@@ -540,10 +387,6 @@ class UserManager
         $statusIn = strtolower(trim($data['status'] ?? 'active'));
         // DB enum is 'Active' or 'Block'
         $status   = (in_array($statusIn, ['inactive','block','blocked','0'], true)) ? 'Block' : 'Active';
-        $province = isset($data['province']) && $data['province'] !== '' ? (int)$data['province'] : null;
-        $district = isset($data['district']) && $data['district'] !== '' ? (int)$data['district'] : null;
-        $ward     = isset($data['ward']) && $data['ward'] !== '' ? (int)$data['ward'] : null;
-        $address  = trim($data['address'] ?? '');
         $password = (string)($data['password'] ?? '');
         $confirm  = (string)($data['confirm_password'] ?? '');
 
@@ -621,66 +464,16 @@ class UserManager
             }
         }
 
-        $schema = $this->detectAddressSchema($conn);
-
         // Begin transaction
         $conn->begin_transaction();
         try {
-            if ($schema['hasAddressId'] && $schema['addressIdColumn']) {
-                // Get current address id
-                $addrId = null;
-                $sqlG = 'SELECT ' . $schema['addressIdColumn'] . ' AS address_id FROM users WHERE user_id = ?';
-                $stmtG = $conn->prepare($sqlG);
-                if (!$stmtG) throw new Exception('Lỗi prepare lấy địa chỉ: ' . $conn->error);
-                $stmtG->bind_param('i', $userId);
-                $stmtG->execute();
-                $resG = $stmtG->get_result();
-                if ($rowG = $resG->fetch_assoc()) { $addrId = (int)$rowG['address_id']; }
-                $resG->free();
-                $stmtG->close();
-
-                if ($addrId && $addrId > 0) {
-                    // Update existing address
-                    $sqlA = 'UPDATE address SET ward_id = ?, address_detail = ? WHERE address_id = ?';
-                    $stmtA = $conn->prepare($sqlA);
-                    if (!$stmtA) throw new Exception('Lỗi prepare cập nhật địa chỉ: ' . $conn->error);
-                    $stmtA->bind_param('isi', $ward, $address, $addrId);
-                    if (!$stmtA->execute()) throw new Exception('Lỗi cập nhật địa chỉ: ' . $stmtA->error);
-                    $stmtA->close();
-                } else {
-                    // Create new address and set for user
-                    $sqlInsA = 'INSERT INTO address (ward_id, address_detail) VALUES (?, ?)';
-                    $stmtIA = $conn->prepare($sqlInsA);
-                    if (!$stmtIA) throw new Exception('Lỗi prepare thêm địa chỉ: ' . $conn->error);
-                    $stmtIA->bind_param('is', $ward, $address);
-                    if (!$stmtIA->execute()) throw new Exception('Lỗi thêm địa chỉ: ' . $stmtIA->error);
-                    $addrId = $conn->insert_id;
-                    $stmtIA->close();
-
-                    $sqlSet = 'UPDATE users SET ' . $schema['addressIdColumn'] . ' = ? WHERE user_id = ?';
-                    $stmtSet = $conn->prepare($sqlSet);
-                    if (!$stmtSet) throw new Exception('Lỗi prepare gán địa chỉ: ' . $conn->error);
-                    $stmtSet->bind_param('ii', $addrId, $userId);
-                    if (!$stmtSet->execute()) throw new Exception('Lỗi gán địa chỉ cho người dùng: ' . $stmtSet->error);
-                    $stmtSet->close();
-                }
-
-                // Update user non-address fields (no Email in schema)
-                $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, Username = ? WHERE user_id = ?';
-                $stmtU = $conn->prepare($sqlU);
-                if (!$stmtU) throw new Exception('Lỗi prepare cập nhật người dùng: ' . $conn->error);
-                $stmtU->bind_param('sssssi', $fullname, $phone, $role, $status, $newUsername, $userId);
-                if (!$stmtU->execute()) throw new Exception('Lỗi cập nhật người dùng: ' . $stmtU->error);
-                $stmtU->close();
-            } else {
-                // No users address columns in current schema -> update only base fields
-                $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, Username = ? WHERE user_id = ?';
-                $stmtU = $conn->prepare($sqlU);
-                if (!$stmtU) throw new Exception('Lỗi prepare cập nhật người dùng: ' . $conn->error);
-                $stmtU->bind_param('sssssi', $fullname, $phone, $role, $status, $newUsername, $userId);
-                if (!$stmtU->execute()) throw new Exception('Lỗi cập nhật người dùng: ' . $stmtU->error);
-                $stmtU->close();
-            }
+            // Update user basic fields only (no address)
+            $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, Username = ? WHERE user_id = ?';
+            $stmtU = $conn->prepare($sqlU);
+            if (!$stmtU) throw new Exception('Lỗi prepare cập nhật người dùng: ' . $conn->error);
+            $stmtU->bind_param('sssssi', $fullname, $phone, $role, $status, $newUsername, $userId);
+            if (!$stmtU->execute()) throw new Exception('Lỗi cập nhật người dùng: ' . $stmtU->error);
+            $stmtU->close();
 
             // Update password if required
             if ($willChangePassword) {
