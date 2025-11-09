@@ -37,7 +37,7 @@ class AnalyzePage
   <!-- Icons -->
   <link rel="stylesheet" href="../icon/css/all.css">
   <!-- Bootstrap (JS only) -->
-  <script src="./asset/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../../assets/libs/bootstrap-5.3.3-dist/js/bootstrap.bundle.min.js"></script>
   <link rel="stylesheet" href="../../assets/libs/bootstrap-5.3.3-dist/css/bootstrap.min.css">
 </head>
 <body>
@@ -307,57 +307,20 @@ class AnalyzePage
       </div>
     </div>
 
-    <!-- Order Detail Modal -->
-    <div id="orderDetailModal" class="order-modal">
-      <div class="order-modal-content">
-        <span class="order-modal-close">&times;</span>
-        <div class="order-detail-header">
-          <h2>Chi tiết đơn hàng #<span id="modalOrderId"></span></h2>
-          <span id="modalOrderStatus" class="status-badge"></span>
-        </div>
 
-        <div class="order-info-grid">
-          <div class="order-info-section">
-            <h3>Thông tin đơn hàng</h3>
-            <div class="info-row">
-              <span class="info-label">Ngày đặt:</span>
-              <span id="modalOrderDate" class="info-value"></span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Phương thức TT:</span>
-              <span id="modalPaymentMethod" class="info-value"></span>
-            </div>
+  </div>
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Chi tiết đơn hàng</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-
-          <div class="order-info-section">
-            <h3>Thông tin khách hàng</h3>
-            <div class="info-row">
-              <span class="info-label">Họ tên:</span>
-              <span id="modalReceiverName" class="info-value"></span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Số điện thoại:</span>
-              <span id="modalReceiverPhone" class="info-value"></span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Địa chỉ:</span>
-              <span id="modalReceiverAddress" class="info-value"></span>
-            </div>
+          <div class="modal-body" id="orderDetailBody">
           </div>
-        </div>
-
-        <div class="order-products">
-          <h3>Sản phẩm</h3>
-          <div id="modalProductList" class="product-list"></div>
-        </div>
-
-        <div class="order-summary">
-          <span class="total-amount">Tổng tiền: <span id="modalTotalAmount"></span></span>
         </div>
       </div>
     </div>
-
-  </div>
 
   <script src="../js/analyzePage.js"></script>
   <script src="../js/checklog.js"></script>
