@@ -1,4 +1,6 @@
 /* -----------------Phan responsive--------------- */
+
+
 @media only screen and (max-width: 47.9375em) {
   .container-main {
     display: flex;
@@ -16,14 +18,14 @@
   }
 
   .overview-order {
-        /* width: 100%; */
-        padding: 8px;
-        font-size: 12px;
-        display: flex;
-        flex-direction: column;
-        flex-wrap: wrap;
-        /* width: fit-content; */
-        height: fit-content;
+    /* width: 100%; */
+    padding: 8px;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    /* width: fit-content; */
+    height: fit-content;
 
   }
 

@@ -231,7 +231,7 @@ class ProductManager
                         <td style="text-align: center;"><?php echo htmlspecialchars($row['CategoryName']); ?></td>
                         <td style="text-align: center;"><?php echo number_format($row['Price'], 0, ',', '.'); ?></td>
                         <td class="actions" style="text-align: center; display:flex;">
-                            <button class="btn btn-warning btn-sm me-2" onclick="editProduct(<?php echo $row['ProductID']; ?>)">
+                            <button class="btn btn-primary btn-sm me-2" onclick="editProduct(<?php echo $row['ProductID']; ?>)">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
 
