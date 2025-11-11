@@ -45,7 +45,7 @@ try {
     
 
     $result = $db->queryPrepared(
-        "SELECT OrderID, TotalAmount, DateGeneration, Status FROM orders 
+        "SELECT OrderID, TotalAmount, DateGeneration FROM orders 
          WHERE Phone = ? 
          ORDER BY DateGeneration DESC",
         [$customerPhone]
