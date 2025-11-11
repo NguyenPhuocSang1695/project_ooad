@@ -583,9 +583,9 @@ global $mysqli;
               </div>
             </div>
 
-            <div class="form-actions text-end mt-3">
-              <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-              <button type="button" class="btn btn-danger me-2" onclick="confirmDelete()">Xóa sản phẩm</button>
+            <div class="form-actions text-end mt-3 d-flex">
+              <button type="submit" class="btn btn-primary btn-sm me-2">Lưu thay đổi</button>
+              <button type="button" class="btn btn-secondary btn-sm me-2" onclick="closeEditOverlay()">Hủy</button>
             </div>
           </form>
         </div>
@@ -683,8 +683,8 @@ global $mysqli;
       });
     })();
 
-    function confirmDelete() {
-      const productId = document.getElementById('editProductId').value;
+    function confirmDelete(productId) {
+      // Sử dụng tham số productId truyền vào thay vì lấy từ DOM
       if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')) {
         fetch('../php/delete-product.php', {
             method: 'POST',
@@ -692,7 +692,7 @@ global $mysqli;
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              productId: productId
+              productId: productId // Dùng tham số truyền vào
             })
           })
           .then(response => response.json())
@@ -762,17 +762,18 @@ global $mysqli;
 
               const tr = document.createElement('tr');
               tr.innerHTML = `
-            <td><img src="../..${p.ImageURL}" style="width:100px;height:100px;object-fit:cover;border-radius:4px;"></td>
-            <td style="text-align:center;">
-              ${p.ProductName}
-            </td>
-            <td style="text-align:center;">${p.CategoryName}</td>
-            <td style="text-align:center;">${p.Price.toLocaleString()} VND</td>
-            <td style="text-align:center;">
-              <button class="btn btn-warning btn-sm" onclick="editProduct(${p.ProductID})">
-                <i class="fa-solid fa-pen-to-square"></i>
-              </button>
-            </td>
+                <td><img src="../..${p.ImageURL}" alt="${p.ProductName}" style="width:100px;height:100px;object-fit:cover;"></td>
+                <td style="text-align: center;">${p.ProductName}</td>
+                <td style="text-align: center;">${p.CategoryName}</td>
+                <td style="text-align: center;">${Number(p.Price).toLocaleString('vi-VN')}</td>
+                <td class="actions d-flex" style="text-align: center;">
+                  <button class="btn btn-warning btn-sm me-2" onclick="editProduct(${p.ProductID})" style="margin-right: 8px;">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  <button type="button" class="btn btn-danger btn-sm me-2" onclick="confirmDelete(${p.ProductID})">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </td>
           `;
               tbody.appendChild(tr);
             });

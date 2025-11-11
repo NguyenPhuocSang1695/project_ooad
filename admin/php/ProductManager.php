@@ -230,9 +230,13 @@ class ProductManager
                         <td style="text-align: center;"><?php echo htmlspecialchars($row['ProductName']); ?></td>
                         <td style="text-align: center;"><?php echo htmlspecialchars($row['CategoryName']); ?></td>
                         <td style="text-align: center;"><?php echo number_format($row['Price'], 0, ',', '.'); ?></td>
-                        <td class="actions" style="text-align: center;">
-                            <button class="btn btn-warning btn-sm" onclick="editProduct(<?php echo $row['ProductID']; ?>)">
+                        <td class="actions" style="text-align: center; display:flex;">
+                            <button class="btn btn-warning btn-sm me-2" onclick="editProduct(<?php echo $row['ProductID']; ?>)">
                                 <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+
+                            <button type="button" class="btn btn-danger btn-sm me-2" onclick="confirmDelete(<?php echo $row['ProductID']; ?>)">
+                                <i class="fa-solid fa-trash"></i>
                             </button>
                         </td>
                     </tr>
