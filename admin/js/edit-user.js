@@ -61,8 +61,7 @@
       var el;
       if ((el = document.getElementById('edit_fullname'))) el.value = u.fullname || '';
       if ((el = document.getElementById('edit_phone'))) el.value = u.phone || '';
-      if ((el = document.getElementById('edit_role'))) el.value = u.role || 'customer';
-      if ((el = document.getElementById('edit_status'))) el.value = u.status || 'Active';
+  if ((el = document.getElementById('edit_role'))) el.value = u.role || 'customer';
 
       // Determine session and permissions
       let canEditSelf = false;
