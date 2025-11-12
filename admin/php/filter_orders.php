@@ -15,6 +15,7 @@ try {
     
     // Build filters array
     $filters = [];
+    if (!empty($_GET['search'])) $filters['search'] = $_GET['search'];
     if (!empty($_GET['date_from'])) $filters['date_from'] = $_GET['date_from'];
     if (!empty($_GET['date_to'])) $filters['date_to'] = $_GET['date_to'];
     if (!empty($_GET['order_status']) && $_GET['order_status'] !== 'all') $filters['order_status'] = $_GET['order_status'];

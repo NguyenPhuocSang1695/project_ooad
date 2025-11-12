@@ -356,6 +356,12 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    // Hide voucher note initially
+    const voucherNote = document.getElementById('voucher-note');
+    if (voucherNote) {
+        voucherNote.style.display = 'none';
+    }
+
     // Load provinces, products when page loads
     loadProvinces();
     loadProductsForAllSelects();
@@ -423,6 +429,32 @@ document.addEventListener('DOMContentLoaded', function() {
         if (this.value.length === 10) {
             fetchCustomerHistory(this.value);
         }
+    });
+
+    // Delivery type radio buttons
+    document.querySelectorAll('input[name="delivery_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            console.log('[DELIVERY_TYPE] Selected:', this.value);
+            const addressSection = document.getElementById('address-section');
+            
+            if (this.value === 'address') {
+                // Hiển thị phần địa chỉ khi chọn "Giao tận nơi"
+                addressSection.style.display = 'block';
+                console.log('[DELIVERY_TYPE] Showing address section');
+            } else {
+                // Ẩn phần địa chỉ khi chọn "Tận nơi"
+                addressSection.style.display = 'none';
+                console.log('[DELIVERY_TYPE] Hiding address section');
+                
+                // Clear address values
+                document.getElementById('add-province').value = '';
+                document.getElementById('add-district').value = '';
+                document.getElementById('add-district').innerHTML = '<option value="">Chọn quận/huyện</option>';
+                document.getElementById('add-ward').value = '';
+                document.getElementById('add-ward').innerHTML = '<option value="">Chọn phường/xã</option>';
+                document.getElementById('address-detail').value = '';
+            }
+        });
     });
 });
 
@@ -577,15 +609,22 @@ function loadProductsForAllSelects() {
 function refreshProductSelects() {
     console.log('[REFRESH_SELECTS] Updating all product selects');
     
-    document.querySelectorAll('.product-select').forEach(select => {
+    document.querySelectorAll('.product-item').forEach(item => {
+        const select = item.querySelector('.product-select');
+        const searchInput = item.querySelector('.product-search');
+        const optionsDiv = item.querySelector('.product-options');
+        
+        if (!select || !searchInput || !optionsDiv) return;
+        
         const currentValue = select.value;
         
-        // Keep only the first empty option
+        // Update select options (for fallback)
         while (select.options.length > 1) {
             select.remove(1);
         }
         
-        // Add products
+        // Build product options list
+        optionsDiv.innerHTML = '';
         allProducts.forEach(product => {
             if (product.status === 'appear') {
                 const option = document.createElement('option');
@@ -593,12 +632,66 @@ function refreshProductSelects() {
                 option.textContent = `${product.name} (${parseInt(product.price).toLocaleString()} VND)`;
                 option.dataset.price = product.price;
                 select.appendChild(option);
+                
+                // Also create searchable option div
+                const optionDiv = document.createElement('div');
+                optionDiv.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; hover-effect: true;';
+                optionDiv.textContent = `${product.name} (${parseInt(product.price).toLocaleString()} VND)`;
+                optionDiv.dataset.productId = product.id;
+                optionDiv.dataset.productName = product.name.toLowerCase();
+                optionDiv.dataset.price = product.price;
+                
+                optionDiv.addEventListener('mouseover', function() {
+                    this.style.backgroundColor = '#f0f0f0';
+                });
+                optionDiv.addEventListener('mouseout', function() {
+                    this.style.backgroundColor = 'transparent';
+                });
+                
+                optionDiv.addEventListener('click', function() {
+                    select.value = this.dataset.productId;
+                    searchInput.value = this.textContent;
+                    optionsDiv.style.display = 'none';
+                    
+                    // Trigger change event to update price
+                    select.dispatchEvent(new Event('change'));
+                });
+                
+                optionsDiv.appendChild(optionDiv);
             }
         });
+        
+        // Setup search functionality
+        searchInput.removeEventListener('input', handleProductSearch);
+        searchInput.addEventListener('input', handleProductSearch);
         
         // Restore previous selection
         if (currentValue) select.value = currentValue;
     });
+}
+
+// Handle product search
+function handleProductSearch(e) {
+    const searchValue = e.target.value.toLowerCase();
+    const item = e.target.closest('.product-item');
+    const optionsDiv = item.querySelector('.product-options');
+    
+    if (!optionsDiv) return;
+    
+    const options = optionsDiv.querySelectorAll('[data-product-id]');
+    let hasVisible = false;
+    
+    options.forEach(option => {
+        const productName = option.dataset.productName;
+        if (searchValue === '' || productName.includes(searchValue)) {
+            option.style.display = 'block';
+            hasVisible = true;
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    optionsDiv.style.display = (searchValue === '' && hasVisible) ? 'block' : (hasVisible ? 'block' : 'none');
 }
 
 // Add a new product row
@@ -613,9 +706,14 @@ function addProductRow() {
     row.className = 'product-item row mb-2';
     row.innerHTML = `
         <div class="col-md-5">
-            <select class="form-control product-select" name="products[]" required>
-                <option value="">Chọn sản phẩm</option>
-            </select>
+            <div style="position: relative;">
+                <input type="text" class="form-control product-search" placeholder="🔍 Tìm kiếm sản phẩm..." style="margin-bottom: 5px;">
+                <select class="form-control product-select" name="products[]" required style="display: none;">
+                    <option value="">Chọn sản phẩm</option>
+                </select>
+                <div class="product-options" style="border: 1px solid #ced4da; border-radius: 4px; max-height: 200px; overflow-y: auto; display: none; position: absolute; width: 100%; background: white; z-index: 1000; top: 38px;">
+                </div>
+            </div>
         </div>
         <div class="col-md-3">
             <input type="number" class="form-control product-quantity" name="quantities[]" 
@@ -633,17 +731,8 @@ function addProductRow() {
 
     productList.appendChild(row);
     
-    // Add products to this select
-    const select = row.querySelector('.product-select');
-    allProducts.forEach(product => {
-        if (product.status === 'appear') {
-            const option = document.createElement('option');
-            option.value = product.id;
-            option.textContent = `${product.name} (${parseInt(product.price).toLocaleString()} VND)`;
-            option.dataset.price = product.price;
-            select.appendChild(option);
-        }
-    });
+    // Refresh product select for this row (including search functionality)
+    refreshProductSelects();
     
     console.log('[ADD_ROW] New product row added');
 }
@@ -941,6 +1030,19 @@ async function fetchCustomerHistory(phone) {
             }
             if (detailsElement) {
                 detailsElement.innerHTML = '';
+            }
+            // Show note for new customer
+            const voucherNote = document.getElementById('voucher-note');
+            if (voucherNote) {
+                voucherNote.style.display = 'block';
+            }
+        }
+        
+        // Hide note if customer is old
+        if (historyResult.success && historyResult.has_purchased) {
+            const voucherNote = document.getElementById('voucher-note');
+            if (voucherNote) {
+                voucherNote.style.display = 'none';
             }
         }
         
