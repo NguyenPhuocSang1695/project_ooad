@@ -285,7 +285,7 @@ $myconn = $connectDb->getConnection();
         while ($row = $result->fetch_assoc()) {
           echo "<div class='overview-order'>
               <div class='info-overview-order'>
-                <p>{$row['FullName']} <span class='label customer'>Customer</span></p>
+                <p>{$row['FullName']} <span class='label customer'>Khách hàng</span></p>
                 <p>Mã đơn hàng: {$row['OrderID']}</p>
                 <p> | </p>
                 <p>Ngày đặt hàng: " . date('d/m/Y', strtotime($row['DateGeneration'])) . "</p>
@@ -325,7 +325,7 @@ $myconn = $connectDb->getConnection();
           echo "<div class='overview-order'>
                   <div><img class='avatar-customer' src='../..{$row['ImageURL']}' alt='Product'></div>
                   <div class='info-overview-order'>
-                    <p>{$row['ProductName']} <span class='label product'>Product</span></p>
+                    <p>{$row['ProductName']} <span class='label product'>Sản phẩm</span></p>
                     <p>Danh mục: {$row['CategoryName']}</p>
                     <p> | </p>
                     <p>Giá: " . number_format($row['Price'], 0, ',', '.') . " VNĐ</p>
