@@ -23,69 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         // Thêm chi tiết phiếu nhập
         if (isset($_POST['products']) && is_array($_POST['products'])) {
             foreach ($_POST['products'] as $product) {
-                if (!empty($product['product_id'])) {
-                    $product_id = $product['product_id'];
-                    $quantity = $product['quantity'];
-                    $import_price = $product['import_price'];
-                    $subtotal = $quantity * $import_price;
-
-                    $sql_detail = "INSERT INTO import_receipt_detail (receipt_id, product_id, quantity, import_price, subtotal) 
-                                  VALUES (?, ?, ?, ?, ?)";
-                    $stmt_detail = $myconn->prepare($sql_detail);
-                    $stmt_detail->bind_param("iiidd", $receipt_id, $product_id, $quantity, $import_price, $subtotal);
-                    $stmt_detail->execute();
-
-                    // Cập nhật số lượng tồn kho
-                    $sql_update = "UPDATE products SET quantity_in_stock = quantity_in_stock + ? WHERE ProductID = ?";
-                    $stmt_update = $myconn->prepare($sql_update);
-                    $stmt_update->bind_param("ii", $quantity, $product_id);
-                    $stmt_update->execute();
-                }
-            }
-        }
-
-        header("Location: importReceipt.php?success=1");
-        exit();
-    }
-}
-
-// Xử lý sửa phiếu nhập
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'edit') {
-    $receipt_id = $_POST['receipt_id'];
-    $import_date = $_POST['import_date'];
-    $total_amount = $_POST['total_amount'];
-    $note = $_POST['note'];
-
-    // Lấy thông tin chi tiết cũ để hoàn lại số lượng
-    $sql = "SELECT product_id, quantity FROM import_receipt_detail WHERE receipt_id = ?";
-    $stmt = $myconn->prepare($sql);
-    $stmt->bind_param("i", $receipt_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $sql_update = "UPDATE products SET quantity_in_stock = quantity_in_stock - ? WHERE ProductID = ?";
-        $stmt_update = $myconn->prepare($sql_update);
-        $stmt_update->bind_param("ii", $row['quantity'], $row['product_id']);
-        $stmt_update->execute();
-    }
-
-    // Xóa chi tiết cũ
-    $sql_delete_detail = "DELETE FROM import_receipt_detail WHERE receipt_id = ?";
-    $stmt = $myconn->prepare($sql_delete_detail);
-    $stmt->bind_param("i", $receipt_id);
-    $stmt->execute();
-
-    // Cập nhật phiếu nhập
-    $sql_update = "UPDATE import_receipt SET import_date = ?, total_amount = ?, note = ? WHERE receipt_id = ?";
-    $stmt = $myconn->prepare($sql_update);
-    $stmt->bind_param("sdsi", $import_date, $total_amount, $note, $receipt_id);
-    $stmt->execute();
-
-    // Thêm chi tiết mới
-    if (isset($_POST['products']) && is_array($_POST['products'])) {
-        foreach ($_POST['products'] as $product) {
-            if (!empty($product['product_id'])) {
                 $product_id = $product['product_id'];
                 $quantity = $product['quantity'];
                 $import_price = $product['import_price'];
@@ -97,17 +34,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $stmt_detail->bind_param("iiidd", $receipt_id, $product_id, $quantity, $import_price, $subtotal);
                 $stmt_detail->execute();
 
-                // Cập nhật số lượng tồn kho mới
+                // Cập nhật số lượng tồn kho
                 $sql_update = "UPDATE products SET quantity_in_stock = quantity_in_stock + ? WHERE ProductID = ?";
                 $stmt_update = $myconn->prepare($sql_update);
                 $stmt_update->bind_param("ii", $quantity, $product_id);
                 $stmt_update->execute();
             }
         }
-    }
 
-    header("Location: importReceipt.php?updated=1");
-    exit();
+        header("Location: importReceipt.php?success=1");
+        exit();
+    }
 }
 
 // Xử lý xóa phiếu nhập
@@ -661,12 +598,6 @@ if (isset($_GET['delete'])) {
             </div>
         <?php endif; ?>
 
-        <?php if (isset($_GET['deleted'])): ?>
-            <div class="alert alert-success">
-                <i class="fa-solid fa-check-circle"></i> Xóa phiếu nhập thành công!
-            </div>
-        <?php endif; ?>
-
         <div class="import-header">
             <h2><i class="fa-solid fa-file-import"></i> Quản lý phiếu nhập kho</h2>
             <button class="btn-add-receipt" onclick="openModal()">
@@ -703,19 +634,19 @@ if (isset($_GET['delete'])) {
                     if ($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()) {
                             echo "<tr data-month='" . date('n', strtotime($row['import_date'])) . "'>
-                                <td>PN{$row['receipt_id']}</td>
-                                <td>" . date('d/m/Y H:i', strtotime($row['import_date'])) . "</td>
-                                <td>" . number_format($row['total_amount'], 0, ',', '.') . " VNĐ</td>
-                                <td>" . ($row['note'] ? $row['note'] : 'Không có ghi chú') . "</td>
-                                <td>
-                                    <button class='btn-action btn-view' onclick='viewReceipt({$row['receipt_id']})'>
-                                    <i class='fa-solid fa-eye'></i> Xem
-                                    </button>
-                                    <button class='btn-action btn-edit' onclick='editReceipt({$row['receipt_id']})'>
-                                    <i class='fa-solid fa-edit'></i> Sửa
-                                    </button>
-                                </td>
-                                </tr>";
+                      <td>PN{$row['receipt_id']}</td>
+                      <td>" . date('d/m/Y H:i', strtotime($row['import_date'])) . "</td>
+                      <td>" . number_format($row['total_amount'], 0, ',', '.') . " VNĐ</td>
+                      <td>" . ($row['note'] ? $row['note'] : 'Không có ghi chú') . "</td>
+                      <td>
+                        <button class='btn-action btn-view' onclick='viewReceipt({$row['receipt_id']})'>
+                          <i class='fa-solid fa-eye'></i> Xem
+                        </button>
+                        <button class='btn-action btn-edit' onclick='editReceipt({$row['receipt_id']})'>
+                            <i class='fa-solid fa-pen-to-square'></i> Sửa
+                        </button>
+                      </td>
+                    </tr>";
                         }
                     } else {
                         echo "<tr><td colspan='5' style='text-align: center;'>Chưa có phiếu nhập nào</td></tr>";
@@ -766,7 +697,7 @@ if (isset($_GET['delete'])) {
                                 <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
                                     <option value="">Chọn sản phẩm</option>
                                     <?php
-                                    $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName";
+                                    $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
                                     $result_products = $connectDb->query($sql_products);
                                     while ($product = $result_products->fetch_assoc()) {
                                         echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
@@ -811,53 +742,6 @@ if (isset($_GET['delete'])) {
         </div>
     </div>
 
-    <!-- Modal Sửa phiếu nhập -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-edit"></i> Chỉnh sửa phiếu nhập</h3>
-                <span class="close" onclick="closeEditModal()">&times;</span>
-            </div>
-            <form method="POST" action="" id="editForm">
-                <input type="hidden" name="action" value="edit">
-                <input type="hidden" name="receipt_id" id="edit_receipt_id">
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Ngày nhập <span style="color: red;">*</span></label>
-                        <input type="datetime-local" name="import_date" id="edit_import_date" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Ghi chú</label>
-                        <input type="text" name="note" id="edit_note" placeholder="Nhập ghi chú (không bắt buộc)">
-                    </div>
-                </div>
-
-                <div class="product-items">
-                    <h4>Danh sách sản phẩm nhập</h4>
-                    <div id="editProductList">
-                        <!-- Sẽ được load bằng JavaScript -->
-                    </div>
-                    <button type="button" class="btn-add-product" onclick="addEditProduct()">
-                        <i class="fa-solid fa-plus"></i> Thêm sản phẩm
-                    </button>
-                </div>
-
-                <div class="total-summary">
-                    <h4>Tổng tiền: <span id="editTotalAmount">0</span> VNĐ</h4>
-                    <input type="hidden" name="total_amount" id="editTotalAmountInput" value="0">
-                </div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Hủy</button>
-                    <button type="submit" class="btn-submit">
-                        <i class="fa-solid fa-save"></i> Cập nhật phiếu nhập
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Modal Xem chi tiết phiếu nhập -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
@@ -876,7 +760,6 @@ if (isset($_GET['delete'])) {
 
     <script>
         let productCount = 1;
-        let editProductCount = 0;
 
         // Hiển thị thông tin user
         document.addEventListener('DOMContentLoaded', () => {
@@ -894,7 +777,7 @@ if (isset($_GET['delete'])) {
             document.getElementById('addModal').style.display = 'block';
         }
 
-        // Đóng modal thêm
+        // Đóng modal
         function closeModal() {
             document.getElementById('addModal').style.display = 'none';
             document.getElementById('importForm').reset();
@@ -904,18 +787,12 @@ if (isset($_GET['delete'])) {
             updateTotalAmount();
         }
 
-        // Đóng modal sửa
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-            document.getElementById('editForm').reset();
-        }
-
         // Đóng modal xem chi tiết
         function closeViewModal() {
             document.getElementById('viewModal').style.display = 'none';
         }
 
-        // Thêm sản phẩm mới (Modal thêm)
+        // Thêm sản phẩm mới
         function addProduct() {
             const productList = document.getElementById('productList');
             const newProduct = productList.children[0].cloneNode(true);
@@ -939,63 +816,18 @@ if (isset($_GET['delete'])) {
             newProduct.querySelector('.subtotal').value = '0';
 
             productList.appendChild(newProduct);
+            productCount++;
 
             // Update onchange events
             const select = newProduct.querySelector('select');
             const quantities = newProduct.querySelectorAll('input[type="number"]');
-            select.onchange = () => updateSubtotal(productCount);
+            select.onchange = () => updateSubtotal(productCount - 1);
             quantities.forEach(input => {
-                input.onchange = () => updateSubtotal(productCount);
+                input.onchange = () => updateSubtotal(productCount - 1);
             });
-
-            productCount++;
         }
 
-        // Thêm sản phẩm mới (Modal sửa)
-        function addEditProduct() {
-            const productList = document.getElementById('editProductList');
-            editProductCount++;
-
-            const productOptions = `<?php
-                                    $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName";
-                                    $result_products = $connectDb->query($sql_products);
-                                    $options = '<option value="">Chọn sản phẩm</option>';
-                                    while ($product = $result_products->fetch_assoc()) {
-                                        $options .= "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
-                                    }
-                                    echo $options;
-                                    ?>`;
-
-            const newProductHtml = `
-                <div class="product-item">
-                    <div class="form-group">
-                        <label>Sản phẩm <span style="color: red;">*</span></label>
-                        <select name="products[${editProductCount}][product_id]" required onchange="updateEditSubtotal(${editProductCount})">
-                            ${productOptions}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Số lượng <span style="color: red;">*</span></label>
-                        <input type="number" name="products[${editProductCount}][quantity]" required min="1" value="1" onchange="updateEditSubtotal(${editProductCount})">
-                    </div>
-                    <div class="form-group">
-                        <label>Giá nhập <span style="color: red;">*</span></label>
-                        <input type="number" name="products[${editProductCount}][import_price]" required min="0" step="1000" onchange="updateEditSubtotal(${editProductCount})">
-                    </div>
-                    <div class="form-group">
-                        <label>Thành tiền</label>
-                        <input type="text" class="subtotal" readonly value="0">
-                    </div>
-                    <button type="button" class="btn-remove-product" onclick="removeEditProduct(this)">
-                        <i class="fa-solid fa-times"></i>
-                    </button>
-                </div>
-            `;
-
-            productList.insertAdjacentHTML('beforeend', newProductHtml);
-        }
-
-        // Xóa sản phẩm (Modal thêm)
+        // Xóa sản phẩm
         function removeProduct(button) {
             const productList = document.getElementById('productList');
             if (productList.children.length > 1) {
@@ -1004,47 +836,26 @@ if (isset($_GET['delete'])) {
             }
         }
 
-        // Xóa sản phẩm (Modal sửa)
-        function removeEditProduct(button) {
-            const productList = document.getElementById('editProductList');
-            if (productList.children.length > 1) {
-                button.closest('.product-item').remove();
-                updateEditTotalAmount();
-            }
-        }
-
-        // Cập nhật thành tiền cho từng sản phẩm (Modal thêm)
+        // Cập nhật thành tiền cho từng sản phẩm
         function updateSubtotal(index) {
-            const productItems = document.querySelectorAll('#productList .product-item');
-            if (productItems[index]) {
-                const item = productItems[index];
-                const quantity = parseFloat(item.querySelector('input[name*="quantity"]').value) || 0;
-                const price = parseFloat(item.querySelector('input[name*="import_price"]').value) || 0;
-                const subtotal = quantity * price;
-                item.querySelector('.subtotal').value = subtotal.toLocaleString('vi-VN');
-            }
+            const productItems = document.querySelectorAll('.product-item');
+            const item = productItems[index];
+
+            const quantity = parseFloat(item.querySelector('input[name*="quantity"]').value) || 0;
+            const price = parseFloat(item.querySelector('input[name*="import_price"]').value) || 0;
+            const subtotal = quantity * price;
+
+            item.querySelector('.subtotal').value = subtotal.toLocaleString('vi-VN');
+
             updateTotalAmount();
         }
 
-        // Cập nhật thành tiền cho từng sản phẩm (Modal sửa)
-        function updateEditSubtotal(index) {
-            const productItems = document.querySelectorAll('#editProductList .product-item');
-            if (productItems[index]) {
-                const item = productItems[index];
-                const quantity = parseFloat(item.querySelector('input[name*="quantity"]').value) || 0;
-                const price = parseFloat(item.querySelector('input[name*="import_price"]').value) || 0;
-                const subtotal = quantity * price;
-                item.querySelector('.subtotal').value = subtotal.toLocaleString('vi-VN');
-            }
-            updateEditTotalAmount();
-        }
-
-        // Cập nhật tổng tiền (Modal thêm)
+        // Cập nhật tổng tiền
         function updateTotalAmount() {
             let total = 0;
-            const productItems = document.querySelectorAll('#productList .product-item');
+            const productItems = document.querySelectorAll('.product-item');
 
-            productItems.forEach((item) => {
+            productItems.forEach((item, index) => {
                 const quantity = parseFloat(item.querySelector('input[name*="quantity"]').value) || 0;
                 const price = parseFloat(item.querySelector('input[name*="import_price"]').value) || 0;
                 total += quantity * price;
@@ -1052,21 +863,6 @@ if (isset($_GET['delete'])) {
 
             document.getElementById('totalAmount').textContent = total.toLocaleString('vi-VN');
             document.getElementById('totalAmountInput').value = total;
-        }
-
-        // Cập nhật tổng tiền (Modal sửa)
-        function updateEditTotalAmount() {
-            let total = 0;
-            const productItems = document.querySelectorAll('#editProductList .product-item');
-
-            productItems.forEach((item) => {
-                const quantity = parseFloat(item.querySelector('input[name*="quantity"]').value) || 0;
-                const price = parseFloat(item.querySelector('input[name*="import_price"]').value) || 0;
-                total += quantity * price;
-            });
-
-            document.getElementById('editTotalAmount').textContent = total.toLocaleString('vi-VN');
-            document.getElementById('editTotalAmountInput').value = total;
         }
 
         // Tìm kiếm phiếu nhập
@@ -1182,109 +978,29 @@ if (isset($_GET['delete'])) {
                 });
         }
 
-        // Chỉnh sửa phiếu nhập
-        function editReceipt(receiptId) {
-            fetch(`../php/get_receipt_detail.php?id=${receiptId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Điền thông tin cơ bản
-                        document.getElementById('edit_receipt_id').value = data.receipt.receipt_id;
-
-                        // Chuyển đổi định dạng ngày từ DD/MM/YYYY HH:mm sang YYYY-MM-DDTHH:mm
-                        const dateStr = data.receipt.import_date_raw || data.receipt.import_date;
-                        document.getElementById('edit_import_date').value = dateStr;
-
-                        document.getElementById('edit_note').value = data.receipt.note || '';
-
-                        // Load danh sách sản phẩm
-                        const productList = document.getElementById('editProductList');
-                        productList.innerHTML = '';
-
-                        const productOptions = `<?php
-                                                $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName";
-                                                $result_products = $connectDb->query($sql_products);
-                                                $options = '<option value="">Chọn sản phẩm</option>';
-                                                while ($product = $result_products->fetch_assoc()) {
-                                                    $options .= "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
-                                                }
-                                                echo $options;
-                                                ?>`;
-
-                        data.details.forEach((item, index) => {
-                            const productHtml = `
-                                <div class="product-item">
-                                    <div class="form-group">
-                                        <label>Sản phẩm <span style="color: red;">*</span></label>
-                                        <select name="products[${index}][product_id]" required onchange="updateEditSubtotal(${index})">
-                                            ${productOptions}
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Số lượng <span style="color: red;">*</span></label>
-                                        <input type="number" name="products[${index}][quantity]" required min="1" value="${item.quantity}" onchange="updateEditSubtotal(${index})">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Giá nhập <span style="color: red;">*</span></label>
-                                        <input type="number" name="products[${index}][import_price]" required min="0" step="1000" value="${item.import_price}" onchange="updateEditSubtotal(${index})">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Thành tiền</label>
-                                        <input type="text" class="subtotal" readonly value="${parseFloat(item.subtotal).toLocaleString('vi-VN')}">
-                                    </div>
-                                    <button type="button" class="btn-remove-product" onclick="removeEditProduct(this)" ${index === 0 ? 'style="display:none;"' : ''}>
-                                        <i class="fa-solid fa-times"></i>
-                                    </button>
-                                </div>
-                            `;
-                            productList.insertAdjacentHTML('beforeend', productHtml);
-                        });
-
-                        // Set giá trị selected cho các dropdown sản phẩm
-                        setTimeout(() => {
-                            data.details.forEach((item, index) => {
-                                const select = productList.querySelectorAll('select')[index];
-                                if (select) {
-                                    select.value = item.product_id;
-                                }
-                            });
-                            updateEditTotalAmount();
-                        }, 100);
-
-                        editProductCount = data.details.length - 1;
-
-                        // Hiển thị modal
-                        document.getElementById('editModal').style.display = 'block';
-                    } else {
-                        alert('Không thể tải thông tin phiếu nhập!');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Đã xảy ra lỗi khi tải thông tin!');
-                });
+        // Xóa phiếu nhập
+        function deleteReceipt(receiptId) {
+            if (confirm('Bạn có chắc chắn muốn xóa phiếu nhập này?\nLưu ý: Số lượng tồn kho sẽ được trừ lại!')) {
+                window.location.href = `importReceipt.php?delete=${receiptId}`;
+            }
         }
 
         // Đóng modal khi click bên ngoài
         window.onclick = function(event) {
             const addModal = document.getElementById('addModal');
-            const editModal = document.getElementById('editModal');
             const viewModal = document.getElementById('viewModal');
 
             if (event.target == addModal) {
                 closeModal();
-            }
-            if (event.target == editModal) {
-                closeEditModal();
             }
             if (event.target == viewModal) {
                 closeViewModal();
             }
         }
 
-        // Validate form trước khi submit (Modal thêm)
+        // Validate form trước khi submit
         document.getElementById('importForm').addEventListener('submit', function(e) {
-            const productItems = document.querySelectorAll('#productList .product-item');
+            const productItems = document.querySelectorAll('.product-item');
             let hasProduct = false;
 
             productItems.forEach(item => {
@@ -1308,31 +1024,170 @@ if (isset($_GET['delete'])) {
             }
         });
 
-        // Validate form trước khi submit (Modal sửa)
-        document.getElementById('editForm').addEventListener('submit', function(e) {
-            const productItems = document.querySelectorAll('#editProductList .product-item');
-            let hasProduct = false;
+        function editReceipt(receiptId) {
+            fetch(`../php/get_receipt_detail.php?id=${receiptId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Đổi tiêu đề modal
+                        document.querySelector('#addModal .modal-header h3').innerHTML =
+                            '<i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa phiếu nhập';
 
-            productItems.forEach(item => {
-                const select = item.querySelector('select[name*="product_id"]');
-                if (select.value) {
-                    hasProduct = true;
+                        // Đổi action thành update
+                        document.querySelector('input[name="action"]').value = 'update';
+
+                        // Thêm input ẩn cho receipt_id
+                        let receiptIdInput = document.querySelector('input[name="receipt_id"]');
+                        if (!receiptIdInput) {
+                            receiptIdInput = document.createElement('input');
+                            receiptIdInput.type = 'hidden';
+                            receiptIdInput.name = 'receipt_id';
+                            document.getElementById('importForm').appendChild(receiptIdInput);
+                        }
+                        receiptIdInput.value = receiptId;
+
+                        // Điền thông tin phiếu nhập
+                        const importDate = new Date(data.receipt.import_date_raw);
+                        const formattedDate = importDate.toISOString().slice(0, 16);
+                        document.querySelector('input[name="import_date"]').value = formattedDate;
+                        document.querySelector('input[name="note"]').value = data.receipt.note || '';
+
+                        // Xóa các sản phẩm cũ
+                        const productList = document.getElementById('productList');
+                        productList.innerHTML = '';
+                        productCount = 0;
+
+                        // Thêm các sản phẩm từ phiếu nhập
+                        data.details.forEach((item, index) => {
+                            if (index === 0) {
+                                addProductForEdit(item, true);
+                            } else {
+                                addProductForEdit(item, false);
+                            }
+                        });
+
+                        // Cập nhật tổng tiền
+                        updateTotalAmount();
+
+                        // Đổi nút submit
+                        document.querySelector('.btn-submit').innerHTML =
+                            '<i class="fa-solid fa-save"></i> Cập nhật phiếu nhập';
+
+                        // Mở modal
+                        document.getElementById('addModal').style.display = 'block';
+                    } else {
+                        alert('Không thể tải thông tin phiếu nhập!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Đã xảy ra lỗi khi tải thông tin!');
+                });
+        }
+
+        // Hàm thêm sản phẩm khi edit
+        function addProductForEdit(item, isFirst) {
+            const productList = document.getElementById('productList');
+            const newProduct = document.createElement('div');
+            newProduct.className = 'product-item';
+
+            newProduct.innerHTML = `
+        <div class="form-group">
+            <label>Sản phẩm <span style="color: red;">*</span></label>
+            <select name="products[${productCount}][product_id]" required onchange="updateSubtotal(${productCount})">
+                <option value="">Chọn sản phẩm</option>
+                <?php
+                $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
+                $result_products = $connectDb->query($sql_products);
+                while ($product = $result_products->fetch_assoc()) {
+                    echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
                 }
-            });
+                ?>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Số lượng <span style="color: red;">*</span></label>
+            <input type="number" name="products[${productCount}][quantity]" required min="1" value="1" onchange="updateSubtotal(${productCount})">
+        </div>
+        <div class="form-group">
+            <label>Giá nhập <span style="color: red;">*</span></label>
+            <input type="number" name="products[${productCount}][import_price]" required min="0" step="1000" onchange="updateSubtotal(${productCount})">
+        </div>
+        <div class="form-group">
+            <label>Thành tiền</label>
+            <input type="text" class="subtotal" readonly value="0">
+        </div>
+        <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: ${isFirst ? 'none' : 'block'};">
+            <i class="fa-solid fa-times"></i>
+        </button>
+    `;
 
-            if (!hasProduct) {
-                e.preventDefault();
-                alert('Vui lòng chọn ít nhất một sản phẩm!');
-                return false;
+            productList.appendChild(newProduct);
+
+            // Set giá trị
+            newProduct.querySelector('select[name*="product_id"]').value = item.product_id;
+            newProduct.querySelector('input[name*="quantity"]').value = item.quantity;
+            newProduct.querySelector('input[name*="import_price"]').value = item.import_price;
+            newProduct.querySelector('.subtotal').value = parseFloat(item.subtotal).toLocaleString('vi-VN');
+
+            productCount++;
+        }
+
+        // Sửa lại hàm closeModal để reset form
+        function closeModal() {
+            document.getElementById('addModal').style.display = 'none';
+            document.getElementById('importForm').reset();
+
+            // Reset lại tiêu đề và nút
+            document.querySelector('#addModal .modal-header h3').innerHTML =
+                '<i class="fa-solid fa-file-import"></i> Tạo phiếu nhập mới';
+            document.querySelector('.btn-submit').innerHTML =
+                '<i class="fa-solid fa-save"></i> Lưu phiếu nhập';
+            document.querySelector('input[name="action"]').value = 'add';
+
+            // Xóa receipt_id nếu có
+            const receiptIdInput = document.querySelector('input[name="receipt_id"]');
+            if (receiptIdInput) {
+                receiptIdInput.remove();
             }
 
-            if (confirm('Xác nhận cập nhật phiếu nhập này?\nLưu ý: Số lượng tồn kho sẽ được điều chỉnh lại!')) {
-                return true;
-            } else {
-                e.preventDefault();
-                return false;
-            }
-        });
+            // Reset product list
+            productCount = 1;
+            const productList = document.getElementById('productList');
+            productList.innerHTML = `
+        <div class="product-item">
+            <div class="form-group">
+                <label>Sản phẩm <span style="color: red;">*</span></label>
+                <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
+                    <option value="">Chọn sản phẩm</option>
+                    <?php
+                    $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
+                    $result_products = $connectDb->query($sql_products);
+                    while ($product = $result_products->fetch_assoc()) {
+                        echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Số lượng <span style="color: red;">*</span></label>
+                <input type="number" name="products[0][quantity]" required min="1" value="1" onchange="updateSubtotal(0)">
+            </div>
+            <div class="form-group">
+                <label>Giá nhập <span style="color: red;">*</span></label>
+                <input type="number" name="products[0][import_price]" required min="0" step="1000" onchange="updateSubtotal(0)">
+            </div>
+            <div class="form-group">
+                <label>Thành tiền</label>
+                <input type="text" class="subtotal" readonly value="0">
+            </div>
+            <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: none;">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+    `;
+            updateTotalAmount();
+        }
     </script>
 </body>
 
@@ -1340,3 +1195,4 @@ if (isset($_GET['delete'])) {
 
 <?php
 $connectDb->close();
+?>

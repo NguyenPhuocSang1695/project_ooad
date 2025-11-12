@@ -28,10 +28,9 @@ if ($result->num_rows == 0) {
 }
 
 $receipt = $result->fetch_assoc();
-
-// Thêm cả format raw cho input datetime-local
-$receipt['import_date_raw'] = date('Y-m-d\TH:i', strtotime($receipt['import_date']));
-$receipt['import_date'] = date('d/m/Y H:i', strtotime($receipt['import_date']));
+// Thêm import_date_raw để dùng cho form edit
+$receipt['import_date_raw'] = $receipt['import_date']; // Format: YYYY-MM-DD HH:MM:SS
+$receipt['import_date'] = date('d/m/Y H:i', strtotime($receipt['import_date'])); // Format hiển thị
 
 // Lấy chi tiết sản phẩm
 $sql_detail = "SELECT ird.*, p.ProductName as product_name
@@ -39,7 +38,6 @@ $sql_detail = "SELECT ird.*, p.ProductName as product_name
                LEFT JOIN products p ON ird.product_id = p.ProductID
                WHERE ird.receipt_id = ?
                ORDER BY ird.product_id";
-
 $stmt_detail = $myconn->prepare($sql_detail);
 $stmt_detail->bind_param("i", $receipt_id);
 $stmt_detail->execute();
