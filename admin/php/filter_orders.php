@@ -18,8 +18,10 @@ try {
     if (!empty($_GET['date_from'])) $filters['date_from'] = $_GET['date_from'];
     if (!empty($_GET['date_to'])) $filters['date_to'] = $_GET['date_to'];
     if (!empty($_GET['order_status']) && $_GET['order_status'] !== 'all') $filters['order_status'] = $_GET['order_status'];
-    if (!empty($_GET['province_id'])) $filters['province_id'] = intval($_GET['province_id']);
-    if (!empty($_GET['district_id'])) $filters['district_id'] = intval($_GET['district_id']);
+    if (!empty($_GET['price_min'])) $filters['price_min'] = floatval($_GET['price_min']);
+    if (!empty($_GET['price_max'])) $filters['price_max'] = floatval($_GET['price_max']);
+    if (!empty($_GET['voucher_filter'])) $filters['voucher_filter'] = $_GET['voucher_filter'];
+    if (!empty($_GET['specific_voucher'])) $filters['specific_voucher'] = intval($_GET['specific_voucher']);
     
     // Get orders using OOP service
     $result = $orderService->listOrders($filters, $page, $limit);

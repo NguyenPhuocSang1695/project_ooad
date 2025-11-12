@@ -497,24 +497,24 @@ $orders = [];
                     <label class="form-label">Địa chỉ giao hàng:</label>
                     <div class="row">
                       <div class="col-md-4 mb-2">
-                        <select id="add-province" name="province" class="form-control" required>
+                        <select id="add-province" name="province" class="form-control" >
                           <option value="">Chọn tỉnh/thành</option>
                         </select>
                       </div>
                       <div class="col-md-4 mb-2">
-                        <select id="add-district" name="district" class="form-control" required>
+                        <select id="add-district" name="district" class="form-control" >
                           <option value="">Chọn quận/huyện</option>
                         </select>
                       </div>
                       <div class="col-md-4 mb-2">
-                        <select id="add-ward" name="ward" class="form-control" required>
+                        <select id="add-ward" name="ward" class="form-control" >
                           <option value="">Chọn phường/xã</option>
                         </select>
                       </div>
                     </div>
                     <div class="mt-2">
                       <input type="text" class="form-control" id="address-detail" name="address_detail" 
-                             placeholder="Số nhà, tên đường..." required>
+                             placeholder="Số nhà, tên đường..." >
                     </div>
                   </div>
 
@@ -523,6 +523,7 @@ $orders = [];
                       <label for="payment-method" class="form-label">Phương thức thanh toán:</label>
                       <select class="form-control" id="payment-method" name="payment_method" required>
                         <option value="">Chọn phương thức</option>
+                        <option value="CASH">Thanh toán tiền mặt</option>
                         <option value="COD">Thanh toán khi nhận hàng (COD)</option>
                         <option value="BANKING">Chuyển khoản ngân hàng</option>
                         <option value="MOMO">Ví điện tử MoMo</option>
@@ -611,15 +612,25 @@ $orders = [];
                     <input type="date" id="date-to" name="date_to" class="form-control">
                   </div>
                   <div class="mb-3">
-                    <label for="city-select" class="form-label">Tỉnh/Thành phố:</label>
-                    <select id="city-select" name="city" class="form-control">
-                      <option value="">Chọn thành phố</option>
-                    </select>
+                    <label for="price-min" class="form-label">Giá tiền tối thiểu:</label>
+                    <input type="number" id="price-min" name="price_min" class="form-control" placeholder="Ví dụ: 100000" min="0" step="1000">
                   </div>
                   <div class="mb-3">
-                    <label for="district-select" class="form-label">Quận/Huyện:</label>
-                    <select id="district-select" name="district" class="form-control">
-                      <option value="">Chọn quận/huyện</option>
+                    <label for="price-max" class="form-label">Giá tiền tối đa:</label>
+                    <input type="number" id="price-max" name="price_max" class="form-control" placeholder="Ví dụ: 5000000" min="0" step="1000">
+                  </div>
+                  <div class="mb-3">
+                    <label for="voucher-filter" class="form-label">Lọc theo voucher:</label>
+                    <select id="voucher-filter" name="voucher_filter" class="form-control">
+                      <option value="">-- Tất cả đơn hàng --</option>
+                      <option value="has_voucher">Có sử dụng voucher</option>
+                      <option value="no_voucher">Không sử dụng voucher</option>
+                    </select>
+                  </div>
+                  <div class="mb-3" id="specific-voucher-container" style="display: none;">
+                    <label for="specific-voucher" class="form-label">Chọn voucher cụ thể:</label>
+                    <select id="specific-voucher" name="specific_voucher" class="form-control">
+                      <option value="">-- Tất cả voucher --</option>
                     </select>
                   </div>
                   <div class="modal-footer">
@@ -640,8 +651,7 @@ $orders = [];
             th:nth-child(2),
             th:nth-child(3),
             th:nth-child(4),
-            th:nth-child(5),
-            th:nth-child(6) {
+            th:nth-child(5) {
               text-align: center;
             }
 
@@ -678,13 +688,13 @@ $orders = [];
             </tbody>
           </table>
         </div>
-        <div id="updateStatusOverlay" class="overlay" style="display: none;">
+        <!-- <div id="updateStatusOverlay" class="overlay" style="display: none;">
           <div class="popup">
             <h3>Cập nhật trạng thái đơn hàng</h3>
             <div id="statusOptions" class="status-options"></div>
             <button onclick="closeUpdateStatusPopup()" class="close-btn">Đóng</button>
           </div>
-        </div>
+        </div> -->
 
         <!-- Modal Chi tiết đơn hàng -->
         <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailLabel" aria-hidden="true">
