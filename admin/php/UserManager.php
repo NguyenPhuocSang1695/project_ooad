@@ -384,9 +384,13 @@ class UserManager
         $phone    = trim($data['phone'] ?? '');
         $roleIn   = strtolower(trim($data['role'] ?? 'customer'));
         $role     = ($roleIn === 'admin') ? 'admin' : 'customer';
-        $statusIn = strtolower(trim($data['status'] ?? 'active'));
-        // DB enum is 'Active' or 'Block'
-        $status   = (in_array($statusIn, ['inactive','block','blocked','0'], true)) ? 'Block' : 'Active';
+        // Status may be omitted (null) to indicate "do not change"
+        $status = null;
+        if (array_key_exists('status', $data) && $data['status'] !== null) {
+            $statusIn = strtolower(trim($data['status']));
+            // DB enum is 'Active' or 'Block'
+            $status = (in_array($statusIn, ['inactive','block','blocked','0'], true)) ? 'Block' : 'Active';
+        }
         $password = (string)($data['password'] ?? '');
         $confirm  = (string)($data['confirm_password'] ?? '');
 
@@ -468,10 +472,19 @@ class UserManager
         $conn->begin_transaction();
         try {
             // Update user basic fields only (no address)
-            $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, Username = ? WHERE user_id = ?';
-            $stmtU = $conn->prepare($sqlU);
-            if (!$stmtU) throw new Exception('Lỗi prepare cập nhật người dùng: ' . $conn->error);
-            $stmtU->bind_param('sssssi', $fullname, $phone, $role, $status, $newUsername, $userId);
+            if ($status === null) {
+                // Do not change Status column
+                $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Username = ? WHERE user_id = ?';
+                $stmtU = $conn->prepare($sqlU);
+                if (!$stmtU) throw new Exception('Lỗi prepare cập nhật người dùng: ' . $conn->error);
+                $stmtU->bind_param('ssssi', $fullname, $phone, $role, $newUsername, $userId);
+            } else {
+                // Include Status in update
+                $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, Username = ? WHERE user_id = ?';
+                $stmtU = $conn->prepare($sqlU);
+                if (!$stmtU) throw new Exception('Lỗi prepare cập nhật người dùng: ' . $conn->error);
+                $stmtU->bind_param('sssssi', $fullname, $phone, $role, $status, $newUsername, $userId);
+            }
             if (!$stmtU->execute()) throw new Exception('Lỗi cập nhật người dùng: ' . $stmtU->error);
             $stmtU->close();
 
@@ -492,6 +505,77 @@ class UserManager
             $conn->rollback();
             return ['success' => false, 'message' => $ex->getMessage()];
         }
+    }
+
+    /**
+     * Delete a user by user_id with permission checks.
+     * Expects keys: user_id, _currentUser, _currentRole
+     * Returns [success=>bool, message=>string]
+     */
+    public function deleteUser(array $data): array
+    {
+        // Ensure we have a mysqli connection
+        $conn = $this->dbConnection->getConnection();
+        if (!$conn && method_exists($this->dbConnection, 'connect')) {
+            $this->dbConnection->connect();
+            $conn = $this->dbConnection->getConnection();
+        }
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Không thể kết nối CSDL'];
+        }
+
+        $userId = isset($data['user_id']) ? (int)$data['user_id'] : 0;
+    $currentUser = strtolower(trim((string)($data['_currentUser'] ?? '')));
+    $currentRole = strtolower(trim((string)($data['_currentRole'] ?? '')));
+
+        if ($userId <= 0) {
+            return ['success' => false, 'message' => 'Thiếu hoặc không hợp lệ user_id'];
+        }
+
+        // If role not present in session, try to resolve from DB by current username
+        if ($currentRole === '' && $currentUser !== '') {
+            $stmtR = $conn->prepare('SELECT Role FROM users WHERE Username = ? LIMIT 1');
+            if ($stmtR) {
+                $stmtR->bind_param('s', $currentUser);
+                if ($stmtR->execute()) {
+                    $resR = $stmtR->get_result();
+                    $rowR = $resR ? $resR->fetch_assoc() : null;
+                    if ($resR) $resR->free();
+                    if ($rowR && isset($rowR['Role'])) {
+                        $currentRole = strtolower(trim((string)$rowR['Role']));
+                    }
+                }
+                $stmtR->close();
+            }
+        }
+
+        // Only admin can delete
+        if ($currentRole !== 'admin') {
+            return ['success' => false, 'message' => 'Không có quyền xóa người dùng'];
+        }
+
+        // Check target user exists and fetch username/role
+        $stmt = $conn->prepare('SELECT user_id, Username, Role FROM users WHERE user_id = ?');
+        if (!$stmt) return ['success' => false, 'message' => 'Lỗi truy vấn người dùng: ' . $conn->error];
+        $stmt->bind_param('i', $userId);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $row = $res ? $res->fetch_assoc() : null;
+        if ($res) $res->free();
+        $stmt->close();
+        if (!$row) return ['success' => false, 'message' => 'Người dùng không tồn tại'];
+
+        $targetUsername = strtolower(trim((string)($row['Username'] ?? '')));
+
+        // Prevent deleting self
+        if ($currentUser !== '' && $targetUsername !== '' && strcmp($currentUser, $targetUsername) === 0) {
+            return ['success' => false, 'message' => 'Không thể xóa tài khoản đang đăng nhập'];
+        }
+
+        // Perform hard delete; consider soft delete if FK constraints block
+        $ok = $this->dbConnection->queryPrepared('DELETE FROM users WHERE user_id = ?', [$userId], 'i');
+        if ($ok) return ['success' => true, 'message' => 'Xóa người dùng thành công'];
+        return ['success' => false, 'message' => 'Không thể xóa người dùng (có thể do ràng buộc dữ liệu)'];
     }
 
     

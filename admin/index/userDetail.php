@@ -145,6 +145,15 @@ include 'header_sidebar.php';
         <a class="back-link" href="customer.php">
           <i class="fas fa-arrow-left"></i> Quay lại danh sách
         </a>
+        <!-- Nút sửa và xoá người dùng -->
+        <?php if ($user): ?>
+        <button class="btn btn-primary" style="margin-left:12px" onclick="showEditUserPopup('<?= htmlspecialchars($user->getUsername()) ?>', <?= (int)$user->getId() ?>)">
+          <i class="fas fa-edit"></i> Sửa thông tin
+        </button>
+        <button id="deleteUserBtn" class="btn btn-danger" style="margin-left:12px" data-user-id="<?= (int)$user->getId() ?>">
+          <i class="fas fa-trash"></i> Xóa người dùng
+        </button>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -161,13 +170,13 @@ include 'header_sidebar.php';
             <?= strtoupper(mb_substr($user->getFullname(), 0, 1)) ?>
           </div>
 
-          <div class="info-row">
+          <!-- <div class="info-row">
             <span class="label">
               <i class="fas fa-user"></i>
               Tên đăng nhập
             </span>
             <span class="value"><?= htmlspecialchars($user->getUsername()) ?></span>
-          </div>
+          </div> -->
 
           <div class="info-row">
             <span class="label">
@@ -193,7 +202,7 @@ include 'header_sidebar.php';
             <span class="value"><?= isset($userData['DateGeneration']) ? date('d/m/Y H:i', strtotime($userData['DateGeneration'])) : 'Chưa có thông tin' ?></span>
           </div>
 
-          <div class="info-row">
+          <!-- <div class="info-row">
             <span class="label">
               <i class="fas fa-user-tag"></i>
               Vai trò
@@ -215,15 +224,15 @@ include 'header_sidebar.php';
                 <?= $user->getStatusText() ?>
               </span>
             </span>
-          </div>
+          </div> -->
 
-          <div class="info-row">
+          <!-- <div class="info-row">
             <span class="label">
               <i class="fas fa-map-marker-alt"></i>
               Địa chỉ
             </span>
             <span class="value"><?= htmlspecialchars($addressText) ?></span>
-          </div>
+          </div> -->
         </div>
 
         <!-- Order Statistics Card -->
@@ -234,19 +243,34 @@ include 'header_sidebar.php';
               Thống kê đơn hàng
             </h3>
             
-            <?php
-            // Calculate order statistics
-            $totalOrders = $total_orders;
-            $successOrders = 0;
-            $totalRevenue = 0;
-            
-            foreach ($orders as $order) {
-              if ($order['Status'] === 'success') {
-                $successOrders++;
-              }
-              $totalRevenue += (float)$order['TotalAmount'];
-            }
-            ?>
+      <?php
+      // Calculate order statistics
+      $totalOrders = $total_orders;
+      $successOrders = 0;
+
+      // Get total revenue from DB (exact sum) rather than summing only paginated results
+      $totalRevenue = 0.00;
+      try {
+        $sqlSum = "SELECT COALESCE(SUM(TotalAmount),0) AS total_revenue FROM orders WHERE user_id = ?";
+        $resSum = $db->queryPrepared($sqlSum, [$userData['user_id']], 'i');
+        if ($resSum && ($rowSum = $resSum->fetch_assoc())) {
+          $totalRevenue = (float)$rowSum['total_revenue'];
+        }
+      } catch (Throwable $e) {
+        // fallback to summing current page if DB sum fails
+        foreach ($orders as $order) {
+          if ($order['Status'] === 'success') { $successOrders++; }
+          $totalRevenue += (float)$order['TotalAmount'];
+        }
+      }
+
+      // still count success orders from available rows
+      foreach ($orders as $order) {
+        if ($order['Status'] === 'success') {
+          $successOrders++;
+        }
+      }
+      ?>
 
             <div class="stats-grid">
               <div class="stat-card">
@@ -258,7 +282,7 @@ include 'header_sidebar.php';
                 <div class="stat-label">Đơn hoàn tất</div>
               </div>
               <div class="stat-card orange">
-                <div class="stat-value"><?= number_format($totalRevenue / 1000000, 1) ?>M</div>
+                <div class="stat-value"><?= number_format($totalRevenue, 2, ',', '.') ?> ₫</div>
                 <div class="stat-label">Tổng chi tiêu</div>
               </div>
             </div>
@@ -280,14 +304,14 @@ include 'header_sidebar.php';
                 <th>Mã đơn</th>
                 <th>Tên khách hàng</th>
                 <th>Ngày tạo</th>
-                <th>Trạng thái</th>
+                <!-- <th>Trạng thái</th> -->
                 <th>Thanh toán</th>
                 <th>Tổng tiền</th>
               </tr>
             </thead>
             <tbody>
               <?php foreach ($orders as $order): ?>
-                <?php 
+               <?php 
                   $status = $order['Status'];
                   $statusClass = 'status-' . $status;
                   $statusText = [
@@ -302,11 +326,11 @@ include 'header_sidebar.php';
                   <td><strong>#<?= htmlspecialchars($order['OrderID']) ?></strong></td>
                   <td><?= htmlspecialchars($order['CustomerName'] ?? $user->getFullname()) ?></td>
                   <td><?= date('d/m/Y H:i', strtotime($order['DateGeneration'])) ?></td>
-                  <td>
+                  <!-- <td>
                     <span class="status-chip <?= htmlspecialchars($statusClass) ?>">
                       <?= htmlspecialchars($statusText) ?>
                     </span>
-                  </td>
+                  </td> -->
                   <td><?= htmlspecialchars($order['PaymentMethod']) ?></td>
                   <td><strong><?= number_format((float)$order['TotalAmount'], 0, ',', '.') ?> ₫</strong></td>
                 </tr>
@@ -369,5 +393,12 @@ include 'header_sidebar.php';
   <script src="asset/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script src="../js/checklog.js"></script>
   <script src="../js/main.js"></script>
+  <script src="../js/delete-user.js"></script>
+  <script src="../js/edit-user.js"></script>
+  <?php
+    // Include edit user modal so the Edit button works
+    define('INCLUDE_CHECK', true);
+    require_once '../php/edit_user_form.php';
+  ?>
 </body>
 </html>
