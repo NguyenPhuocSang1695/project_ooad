@@ -92,6 +92,23 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Search input event listener for real-time search
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      console.log('[SEARCH] Input:', this.value);
+      currentPage = 1;
+      filterOrders();
+    });
+    
+    // Prevent form submission on Enter key
+    searchInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+      }
+    });
+  }
+
   const orderTableBody = document.getElementById("order-table-body");
   const districtInput = document.getElementById("district-input");
   const districtSuggestions = document.getElementById("district-suggestions");
@@ -139,12 +156,15 @@ document.addEventListener("DOMContentLoaded", function () {
       formData?.get("specific_voucher") ||
       document.getElementById("specific-voucher")?.value ||
       "";
+    const searchValue =
+      document.getElementById("search-input")?.value || "";
 
     const params = new URLSearchParams({
       page: currentPage,
       limit: limit,
     });
 
+    if (searchValue) params.set("search", searchValue);
     if (dateFrom) params.set("date_from", dateFrom);
     if (dateTo) params.set("date_to", dateTo);
     if (orderStatus && orderStatus !== "all")
@@ -1061,11 +1081,11 @@ function showOrderDetailModal(orderId) {
             
             <!-- Voucher Section (if exists) -->
             ${order.voucher ? `
-              <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 10px; border-left: 5px solid #667eea; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+              <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #d4edda 100%); border-radius: 10px; border-left: 5px solid #6de323ff; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
                   <span style="font-size: 24px;">🎁</span>
                   <h5 style="margin: 0; color: #2c3e50; font-weight: 700; font-size: 16px;">Mã giảm giá đã áp dụng</h5>
-                  <span style="display: inline-block; padding: 4px 10px; background-color: #667eea; color: white; border-radius: 20px; font-size: 11px; font-weight: 600;">Đã dùng</span>
+                  <span style="display: inline-block; padding: 4px 10px; background-color: #4bec32ff; color: white; border-radius: 20px; font-size: 11px; font-weight: 600;">Đã dùng</span>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                   <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">

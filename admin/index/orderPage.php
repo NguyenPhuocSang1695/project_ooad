@@ -203,7 +203,7 @@ $orders = [];
     }
 
     #orderDetailModal .modal-header {
-      background: #667eea;
+      background: #6aa173;
       color: white;
       border-radius: 12px 12px 0 0;
       border: none;
@@ -257,6 +257,47 @@ $orders = [];
     .ellipsis {
       padding: 8px 12px;
       color: #666;
+    }
+
+    /* Search Input Styling */
+    #search-input {
+      font-size: 14px;
+      padding: 10px 12px 10px 35px !important;
+      border-radius: 6px !important;
+      border: 2px solid #e0e0e0 !important;
+      transition: all 0.3s ease !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    #search-input:focus {
+      border-color: #6aa173 !important;
+      box-shadow: 0 4px 12px rgba(106, 161, 115, 0.15) !important;
+      outline: none;
+      background-color: #fafafa;
+    }
+
+    #search-input::placeholder {
+      color: #999;
+      font-style: italic;
+    }
+
+    .filter-section {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .filter-section button {
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .filter-section button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
   </style>
 </head>
@@ -455,11 +496,20 @@ $orders = [];
         <div class="container-bar-operation">
           <p style="font-size: 30px; font-weight: 700;">Quản lý đơn hàng</p>
         </div>
-        <div class="filter-section">
-          <button type="button" class="btn btn-primary" id="filter-button" data-bs-toggle="modal" data-bs-target="#filterModal">
+        <div class="filter-section" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <div style="width: 20rem; position: relative;">
+            <input 
+              type="text" 
+              class="form-control" 
+              id="search-input" 
+              placeholder="Tìm kiếm mã đơn hàng hoặc tên khách hàng..."
+              style="padding-left: 35px; border-radius: 6px; border: 2px solid #e0e0e0; transition: all 0.3s ease;">
+            <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999;"></i>
+          </div>
+          <button type="button" class="btn btn-primary" id="filter-button" data-bs-toggle="modal" data-bs-target="#filterModal" style="border-radius: 6px;">
             <i class="fas fa-filter"></i> Bộ lọc
           </button>
-          <button type="button" class="btn btn-success" id="add-order-button" data-bs-toggle="modal" data-bs-target="#addOrderModal">
+          <button type="button" class="btn btn-success" id="add-order-button" data-bs-toggle="modal" data-bs-target="#addOrderModal" style="border-radius: 6px;">
             <i class="fas fa-plus"></i> Thêm đơn hàng
           </button>
         </div>
@@ -476,12 +526,12 @@ $orders = [];
                 <form id="add-order-form">
                   <div class="row">
                     <div class="col-md-6 mb-3">
-                      <label for="customer-name" class="form-label">Tên khách hàng:</label>
-                      <input type="text" class="form-control" id="customer-name" name="customer_name" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
                       <label for="customer-phone" class="form-label">Số điện thoại:</label>
                       <input type="tel" class="form-control" id="customer-phone" name="customer_phone" pattern="[0-9]*" maxlength="10" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="customer-name" class="form-label">Tên khách hàng:</label>
+                      <input type="text" class="form-control" id="customer-name" name="customer_name" required>
                     </div>
                   </div>
 
@@ -492,8 +542,26 @@ $orders = [];
                       <small id="history-details" style="color: #999;"></small>
                     </div>
                   </div>
-                  
+
                   <div class="mb-3">
+                    <label class="form-label">Địa chỉ giao hàng:</label>
+                    <div class="row">
+                      <div class="col-md-6 form-check">
+                        <input class="form-check-input" type="radio" name="delivery_type" id="delivery_pickup" value="pickup" checked>
+                        <label class="form-check-label" for="delivery_pickup">
+                          Tận nơi (Khách tự đến lấy)
+                        </label>
+                      </div>
+                      <div class="col-md-6 form-check">
+                        <input class="form-check-input" type="radio" name="delivery_type" id="delivery_address" value="address">
+                        <label class="form-check-label" for="delivery_address">
+                          Giao tận nơi (Nhập địa chỉ chỉ)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="address-section" style="display: none;" class="mb-3">
                     <label class="form-label">Địa chỉ giao hàng:</label>
                     <div class="row">
                       <div class="col-md-4 mb-2">
@@ -517,8 +585,8 @@ $orders = [];
                              placeholder="Số nhà, tên đường..." >
                     </div>
                   </div>
-
-                  <div class="row">
+                  
+                  <div class="mb-3">
                     <div class="col-md-6 mb-3">
                       <label for="payment-method" class="form-label">Phương thức thanh toán:</label>
                       <select class="form-control" id="payment-method" name="payment_method" required>
@@ -539,6 +607,7 @@ $orders = [];
                       <option value="">-- Không dùng voucher --</option>
                     </select>
                     <small id="voucher-message" class="form-text" style="margin-top: 5px;"></small>
+                    <small id="voucher-note" class="form-text" style="margin-top: 5px; color: #ff9800; display: none;"><i class="fas fa-info-circle"></i> ⚠️ Khách hàng mới chưa được áp dụng voucher</small>
                   </div>
 
                   <div class="row">
@@ -557,9 +626,14 @@ $orders = [];
                     <div id="product-list">
                       <div class="product-item row mb-2">
                         <div class="col-md-5">
-                          <select class="form-control product-select" name="products[]" required>
-                            <option value="">Chọn sản phẩm</option>
-                          </select>
+                          <div style="position: relative;">
+                            <input type="text" class="form-control product-search" placeholder="🔍 Tìm kiếm sản phẩm..." style="margin-bottom: 5px;">
+                            <select class="form-control product-select" name="products[]" required style="display: none;">
+                              <option value="">Chọn sản phẩm</option>
+                            </select>
+                            <div class="product-options" style="border: 1px solid #ced4da; border-radius: 4px; max-height: 200px; overflow-y: auto; display: none; position: absolute; width: 100%; background: white; z-index: 1000; top: 38px;">
+                            </div>
+                          </div>
                         </div>
                         <div class="col-md-3">
                           <input type="number" class="form-control product-quantity" name="quantities[]" 

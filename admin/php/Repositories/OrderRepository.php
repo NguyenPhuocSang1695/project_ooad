@@ -81,6 +81,13 @@ class OrderRepository {
             $types = "";
             
             // Build WHERE clause
+            if (!empty($filters['search'])) {
+                $whereConditions[] = "(o.OrderID LIKE ? OR o.CustomerName LIKE ?)";
+                $searchValue = "%" . $filters['search'] . "%";
+                $params[] = $searchValue;
+                $params[] = $searchValue;
+                $types .= "ss";
+            }
             if (!empty($filters['date_from'])) {
                 $whereConditions[] = "DATE(o.DateGeneration) >= ?";
                 $params[] = $filters['date_from'];
