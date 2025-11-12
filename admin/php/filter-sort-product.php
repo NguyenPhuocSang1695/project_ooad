@@ -49,9 +49,21 @@ if ($priceMax > 0) {
 }
 
 if (!empty($statusFilter) && $statusFilter !== 'all') {
-    $whereConditions[] = "p.Status = ?";
-    $params[] = $statusFilter;
-    $types .= 's';
+    // Special filter: out_of_stock should check quantity
+    if ($statusFilter === 'out_of_stock') {
+        // Products with no stock (zero or less)
+        $whereConditions[] = "(p.quantity_in_stock IS NULL OR p.quantity_in_stock = 0)";
+        // no param to bind
+    } else if ($statusFilter === 'near_out_of_stock') {
+        // Products with stock less than or equal to 5
+        $whereConditions[] = "(p.quantity_in_stock IS NOT NULL AND p.quantity_in_stock > 0 AND p.quantity_in_stock <= 5)";
+        // no param to bind
+
+    } else {
+        $whereConditions[] = "p.Status = ?";
+        $params[] = $statusFilter;
+        $types .= 's';
+    }
 }
 
 $whereClause = implode(' AND ', $whereConditions);
