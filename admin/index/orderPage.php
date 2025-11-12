@@ -666,7 +666,7 @@ $orders = [];
                 <th class="hide-index-tablet ">Người mua</th>
                 <th>Ngày tạo</th>
                 <th class="hide-index-mobile">Giá tiền (VND)</th>
-                <th>Địa chỉ giao hàng</th>
+                <th>Số điện thoại</th>
               </tr>
             </thead>
             <tbody id="order-table-body">
@@ -678,7 +678,7 @@ $orders = [];
                       echo '<td class="hide-index-tablet">' . htmlspecialchars($o['CustomerName']) . '</td>';
                       echo '<td>' . htmlspecialchars($o['DateGeneration']) . '</td>';
                       echo '<td class="hide-index-mobile">' . number_format($o['TotalAmount']) . '</td>';
-                      echo '<td>' . htmlspecialchars($o['Province'] . ', ' . $o['District'] . ', ' . $o['Ward']) . '</td>';
+                      echo '<td>' . htmlspecialchars($o['Phone']) . '</td>';
                       echo '</tr>';
                   }
               } else {

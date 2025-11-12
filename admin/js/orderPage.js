@@ -1,6 +1,24 @@
 // Global variable để theo dõi trang hiện tại
 let currentPage = 1;
 
+// Hàm chuyển đổi phương thức thanh toán sang Tiếng Việt
+function formatPaymentMethod(method) {
+  if (!method) return 'Không rõ';
+  
+  // Normalize method to lowercase for comparison
+  const normalizedMethod = method.toLowerCase().trim();
+  
+  const paymentMethods = {
+    'cod': 'Thanh toán khi nhận hàng',
+    'banking': 'Chuyển khoản ngân hàng',
+    'momo': 'Ví điện tử MoMo',
+    'vnpay': 'VNPay',
+    'cash': 'Tiền mặt'
+  };
+  
+  return paymentMethods[normalizedMethod] || method;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   const filterForm = document.getElementById("filter-form");
   const filterModal = new bootstrap.Modal(
@@ -181,7 +199,7 @@ document.addEventListener("DOMContentLoaded", function () {
               <td class="hide-index-mobile">${formatCurrency(
                 order.giatien || 0
               )}</td>
-              <td>${order.receiver_address || ""}</td>
+              <td>${order.receiver_phone || ""}</td>
             `;
             orderTableBody.appendChild(row);
           });
@@ -995,8 +1013,8 @@ function showOrderDetailModal(orderId) {
                   <p style="margin: 5px 0; font-weight: 600; color: #333;">${new Date(order.orderDate).toLocaleString('vi-VN')}</p>
                 </div>
                 <div>
-                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Phương thức TT</label>
-                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.paymentMethod}</p>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Phương thức thanh toán: </label>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${formatPaymentMethod(order.paymentMethod)}</p>
                 </div>
               </div>
             </div>
@@ -1006,11 +1024,11 @@ function showOrderDetailModal(orderId) {
               <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">👤 Thông tin khách hàng</h5>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
-                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên</label>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên: </label>
                   <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerName}</p>
                 </div>
                 <div>
-                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại</label>
+                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại: </label>
                   <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerPhone}</p>
                 </div>
               </div>
@@ -1018,7 +1036,7 @@ function showOrderDetailModal(orderId) {
             
             <!-- Address Section -->
             <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
-              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📍 Địa chỉ giao hàng</h5>
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📍 Địa chỉ giao hàng: </h5>
               <p style="margin: 0; color: #333; line-height: 1.6;">${order.address}</p>
             </div>
             
@@ -1075,7 +1093,7 @@ function showOrderDetailModal(orderId) {
             <!-- Total Section -->
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 16px; font-weight: 600; color: #333;">Thành tiền:</span>
+                <span style="font-size: 16px; font-weight: 600; color: #333;">Thành tiền: </span>
                 <span style="font-size: 24px; font-weight: 700; color: #667eea;">${parseInt(order.totalAmount).toLocaleString('vi-VN')} VNĐ</span>
               </div>
             </div>
