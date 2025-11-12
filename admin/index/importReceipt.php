@@ -47,6 +47,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
+// Xử lý cập nhật phiếu nhập
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update') {
+    $receipt_id = $_POST['receipt_id'];
+    $import_date = $_POST['import_date'];
+    $total_amount = $_POST['total_amount'];
+    $note = $_POST['note'];
+
+    // Lấy thông tin chi tiết cũ để trừ lại số lượng
+    $sql = "SELECT product_id, quantity FROM import_receipt_detail WHERE receipt_id = ?";
+    $stmt = $myconn->prepare($sql);
+    $stmt->bind_param("i", $receipt_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    while ($row = $result->fetch_assoc()) {
+        $sql_update = "UPDATE products SET quantity_in_stock = quantity_in_stock - ? WHERE ProductID = ?";
+        $stmt_update = $myconn->prepare($sql_update);
+        $stmt_update->bind_param("ii", $row['quantity'], $row['product_id']);
+        $stmt_update->execute();
+    }
+
+    // Xóa chi tiết cũ
+    $sql_delete_detail = "DELETE FROM import_receipt_detail WHERE receipt_id = ?";
+    $stmt = $myconn->prepare($sql_delete_detail);
+    $stmt->bind_param("i", $receipt_id);
+    $stmt->execute();
+
+    // Cập nhật phiếu nhập
+    $sql = "UPDATE import_receipt SET import_date = ?, total_amount = ?, note = ? WHERE receipt_id = ?";
+    $stmt = $myconn->prepare($sql);
+    $stmt->bind_param("sdsi", $import_date, $total_amount, $note, $receipt_id);
+
+    if ($stmt->execute()) {
+        // Thêm chi tiết mới
+        if (isset($_POST['products']) && is_array($_POST['products'])) {
+            foreach ($_POST['products'] as $product) {
+                $product_id = $product['product_id'];
+                $quantity = $product['quantity'];
+                $import_price = $product['import_price'];
+                $subtotal = $quantity * $import_price;
+
+                $sql_detail = "INSERT INTO import_receipt_detail (receipt_id, product_id, quantity, import_price, subtotal) 
+                              VALUES (?, ?, ?, ?, ?)";
+                $stmt_detail = $myconn->prepare($sql_detail);
+                $stmt_detail->bind_param("iiidd", $receipt_id, $product_id, $quantity, $import_price, $subtotal);
+                $stmt_detail->execute();
+
+                // Cộng lại số lượng tồn kho với dữ liệu mới
+                $sql_update = "UPDATE products SET quantity_in_stock = quantity_in_stock + ? WHERE ProductID = ?";
+                $stmt_update = $myconn->prepare($sql_update);
+                $stmt_update->bind_param("ii", $quantity, $product_id);
+                $stmt_update->execute();
+            }
+        }
+
+        header("Location: importReceipt.php?updated=1");
+        exit();
+    }
+}
+
 // Xử lý xóa phiếu nhập
 if (isset($_GET['delete'])) {
     $receipt_id = $_GET['delete'];
@@ -840,6 +900,27 @@ if (isset($_GET['delete'])) {
         function updateSubtotal(index) {
             const productItems = document.querySelectorAll('.product-item');
             const item = productItems[index];
+            const select = item.querySelector('select[name*="product_id"]');
+
+            // Kiểm tra trùng lặp khi chọn sản phẩm
+            if (select.value) {
+                const selectedProducts = [];
+                productItems.forEach((otherItem, otherIndex) => {
+                    if (otherIndex !== index) {
+                        const otherSelect = otherItem.querySelector('select[name*="product_id"]');
+                        if (otherSelect.value === select.value) {
+                            const productName = select.options[select.selectedIndex].text;
+                            alert(`Sản phẩm "${productName}" đã được chọn!\nVui lòng chọn sản phẩm khác hoặc điều chỉnh số lượng ở sản phẩm đã có.`);
+                            select.value = '';
+                            item.querySelector('input[name*="quantity"]').value = '1';
+                            item.querySelector('input[name*="import_price"]').value = '';
+                            item.querySelector('.subtotal').value = '0';
+                            updateTotalAmount();
+                            return;
+                        }
+                    }
+                });
+            }
 
             const quantity = parseFloat(item.querySelector('input[name*="quantity"]').value) || 0;
             const price = parseFloat(item.querySelector('input[name*="import_price"]').value) || 0;
@@ -998,6 +1079,30 @@ if (isset($_GET['delete'])) {
             }
         }
 
+
+        // Thêm hàm kiểm tra trùng sản phẩm
+        function checkDuplicateProducts() {
+            const productItems = document.querySelectorAll('.product-item');
+            const selectedProducts = new Map();
+
+            for (let i = 0; i < productItems.length; i++) {
+                const select = productItems[i].querySelector('select[name*="product_id"]');
+                const productId = select.value;
+
+                if (productId) {
+                    if (selectedProducts.has(productId)) {
+                        const productName = select.options[select.selectedIndex].text;
+                        alert(`Sản phẩm "${productName}" đã được chọn ở dòng ${selectedProducts.get(productId) + 1}!\nVui lòng chọn sản phẩm khác.`);
+                        select.value = '';
+                        select.focus();
+                        return false;
+                    }
+                    selectedProducts.set(productId, i);
+                }
+            }
+            return true;
+        }
+
         // Validate form trước khi submit
         document.getElementById('importForm').addEventListener('submit', function(e) {
             const productItems = document.querySelectorAll('.product-item');
@@ -1013,6 +1118,12 @@ if (isset($_GET['delete'])) {
             if (!hasProduct) {
                 e.preventDefault();
                 alert('Vui lòng chọn ít nhất một sản phẩm!');
+                return false;
+            }
+
+            // Kiểm tra trùng lặp sản phẩm
+            if (!checkDuplicateProducts()) {
+                e.preventDefault();
                 return false;
             }
 
