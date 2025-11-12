@@ -875,11 +875,19 @@ async function submitOrder() {
 // Fetch customer history and load eligible vouchers
 async function fetchCustomerHistory(phone) {
     console.log('[FETCH_HISTORY] For phone:', phone);
+    console.log('[FETCH_HISTORY] Phone length:', phone.length);
     
     const historyDiv = document.getElementById('customer-history');
     const messageElement = document.getElementById('history-message');
     const detailsElement = document.getElementById('history-details');
     const voucherSelect = document.getElementById('voucher-select');
+    
+    console.log('[FETCH_HISTORY] Elements found:', {
+        historyDiv: !!historyDiv,
+        messageElement: !!messageElement,
+        detailsElement: !!detailsElement,
+        voucherSelect: !!voucherSelect
+    });
     
     if (!historyDiv || !voucherSelect) {
         console.error('[ERROR] Elements not found');

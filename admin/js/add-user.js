@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
         addUserBtn.addEventListener('click', function() {
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden'; // Prevent scrolling of background
-            loadProvinces();
             applyRolePasswordRule();
         });
     }
@@ -33,28 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.style.overflow = '';
         }
     });
-
-    // Load provinces when the form is opened
-    function loadProvinces() {
-        fetch('../php/get_provinces.php')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const provinceSelect = document.getElementById('province');
-                provinceSelect.innerHTML = '<option value="">Chọn tỉnh/thành phố</option>';
-                data.forEach(province => {
-                    provinceSelect.innerHTML += `<option value="${province.province_id}">${province.name}</option>`;
-                });
-            })
-            .catch(error => {
-                console.error('Error loading provinces:', error);
-                alert('Không thể tải danh sách tỉnh/thành phố. Vui lòng thử lại sau.');
-            });
-    }
 
     // Toggle password requirement based on role
     function applyRolePasswordRule() {
@@ -86,41 +63,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (roleSelectEl) {
         roleSelectEl.addEventListener('change', applyRolePasswordRule);
     }
-
-    // Event listener for province selection
-    document.getElementById('province').addEventListener('change', function() {
-        const provinceId = this.value;
-        if (provinceId) {
-            fetch(`../php/get_districts.php?province_id=${provinceId}`)
-                .then(response => response.json())
-                .then(data => {
-                    const districtSelect = document.getElementById('district');
-                    districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-                    data.forEach(district => {
-                        districtSelect.innerHTML += `<option value="${district.district_id}">${district.name}</option>`;
-                    });
-                    document.getElementById('ward').innerHTML = '<option value="">Chọn phường/xã</option>';
-                })
-                .catch(error => console.error('Error loading districts:', error));
-        }
-    });
-
-    // Event listener for district selection
-    document.getElementById('district').addEventListener('change', function() {
-        const districtId = this.value;
-        if (districtId) {
-            fetch(`../php/get_wards.php?district_id=${districtId}`)
-                .then(response => response.json())
-                .then(data => {
-                    const wardSelect = document.getElementById('ward');
-                    wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
-                    data.forEach(ward => {
-                        wardSelect.innerHTML += `<option value="${ward.ward_id}">${ward.name}</option>`;
-                    });
-                })
-                .catch(error => console.error('Error loading wards:', error));
-        }
-    });
 
     // Form submission handler
     document.getElementById('submitAddUser').addEventListener('click', function() {

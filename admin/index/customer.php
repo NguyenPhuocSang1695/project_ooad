@@ -190,8 +190,13 @@ require_once '../php/User.php';
       document.querySelectorAll('tr.user-row').forEach(function(tr){
         tr.addEventListener('click', function(e){
           if (e.target.closest('.btn-edit')) return; // don't navigate when clicking edit
+          const userId = this.getAttribute('data-user-id');
           const username = this.getAttribute('data-username');
-          if (username) {
+          
+          // Ưu tiên dùng user_id, fallback về username
+          if (userId) {
+            window.location.href = 'userDetail.php?user_id=' + encodeURIComponent(userId);
+          } else if (username) {
             window.location.href = 'userDetail.php?username=' + encodeURIComponent(username);
           }
         });
