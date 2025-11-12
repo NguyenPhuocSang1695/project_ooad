@@ -171,6 +171,23 @@ class OrderService {
                 }
                 $fullAddress = implode(', ', $addressParts);
 
+                // Get voucher info if applied
+                $voucherInfo = null;
+                $voucherId = $order->getVoucherId();
+                if ($voucherId) {
+                    $voucherResult = $this->db->queryPrepared(
+                        "SELECT name, percen_decrease FROM vouchers WHERE id = ?",
+                        [$voucherId]
+                    );
+                    if ($voucherResult && $voucherResult->num_rows > 0) {
+                        $voucher = $voucherResult->fetch_assoc();
+                        $voucherInfo = [
+                            'name' => $voucher['name'],
+                            'percen_decrease' => intval($voucher['percen_decrease'])
+                        ];
+                    }
+                }
+
                 $ordersData[] = [
                     'madonhang' => $order->getOrderId(),
                     'ngaytao' => $order->getDateGeneration(),
@@ -179,7 +196,8 @@ class OrderService {
                     'giatien' => $order->getTotalAmount(),
                     'receiver_name' => $order->getCustomerName(),
                     'receiver_phone' => $order->getPhone(),
-                    'receiver_address' => $fullAddress
+                    'receiver_address' => $fullAddress,
+                    'voucher' => $voucherInfo
                 ];
             }
 

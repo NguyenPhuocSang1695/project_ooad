@@ -7,6 +7,51 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("filterModal")
   );
 
+  // Load danh sách voucher khi modal filter mở
+  const voucherFilterSelect = document.getElementById("voucher-filter");
+  const specificVoucherContainer = document.getElementById("specific-voucher-container");
+  const specificVoucherSelect = document.getElementById("specific-voucher");
+
+  // Hàm load danh sách voucher
+  window.loadVouchersList = function () {
+    fetch("../php/get-vouchers.php")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Vouchers data:", data);
+        if (data.success && data.data && data.data.length > 0) {
+          specificVoucherSelect.innerHTML = '<option value="">-- Tất cả voucher --</option>';
+          data.data.forEach((voucher) => {
+            const option = document.createElement("option");
+            option.value = voucher.id;
+            option.textContent = `${voucher.name} (${voucher.percen_decrease}% giảm)`;
+            specificVoucherSelect.appendChild(option);
+            console.log("Added voucher:", voucher.name);
+          });
+        } else {
+          console.warn("No vouchers found or data.success is false");
+          specificVoucherSelect.innerHTML = '<option value="">-- Không có voucher nào --</option>';
+        }
+      })
+      .catch((error) => console.error("Error loading vouchers:", error));
+  };
+
+  // Load vouchers khi filter modal mở
+  document.getElementById("filterModal").addEventListener("show.bs.modal", function () {
+    window.loadVouchersList();
+  });
+
+  // Event listener khi thay đổi voucher-filter select
+  if (voucherFilterSelect) {
+    voucherFilterSelect.addEventListener("change", function () {
+      if (this.value === "has_voucher") {
+        specificVoucherContainer.style.display = "block";
+      } else {
+        specificVoucherContainer.style.display = "none";
+        specificVoucherSelect.value = "";
+      }
+    });
+  }
+
   // Event listener cho nút "Xem chi tiết" đơn hàng (view-btn)
   document.addEventListener("click", function (e) {
     if (e.target.closest(".view-btn")) {
@@ -39,7 +84,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const nextPageButton = document.getElementById("nextPage");
 
   const limit = 5;
-  // Get current page from URL (currentPage is already declared as global variable)
   const urlParams = new URLSearchParams(window.location.search);
   currentPage = parseInt(urlParams.get("page")) || 1;
 
@@ -61,13 +105,21 @@ document.addEventListener("DOMContentLoaded", function () {
       formData?.get("order_status") ||
       document.getElementById("order-status")?.value ||
       "all";
-    const citySelect =
-      formData?.get("city") ||
-      document.getElementById("city-select")?.value ||
+    const priceMin =
+      formData?.get("price_min") ||
+      document.getElementById("price-min")?.value ||
       "";
-    const districtSelect =
-      formData?.get("district") ||
-      document.getElementById("district-select")?.value ||
+    const priceMax =
+      formData?.get("price_max") ||
+      document.getElementById("price-max")?.value ||
+      "";
+    const voucherFilter =
+      formData?.get("voucher_filter") ||
+      document.getElementById("voucher-filter")?.value ||
+      "";
+    const specificVoucher =
+      formData?.get("specific_voucher") ||
+      document.getElementById("specific-voucher")?.value ||
       "";
 
     const params = new URLSearchParams({
@@ -79,8 +131,10 @@ document.addEventListener("DOMContentLoaded", function () {
     if (dateTo) params.set("date_to", dateTo);
     if (orderStatus && orderStatus !== "all")
       params.set("order_status", orderStatus);
-    if (citySelect) params.set("province_id", citySelect);
-    if (districtSelect) params.set("district_id", districtSelect);
+    if (priceMin) params.set("price_min", priceMin);
+    if (priceMax) params.set("price_max", priceMax);
+    if (voucherFilter) params.set("voucher_filter", voucherFilter);
+    if (specificVoucher && voucherFilter === "has_voucher") params.set("specific_voucher", specificVoucher);
 
     window.history.pushState(
       {},
@@ -707,53 +761,8 @@ document.addEventListener("DOMContentLoaded", function () {
       // Đặt lại các giá trị trong form
       filterForm.reset();
 
-      // Đặt lại danh sách quận/huyện
-      const districtSelect = document.getElementById("district-select");
-      if (districtSelect) {
-        districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-      }
       currentPage = 1; // Đặt lại về trang 1 khi reset bộ lọc
       // filterOrders();
-    });
-  }
-  loadCities();
-
-  // Dùng event delegation để đảm bảo event listener hoạt động sau khi element được tạo
-  document.addEventListener("change", function (e) {
-    if (e.target && e.target.id === "city-select") {
-      const provinceId = e.target.value;
-      console.log("[CITY_CHANGE_DELEGATION] Province ID selected:", provinceId);
-      
-      if (provinceId) {
-        loadDistrictsForFilter(provinceId);
-      } else {
-        const districtSelect = document.getElementById("district-select");
-        if (districtSelect) {
-          districtSelect.innerHTML =
-            '<option value="">Chọn quận/huyện</option>';
-        }
-      }
-      currentPage = 1;
-    }
-  });
-  
-  // Backup: Direct event listener for city-select (nếu element đã có trong DOM)
-  const citySelect = document.getElementById("city-select");
-  if (citySelect) {
-    citySelect.addEventListener("change", function () {
-      const provinceId = this.value;
-      console.log("[CITY_CHANGE_DIRECT] Province ID selected:", provinceId);
-      
-      if (provinceId) {
-        loadDistrictsForFilter(provinceId);
-      } else {
-        const districtSelect = document.getElementById("district-select");
-        if (districtSelect) {
-          districtSelect.innerHTML =
-            '<option value="">Chọn quận/huyện</option>';
-        }
-      }
-      currentPage = 1;
     });
   }
 });
@@ -1023,7 +1032,7 @@ function showOrderDetailModal(orderId) {
                     <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Sản phẩm</th>
                     <th style="padding: 12px; text-align: center; color: #666; font-weight: 600;">Số lượng</th>
                     <th style="padding: 12px; text-align: right; color: #666; font-weight: 600;">Đơn giá</th>
-                    <th style="padding: 12px; text-align: right; color: #666; font-weight: 600;">Tổng</th>
+                    <th style="padding: 12px; text-align: right; color: #666; font-weight: 600;">Thành tiền</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1066,7 +1075,7 @@ function showOrderDetailModal(orderId) {
             <!-- Total Section -->
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 16px; font-weight: 600; color: #333;">Tổng cộng:</span>
+                <span style="font-size: 16px; font-weight: 600; color: #333;">Thành tiền:</span>
                 <span style="font-size: 24px; font-weight: 700; color: #667eea;">${parseInt(order.totalAmount).toLocaleString('vi-VN')} VNĐ</span>
               </div>
             </div>
