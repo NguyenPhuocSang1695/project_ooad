@@ -55,32 +55,6 @@
               </select>
             </div>
           </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="edit_province" class="form-label">Tỉnh/Thành phố</label>
-              <select class="form-select" id="edit_province" name="province">
-                <option value="">Chọn tỉnh/thành phố</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="edit_district" class="form-label">Quận/Huyện</label>
-              <select class="form-select" id="edit_district" name="district">
-                <option value="">Chọn quận/huyện</option>
-              </select>
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="edit_ward" class="form-label">Phường/Xã</label>
-              <select class="form-select" id="edit_ward" name="ward">
-                <option value="">Chọn phường/xã</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="edit_address" class="form-label">Địa chỉ cụ thể</label>
-              <input type="text" class="form-control" id="edit_address" name="address">
-            </div>
-          </div>
         </form>
       </div>
       <div class="modal-footer">

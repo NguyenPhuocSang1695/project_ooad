@@ -199,74 +199,92 @@ $myconn = $connectDb->getConnection();
     </a>
   </div>
 
-  <!-- MAIN  -->
+  <!-- MAIN -->
   <div class="container-main">
     <div class="dashboard-overview">
       <?php
-      $sql = "SELECT COUNT(*) AS totalExOder FROM orders WHERE Status = 'execute'";
+      // Tổng số đơn hàng
+      $sql = "SELECT COUNT(*) AS totalExOder FROM orders";
       $result = $connectDb->query($sql);
-
       while ($row = $result->fetch_assoc()) {
-        echo "<a href='./orderPage.php?order_status=execute' style='text-decoration: none; color: inherit;'>";
-        echo "<div class='overview-card'>";
-        echo "<h3>{$row['totalExOder']}</h3>";
-        echo "<p>Đơn hàng chờ xác nhận</p>";
-        echo "</div></a>";
+        echo "<a href='./orderPage.php?order_status=execute' style='text-decoration: none; color: inherit;'>
+            <div class='overview-card'>
+              <h3>{$row['totalExOder']}</h3>
+              <p>Đơn hàng</p>
+            </div>
+          </a>";
       }
 
+      // Tổng số sản phẩm trong kho
       $sql = "SELECT COUNT(*) AS QuantityProduct FROM products";
       $result = $connectDb->query($sql);
       while ($row = $result->fetch_assoc()) {
-        echo "<a href='./wareHouse.php' style='text-decoration: none; color: inherit;'>";
-        echo "<div class='overview-card'>";
-        echo "<h3>{$row['QuantityProduct']}</h3>";
-        echo "<p>Sản phẩm trong kho</p></div></a>";
+        echo "<a href='./wareHouse.php' style='text-decoration: none; color: inherit;'>
+            <div class='overview-card'>
+              <h3>{$row['QuantityProduct']}</h3>
+              <p>Sản phẩm trong kho</p>
+            </div>
+          </a>";
       }
 
+      // Sản phẩm sắp hết hàng (ví dụ: tồn kho < 5)
+      $sql = "SELECT COUNT(*) AS lowStock FROM products WHERE quantity_in_stock < 5";
+      $result = $connectDb->query($sql);
+      while ($row = $result->fetch_assoc()) {
+        echo "<a href='./wareHouse.php?filter=low_stock' style='text-decoration: none; color: inherit;'>
+            <div class='overview-card'>
+              <h3>{$row['lowStock']}</h3>
+              <p>Sản phẩm sắp hết hàng</p>
+            </div>
+          </a>";
+      }
+
+      // Tổng số khách hàng
       $sql = "SELECT COUNT(*) AS QuantityUser FROM users WHERE Role='customer'";
       $result = $connectDb->query($sql);
       while ($row = $result->fetch_assoc()) {
-        echo "<a href='./customer.php?from=home' style='text-decoration: none; color: inherit;'>";
-        echo "<div class='overview-card'>";
-        echo "<h3>{$row['QuantityUser']}</h3>";
-        echo "<p>Khách hàng</p></div></a>";
+        echo "<a href='./customer.php?from=home' style='text-decoration: none; color: inherit;'>
+            <div class='overview-card'>
+              <h3>{$row['QuantityUser']}</h3>
+              <p>Khách hàng</p>
+            </div>
+          </a>";
       }
       ?>
     </div>
 
+
     <div class="order-section">
-      <p class="section-title">Đơn hàng chờ xác nhận</p>
-      <a href="orderPage.php?order_status=execute"><button class="button-handle" style="white-space:nowrap;">Xem thêm</button></a>
+      <p class="section-title">Đơn hàng mới</p>
+      <a href="orderPage.php"><button class="button-handle" style="white-space:nowrap;">Xem thêm</button></a>
       <?php
-      $sql = "SELECT o.*, u.FullName, a.address_detail, pr.name AS province_name, dr.name AS district_name
-              FROM orders o
-              LEFT JOIN users u ON o.user_id = u.user_id
-              join address a ON o.address_id = a.address_id
-              join ward w ON a.ward_id = w.ward_id
-              JOIN district dr ON w.district_id = dr.district_id
-              JOIN province pr ON dr.province_id = pr.province_id
-              
-              WHERE o.Status = 'execute'
-              ORDER BY o.DateGeneration DESC
-              LIMIT 5";
+      $sql = "SELECT o.*, u.FullName
+          FROM orders o
+          LEFT JOIN users u ON o.user_id = u.user_id
+
+          
+          ORDER BY o.OrderID DESC
+          LIMIT 5";
 
       $result = $connectDb->query($sql);
 
       if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
           echo "<div class='overview-order'>
-                  <div class='info-overview-order'>
-                    <p>{$row['FullName']} <span class='label customer'>Customer</span></p>
-                    <p>Ngày đặt hàng: " . date('d/m/Y', strtotime($row['DateGeneration'])) . "</p>
-                    <p>Địa chỉ: {$row['Address']}, {$row['district_name']}, {$row['province_name']}</p>
-                  </div>
-                  <div><a href='orderDetail2.php?code_Product={$row['OrderID']}' style='text-decoration: none; color: black;'>
-                    <button class='button-handle'>Xử lý</button></a>
-                  </div>
-                </div>";
+              <div class='info-overview-order'>
+                <p>{$row['FullName']} <span class='label customer'>Customer</span></p>
+                <p>Ngày đặt hàng: " . date('d/m/Y', strtotime($row['DateGeneration'])) . "</p>
+                
+              </div>
+              <div>
+                <a href='orderPage.php' style='text-decoration: none; color: black;'>
+                  <button class='button-handle'>Xử lý</button>
+                </a>
+              </div>
+            </div>";
         }
       } else {
-        echo "<div class='overview-order'><p>Không có đơn hàng chưa xử lý</p></div>";
+        echo "<div class='overview-order'><p>Không có đơn hàng nào</p></div>";
       }
       ?>
     </div>

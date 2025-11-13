@@ -58,32 +58,6 @@ if (!defined('INCLUDE_CHECK')) {
               </select>
             </div>
           </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="province" class="form-label">Tỉnh/Thành phố</label>
-              <select class="form-select" id="province" name="province" required>
-                <option value="">Chọn tỉnh/thành phố</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="district" class="form-label">Quận/Huyện</label>
-              <select class="form-select" id="district" name="district" required>
-                <option value="">Chọn quận/huyện</option>
-              </select>
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="ward" class="form-label">Phường/Xã</label>
-              <select class="form-select" id="ward" name="ward" required>
-                <option value="">Chọn phường/xã</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label for="address" class="form-label">Địa chỉ cụ thể</label>
-              <input type="text" class="form-control" id="address" name="address" required>
-            </div>
-          </div>
   </form>
       </div>
       <div class="modal-footer">

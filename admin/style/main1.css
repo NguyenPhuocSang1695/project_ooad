@@ -110,10 +110,11 @@
   font-size: 14px;
 }
 
-.order-section,
+/* .order-section,
 .inventory-section {
-  margin-bottom: 30px;
-}
+  margin: 0 0 30px 50px;
+} */
+
 
 .section-title {
   font-size: 18px;
@@ -209,4 +210,12 @@
 
 .label.product {
   background-color: #e74c3c;
+}
+
+@media only screen and (min-width: 1024px) {
+
+  .order-section,
+  .inventory-section {
+    margin: 10px 0 0 50px;
+  }
 }
