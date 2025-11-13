@@ -222,7 +222,7 @@ class AnalyzePage
           <label for="start-date">Từ ngày:</label>
           <input type="date" id="start-date" name="start_date" required>
           <label for="end-date">Đến ngày:</label>
-          <input type="date" id="end-date" name="end_date" required>
+          <input type="date" id="end-date" name="end_date" >
           <button type="submit" name="submit">Lọc <i class="fa-solid fa-filter"></i></button>
         </form>
       </div>
