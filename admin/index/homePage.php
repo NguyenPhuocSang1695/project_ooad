@@ -72,12 +72,36 @@ $myconn = $connectDb->getConnection();
               <p style="color:black">Đơn hàng</p>
             </div>
           </a>
+          <a href="importReceipt.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Nhập hàng</p>
+            </div>
+          </a>
           <a href="analyzePage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
               <button class="button-function-selection">
                 <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
               </button>
               <p>Thống kê</p>
+            </div>
+          </a>
+          <a href="supplierManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Nhà cung cấp</p>
+            </div>
+          </a>
+          <a href="voucherManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Mã giảm giá</p>
             </div>
           </a>
           <a href="accountPage.php" style="text-decoration: none; color: black;">
@@ -182,12 +206,36 @@ $myconn = $connectDb->getConnection();
         <p>Đơn hàng</p>
       </div>
     </a>
+    <a href="importReceipt.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Nhập hàng</p>
+      </div>
+    </a>
     <a href="analyzePage.php" style="text-decoration: none; color: black;">
       <div class="container-function-selection">
         <button class="button-function-selection">
           <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
         </button>
         <p>Thống kê</p>
+      </div>
+    </a>
+    <a href="supplierManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Nhà cung cấp</p>
+      </div>
+    </a>
+    <a href="voucherManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Mã giảm giá</p>
       </div>
     </a>
     <a href="accountPage.php" style="text-decoration: none; color: black;">

@@ -103,6 +103,15 @@ $voucherResult = $myconn->query($sqlVouchers);
               <p>Thống kê</p>
             </div>
           </a>
+
+          <a href="supplier.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection" style="background-color: #6aa173;">
+                <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Nhà cung cấp</p>
+            </div>
+          </a>
           <a href="voucherManage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
               <button class="button-function-selection">
@@ -234,6 +243,14 @@ $voucherResult = $myconn->query($sqlVouchers);
           <p>Đơn hàng</p>
         </div>
       </a>
+      <a href="importReceipt.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection">
+            <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Nhập hàng</p>
+        </div>
+      </a>
       <a href="analyzePage.php" style="text-decoration: none; color: black;">
         <div class="container-function-selection">
           <button class="button-function-selection">
@@ -243,6 +260,14 @@ $voucherResult = $myconn->query($sqlVouchers);
                 "></i>
           </button>
           <p>Thống kê</p>
+        </div>
+      </a>
+      <a href="supplierManage.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection">
+            <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Nhà cung cấp</p>
         </div>
       </a>
       <a href="voucherManage.php" style="text-decoration: none; color: black;">

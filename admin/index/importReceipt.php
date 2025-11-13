@@ -11,11 +11,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $import_date = $_POST['import_date'];
     $total_amount = $_POST['total_amount'];
     $note = $_POST['note'];
+    $supplier_id = $_POST['suppliers']; // Lấy supplier từ form
+
+
+    if (empty($supplier_id)) {
+        echo "<script>alert('Vui lòng chọn nhà cung cấp!'); window.history.back();</script>";
+        exit;
+    }
 
     // Thêm phiếu nhập
-    $sql = "INSERT INTO import_receipt (import_date, total_amount, note) VALUES (?, ?, ?)";
+    $sql = "INSERT INTO import_receipt (import_date, total_amount, note, supplier_id) VALUES (?, ?, ?, ?)";
     $stmt = $myconn->prepare($sql);
-    $stmt->bind_param("sds", $import_date, $total_amount, $note);
+    $stmt->bind_param("sdsi", $import_date, $total_amount, $note, $supplier_id);
 
     if ($stmt->execute()) {
         $receipt_id = $stmt->insert_id;
@@ -447,12 +454,29 @@ if (isset($_GET['delete'])) {
                             <p style="color:black">Nhập hàng</p>
                         </div>
                     </a>
+
                     <a href="analyzePage.php" style="text-decoration: none; color: black;">
                         <div class="container-function-selection">
                             <button class="button-function-selection">
                                 <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
                             </button>
                             <p>Thống kê</p>
+                        </div>
+                    </a>
+                    <a href="supplierManage.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Nhà cung cấp</p>
+                        </div>
+                    </a>
+                    <a href="voucherManage.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Mã giảm giá</p>
                         </div>
                     </a>
                     <a href="accountPage.php" style="text-decoration: none; color: black;">
@@ -566,12 +590,29 @@ if (isset($_GET['delete'])) {
                 <p>Nhập hàng</p>
             </div>
         </a>
+
         <a href="analyzePage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
                 <button class="button-function-selection">
                     <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
                 </button>
                 <p>Thống kê</p>
+            </div>
+        </a>
+        <a href="supplierManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Nhà cung cấp</p>
+            </div>
+        </a>
+        <a href="voucherManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Mã giảm giá</p>
             </div>
         </a>
         <a href="accountPage.php" style="text-decoration: none; color: black;">
@@ -686,6 +727,27 @@ if (isset($_GET['delete'])) {
                         <label>Ghi chú</label>
                         <input type="text" name="note" placeholder="Nhập ghi chú (không bắt buộc)">
                     </div>
+                </div>
+
+                <div class="form-row">
+                    <p>
+                    <h4>Nhà cung cấp</h4>
+                    </p>
+                    <select name="suppliers" id="suppliers" style="padding:5px; width:100%;">
+                        <option value="">-- Chọn nhà cung cấp --</option>
+                        <?php
+                        $sql = "SELECT supplier_id, supplier_name FROM suppliers";
+                        $result = $connectDb->query($sql);
+
+                        if ($result->num_rows > 0) {
+                            while ($row = $result->fetch_assoc()) {
+                                echo '<option value="' . $row['supplier_id'] . '">' . $row['supplier_name'] . '</option>';
+                            }
+                        } else {
+                            echo '<option value="">Không có nhà cung cấp</option>';
+                        }
+                        ?>
+                    </select>
                 </div>
 
                 <div class="product-items">
@@ -915,33 +977,37 @@ if (isset($_GET['delete'])) {
                 .then(data => {
                     if (data.success) {
                         let html = `
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Mã phiếu nhập:</label>
-                  <p style="font-size: 16px; font-weight: 500;">PN${data.receipt.receipt_id}</p>
-                </div>
-                <div class="form-group">
-                  <label>Ngày nhập:</label>
-                  <p style="font-size: 16px; font-weight: 500;">${data.receipt.import_date}</p>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Ghi chú:</label>
-                <p style="font-size: 16px;">${data.receipt.note || 'Không có ghi chú'}</p>
-              </div>
-              <h4 style="margin-top: 20px; color: #64792c;">Danh sách sản phẩm</h4>
-              <table class="receipt-table">
-                <thead>
-                  <tr>
-                    <th>STT</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Số lượng</th>
-                    <th>Giá nhập</th>
-                    <th>Thành tiền</th>
-                  </tr>
-                </thead>
-                <tbody>
-            `;
+                            <div class="form-row">
+                                <div class="form-group">
+                                <label>Mã phiếu nhập:</label>
+                                <p style="font-size: 16px; font-weight: 500;">PN${data.receipt.receipt_id}</p>
+                                </div>
+                                <div class="form-group">
+                                <label>Ngày nhập:</label>
+                                <p style="font-size: 16px; font-weight: 500;">${data.receipt.import_date}</p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Nhà cung cấp:</label>
+                                <p style="font-size: 16px;">${data.receipt.supplier_name || 'Không có nhà cung cấp'}</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Ghi chú:</label>
+                                <p style="font-size: 16px;">${data.receipt.note || 'Không có ghi chú'}</p>
+                            </div>
+                            <h4 style="margin-top: 20px; color: #64792c;">Danh sách sản phẩm</h4>
+                            <table class="receipt-table">
+                                <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Số lượng</th>
+                                    <th>Giá nhập</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                        `;
 
                         data.details.forEach((item, index) => {
                             html += `

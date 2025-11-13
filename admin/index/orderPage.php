@@ -3,8 +3,8 @@
 session_name('admin_session');
 
 $pagination = [
-    'currentPage' => 1,
-    'totalPages' => 1
+  'currentPage' => 1,
+  'totalPages' => 1
 ];
 $orders = [];
 ?>
@@ -30,7 +30,7 @@ $orders = [];
       text-decoration: none;
 
     }
- 
+
     .container-function-selection {
       cursor: pointer;
       font-size: 10px;
@@ -402,6 +402,14 @@ $orders = [];
             <p>Đơn hàng</p>
           </div>
         </a>
+        <a href="importReceipt.php" style="text-decoration: none; color: black;">
+          <div class="container-function-selection">
+            <button class="button-function-selection">
+              <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+            </button>
+            <p>Nhập hàng</p>
+          </div>
+        </a>
         <a href="analyzePage.php" style="text-decoration: none; color: black;">
           <div class="container-function-selection">
             <button class="button-function-selection">
@@ -410,14 +418,22 @@ $orders = [];
             <p>Thống kê</p>
           </div>
         </a>
-            <a href="voucherManage.php" style="text-decoration: none; color: black;">
-      <div class="container-function-selection">
-        <button class="button-function-selection">
-          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
-        </button>
-        <p>Mã giảm giá</p>
-      </div>
-    </a>
+        <a href="supplierManage.php" style="text-decoration: none; color: black;">
+          <div class="container-function-selection">
+            <button class="button-function-selection">
+              <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+            </button>
+            <p>Nhà cung cấp</p>
+          </div>
+        </a>
+        <a href="voucherManage.php" style="text-decoration: none; color: black;">
+          <div class="container-function-selection">
+            <button class="button-function-selection">
+              <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+            </button>
+            <p>Mã giảm giá</p>
+          </div>
+        </a>
         <a href="accountPage.php" style="text-decoration: none; color: black;">
           <div class="container-function-selection">
             <button class="button-function-selection">
@@ -466,6 +482,14 @@ $orders = [];
           <p>Đơn hàng</p>
         </div>
       </a>
+      <a href="importReceipt.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection">
+            <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Nhập hàng</p>
+        </div>
+      </a>
       <a href="analyzePage.php" style="text-decoration: none; color: black;">
         <div class="container-function-selection">
           <button class="button-function-selection">
@@ -474,14 +498,22 @@ $orders = [];
           <p>Thống kê</p>
         </div>
       </a>
-          <a href="voucherManage.php" style="text-decoration: none; color: black;">
-      <div class="container-function-selection">
-        <button class="button-function-selection">
-          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
-        </button>
-        <p>Mã giảm giá</p>
-      </div>
-    </a>
+      <a href="supplierManage.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection">
+            <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Nhà cung cấp</p>
+        </div>
+      </a>
+      <a href="voucherManage.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection">
+            <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Mã giảm giá</p>
+        </div>
+      </a>
       <a href="accountPage.php" style="text-decoration: none; color: black;">
         <div class="container-function-selection">
           <button class="button-function-selection">
@@ -498,10 +530,10 @@ $orders = [];
         </div>
         <div class="filter-section" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
           <div style="width: 20rem; position: relative;">
-            <input 
-              type="text" 
-              class="form-control" 
-              id="search-input" 
+            <input
+              type="text"
+              class="form-control"
+              id="search-input"
               placeholder="Tìm kiếm mã đơn hàng hoặc tên khách hàng..."
               style="padding-left: 35px; border-radius: 6px; border: 2px solid #e0e0e0; transition: all 0.3s ease;">
             <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999;"></i>
@@ -565,27 +597,27 @@ $orders = [];
                     <label class="form-label">Địa chỉ giao hàng:</label>
                     <div class="row">
                       <div class="col-md-4 mb-2">
-                        <select id="add-province" name="province" class="form-control" >
+                        <select id="add-province" name="province" class="form-control">
                           <option value="">Chọn tỉnh/thành</option>
                         </select>
                       </div>
                       <div class="col-md-4 mb-2">
-                        <select id="add-district" name="district" class="form-control" >
+                        <select id="add-district" name="district" class="form-control">
                           <option value="">Chọn quận/huyện</option>
                         </select>
                       </div>
                       <div class="col-md-4 mb-2">
-                        <select id="add-ward" name="ward" class="form-control" >
+                        <select id="add-ward" name="ward" class="form-control">
                           <option value="">Chọn phường/xã</option>
                         </select>
                       </div>
                     </div>
                     <div class="mt-2">
-                      <input type="text" class="form-control" id="address-detail" name="address_detail" 
-                             placeholder="Số nhà, tên đường..." >
+                      <input type="text" class="form-control" id="address-detail" name="address_detail"
+                        placeholder="Số nhà, tên đường...">
                     </div>
                   </div>
-                  
+
                   <div class="mb-3">
                     <div class="col-md-6 mb-3">
                       <label for="payment-method" class="form-label">Phương thức thanh toán:</label>
@@ -600,7 +632,7 @@ $orders = [];
                     </div>
                   </div>
 
-             
+
                   <div class="mb-3">
                     <label for="voucher-select" class="form-label">Mã giảm giá (Voucher):</label>
                     <select class="form-control" id="voucher-select" name="voucher_id">
@@ -636,8 +668,8 @@ $orders = [];
                           </div>
                         </div>
                         <div class="col-md-3">
-                          <input type="number" class="form-control product-quantity" name="quantities[]" 
-                                 placeholder="Số lượng" min="1" required>
+                          <input type="number" class="form-control product-quantity" name="quantities[]"
+                            placeholder="Số lượng" min="1" required>
                         </div>
                         <div class="col-md-3">
                           <input type="text" class="form-control product-price" readonly>
@@ -746,17 +778,17 @@ $orders = [];
             <tbody id="order-table-body">
               <?php
               if (!empty($orders)) {
-                  foreach ($orders as $o) {
-                      echo '<tr>';
-                      echo '<td>#' . htmlspecialchars($o['OrderID']) . '</td>';
-                      echo '<td class="hide-index-tablet">' . htmlspecialchars($o['CustomerName']) . '</td>';
-                      echo '<td>' . htmlspecialchars($o['DateGeneration']) . '</td>';
-                      echo '<td class="hide-index-mobile">' . number_format($o['TotalAmount']) . '</td>';
-                      echo '<td>' . htmlspecialchars($o['Phone']) . '</td>';
-                      echo '</tr>';
-                  }
+                foreach ($orders as $o) {
+                  echo '<tr>';
+                  echo '<td>#' . htmlspecialchars($o['OrderID']) . '</td>';
+                  echo '<td class="hide-index-tablet">' . htmlspecialchars($o['CustomerName']) . '</td>';
+                  echo '<td>' . htmlspecialchars($o['DateGeneration']) . '</td>';
+                  echo '<td class="hide-index-mobile">' . number_format($o['TotalAmount']) . '</td>';
+                  echo '<td>' . htmlspecialchars($o['Phone']) . '</td>';
+                  echo '</tr>';
+                }
               } else {
-                  echo '<tr><td colspan="5">Không có đơn hàng</td></tr>';
+                echo '<tr><td colspan="5">Không có đơn hàng</td></tr>';
               }
               ?>
             </tbody>
