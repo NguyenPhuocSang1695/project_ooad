@@ -39,7 +39,8 @@
   .button-handle {
     width: 100%;
     margin-left: 0;
-    margin-top: 10px;
+    /* margin-top: 10px; */
+    margin: 0 0 10px 0;
     padding: 10px;
   }
 
@@ -62,7 +63,7 @@
     margin-top: 98px;
     justify-content: space-around;
     margin-right: 10px;
-    margin-left: 5px
+    margin-left: 65px;
   }
 }
 

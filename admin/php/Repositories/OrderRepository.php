@@ -18,8 +18,11 @@ class OrderRepository {
     public function find($orderId) {
         try {
             $conn = $this->db->getConnection();
+            if (!$conn) {
+                throw new Exception("Database connection failed");
+            }
             
-            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod,
+            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod, o.voucher_id, o.user_id,
                              a.address_detail, 
                              w.name as ward_name, 
                              d.name as district_name, 
@@ -61,6 +64,9 @@ class OrderRepository {
     public function findWithFilters($filters = [], $page = 1, $limit = 5) {
         try {
             $conn = $this->db->getConnection();
+            if (!$conn) {
+                throw new Exception("Database connection failed");
+            }
             $offset = ($page - 1) * $limit;
             
             $baseQuery = "FROM orders o 
@@ -75,6 +81,13 @@ class OrderRepository {
             $types = "";
             
             // Build WHERE clause
+            if (!empty($filters['search'])) {
+                $whereConditions[] = "(o.OrderID LIKE ? OR o.CustomerName LIKE ?)";
+                $searchValue = "%" . $filters['search'] . "%";
+                $params[] = $searchValue;
+                $params[] = $searchValue;
+                $types .= "ss";
+            }
             if (!empty($filters['date_from'])) {
                 $whereConditions[] = "DATE(o.DateGeneration) >= ?";
                 $params[] = $filters['date_from'];
@@ -85,15 +98,28 @@ class OrderRepository {
                 $params[] = $filters['date_to'];
                 $types .= "s";
             }
-            if (!empty($filters['province_id'])) {
-                $whereConditions[] = "p.province_id = ?";
-                $params[] = intval($filters['province_id']);
-                $types .= "i";
+            if (!empty($filters['price_min'])) {
+                $whereConditions[] = "o.TotalAmount >= ?";
+                $params[] = floatval($filters['price_min']);
+                $types .= "d";
             }
-            if (!empty($filters['district_id'])) {
-                $whereConditions[] = "d.district_id = ?";
-                $params[] = intval($filters['district_id']);
-                $types .= "i";
+            if (!empty($filters['price_max'])) {
+                $whereConditions[] = "o.TotalAmount <= ?";
+                $params[] = floatval($filters['price_max']);
+                $types .= "d";
+            }
+            if (!empty($filters['voucher_filter'])) {
+                if ($filters['voucher_filter'] === 'has_voucher') {
+                    $whereConditions[] = "o.voucher_id IS NOT NULL";
+                    // Nếu có chọn voucher cụ thể
+                    if (!empty($filters['specific_voucher'])) {
+                        $whereConditions[] = "o.voucher_id = ?";
+                        $params[] = intval($filters['specific_voucher']);
+                        $types .= "i";
+                    }
+                } elseif ($filters['voucher_filter'] === 'no_voucher') {
+                    $whereConditions[] = "o.voucher_id IS NULL";
+                }
             }
             
             $whereClause = "";
@@ -116,7 +142,7 @@ class OrderRepository {
             $stmt->close();
             
             // Get orders with pagination
-            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod,
+            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod, o.voucher_id,
                              a.address_detail, w.name as ward_name, d.name as district_name, p.name as province_name " 
                     . $baseQuery . $whereClause . " ORDER BY o.DateGeneration DESC LIMIT ? OFFSET ?";
             
@@ -161,6 +187,7 @@ class OrderRepository {
     /**
      * Create new order
      */
+
     public function create(Order $order) {
         try {
             $order->validate();
@@ -210,7 +237,9 @@ class OrderRepository {
                 throw new Exception("Prepare failed: " . $conn->error);
             }
             
-            $stmt->bind_param("ii", $amount, $orderId);
+            // Ensure amount is a double and bind parameters as (double, integer)
+            $amountVal = floatval($amount);
+            $stmt->bind_param("di", $amountVal, $orderId);
             
             if (!$stmt->execute()) {
                 throw new Exception("Update failed: " . $stmt->error);

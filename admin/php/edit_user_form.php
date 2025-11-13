@@ -47,13 +47,7 @@
                 <option value="admin">Quản trị viên</option>
               </select>
             </div>
-            <div class="col-md-6">
-              <label for="edit_status" class="form-label">Trạng thái</label>
-              <select class="form-select" id="edit_status" name="status">
-                <option value="Active">Hoạt động</option>
-                <option value="Block">Không hoạt động</option>
-              </select>
-            </div>
+            <!-- Status editing removed -->
           </div>
         </form>
       </div>

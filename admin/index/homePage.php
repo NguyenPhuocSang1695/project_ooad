@@ -20,7 +20,8 @@ $myconn = $connectDb->getConnection();
   <link rel="stylesheet" href="../style/sidebar.css">
   <link href="../icon/css/all.css" rel="stylesheet">
   <link href="../style/generall.css" rel="stylesheet">
-  <link href="../style/main1.css" rel="stylesheet">
+  <!-- <link href="../style/main1.css" rel="stylesheet"> -->
+  <link href="../style/main2.css" rel="stylesheet">
   <link href="../style/LogInfo.css" rel="stylesheet">
   <link href="asset/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../style/responsiveHomePage.css">
@@ -209,7 +210,7 @@ $myconn = $connectDb->getConnection();
       while ($row = $result->fetch_assoc()) {
         echo "<a href='./orderPage.php?order_status=execute' style='text-decoration: none; color: inherit;'>
             <div class='overview-card'>
-              <h3>{$row['totalExOder']}</h3>
+              <h3>{$row['totalExOder']}</h3> <br>
               <p>Đơn hàng</p>
             </div>
           </a>";
@@ -221,19 +222,31 @@ $myconn = $connectDb->getConnection();
       while ($row = $result->fetch_assoc()) {
         echo "<a href='./wareHouse.php' style='text-decoration: none; color: inherit;'>
             <div class='overview-card'>
-              <h3>{$row['QuantityProduct']}</h3>
+              <h3>{$row['QuantityProduct']}</h3> <br>
               <p>Sản phẩm trong kho</p>
             </div>
           </a>";
       }
 
-      // Sản phẩm sắp hết hàng (ví dụ: tồn kho < 5)
-      $sql = "SELECT COUNT(*) AS lowStock FROM products WHERE quantity_in_stock < 5";
+      // Sản phẩm hết hàng (ví dụ: tồn kho = 0)
+      $sql = "SELECT COUNT(*) AS lowStock FROM products WHERE quantity_in_stock = 0";
       $result = $connectDb->query($sql);
       while ($row = $result->fetch_assoc()) {
-        echo "<a href='./wareHouse.php?filter=low_stock' style='text-decoration: none; color: inherit;'>
+        echo "<a href='./wareHouse.php?status=out_of_stock' style='text-decoration: none; color: inherit;'>
             <div class='overview-card'>
-              <h3>{$row['lowStock']}</h3>
+              <h3>{$row['lowStock']}</h3> <br>
+              <p>Sản phẩm hết hàng</p>
+            </div>
+          </a>";
+      }
+
+      // Sản phẩm sắp hết hàng (ví dụ: tồn kho > 0 và <= 5)
+      $sql = "SELECT COUNT(*) AS lowStock FROM products WHERE quantity_in_stock > 0 AND quantity_in_stock <=5";
+      $result = $connectDb->query($sql);
+      while ($row = $result->fetch_assoc()) {
+        echo "<a href='./wareHouse.php?status=near_out_of_stock' style='text-decoration: none; color: inherit;'>
+            <div class='overview-card'>
+              <h3>{$row['lowStock']}</h3> <br>
               <p>Sản phẩm sắp hết hàng</p>
             </div>
           </a>";
@@ -245,7 +258,7 @@ $myconn = $connectDb->getConnection();
       while ($row = $result->fetch_assoc()) {
         echo "<a href='./customer.php?from=home' style='text-decoration: none; color: inherit;'>
             <div class='overview-card'>
-              <h3>{$row['QuantityUser']}</h3>
+              <h3>{$row['QuantityUser']}</h3> <br>
               <p>Khách hàng</p>
             </div>
           </a>";
@@ -256,7 +269,7 @@ $myconn = $connectDb->getConnection();
 
     <div class="order-section">
       <p class="section-title">Đơn hàng mới</p>
-      <a href="orderPage.php"><button class="button-handle" style="white-space:nowrap;">Xem thêm</button></a>
+      <!-- <a href="orderPage.php"><button class="button-handle" style="white-space:nowrap;">Xem thêm</button></a> -->
       <?php
       $sql = "SELECT o.*, u.FullName
           FROM orders o
@@ -272,17 +285,23 @@ $myconn = $connectDb->getConnection();
         while ($row = $result->fetch_assoc()) {
           echo "<div class='overview-order'>
               <div class='info-overview-order'>
-                <p>{$row['FullName']} <span class='label customer'>Customer</span></p>
+                <p>{$row['FullName']} <span class='label customer'>Khách hàng</span></p>
+                <p>Mã đơn hàng: {$row['OrderID']}</p>
+                <p> | </p>
                 <p>Ngày đặt hàng: " . date('d/m/Y', strtotime($row['DateGeneration'])) . "</p>
                 
               </div>
               <div>
                 <a href='orderPage.php' style='text-decoration: none; color: black;'>
-                  <button class='button-handle'>Xử lý</button>
+                  <button class='button-handle'>Xem đơn hàng</button>
                 </a>
               </div>
             </div>";
         }
+
+        echo "<div class= 'd-flex justify-content-center mt-3'>
+              <a href='orderPage.php'><button class='button-handle' style='white-space:nowrap;'>Xem thêm</button></a>
+              </div>";
       } else {
         echo "<div class='overview-order'><p>Không có đơn hàng nào</p></div>";
       }
@@ -291,7 +310,7 @@ $myconn = $connectDb->getConnection();
 
     <div class="inventory-section">
       <p class="section-title">Sản phẩm mới</p>
-      <a href="wareHouse.php"><button class="button-handle" style="white-space:nowrap;">Xem thêm</button></a>
+
       <?php
       $sql = "SELECT p.*, c.CategoryName 
               FROM products p 
@@ -306,15 +325,19 @@ $myconn = $connectDb->getConnection();
           echo "<div class='overview-order'>
                   <div><img class='avatar-customer' src='../..{$row['ImageURL']}' alt='Product'></div>
                   <div class='info-overview-order'>
-                    <p>{$row['ProductName']} <span class='label product'>Product</span></p>
+                    <p>{$row['ProductName']} <span class='label product'>Sản phẩm</span></p>
                     <p>Danh mục: {$row['CategoryName']}</p>
+                    <p> | </p>
                     <p>Giá: " . number_format($row['Price'], 0, ',', '.') . " VNĐ</p>
                   </div>
-                  <div><a href='wareHouse.php' style='text-decoration: none; color: black;'>
+                  <div><a href='wareHouse.php?edit={$row['ProductID']}' style='text-decoration: none; color: black;'>
                     <button class='button-handle'><p>Chi tiết</p></button></a>
                   </div>
                 </div>";
         }
+        echo "<div class= 'd-flex justify-content-center mt-3'>
+              <a href='wareHouse.php'><button class='button-handle' style='white-space:nowrap;'>Xem thêm</button></a>
+              </div>";
       } else {
         echo "<div class='overview-order'><p>Không có sản phẩm mới</p></div>";
       }
