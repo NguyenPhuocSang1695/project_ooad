@@ -1,0 +1,1410 @@
+<?php
+include '../php/connect.php';
+// include '../php/check_session.php';
+
+$connectDb = new DatabaseConnection();
+$connectDb->connect();
+$myconn = $connectDb->getConnection();
+
+// Xử lý thêm/sửa nhà cung cấp
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action'])) {
+        $name = $_POST['supplier_name'];
+        $phone = $_POST['phone'];
+        $email = $_POST['email'];
+        $address_detail = $_POST['address_detail']; // input chi tiết địa chỉ
+        $ward_id = $_POST['ward_id']; // select ward
+
+        if ($_POST['action'] === 'add') {
+            // 1. Thêm địa chỉ vào bảng address
+            $sqlAddress = "INSERT INTO address (address_detail, ward_id) VALUES (?, ?)";
+            $stmtAddress = $myconn->prepare($sqlAddress);
+            $stmtAddress->bind_param("si", $address_detail, $ward_id);
+            $stmtAddress->execute();
+            $address_id = $stmtAddress->insert_id; // lấy id vừa insert
+
+            // 2. Thêm nhà cung cấp với address_id
+            $sqlSupplier = "INSERT INTO suppliers (supplier_name, Phone, Email, address_id) VALUES (?, ?, ?, ?)";
+            $stmtSupplier = $myconn->prepare($sqlSupplier);
+            $stmtSupplier->bind_param("sssi", $name, $phone, $email, $address_id);
+            $stmtSupplier->execute();
+            header("Location: supplierManage.php?success=added");
+            exit();
+        } elseif ($_POST['action'] === 'edit') {
+            $supplier_id = $_POST['supplier_id'];
+            $address_id = $_POST['address_id'];
+
+            // Lấy thông tin cũ từ DB
+            $sqlOld = "SELECT s.supplier_name, s.Phone, s.Email, a.address_detail, a.ward_id
+               FROM suppliers s
+               JOIN address a ON s.address_id = a.address_id
+               WHERE s.supplier_id=?";
+            $stmtOld = $myconn->prepare($sqlOld);
+            $stmtOld->bind_param("i", $supplier_id);
+            $stmtOld->execute();
+            $resultOld = $stmtOld->get_result()->fetch_assoc();
+
+            // Nếu input trống thì dùng giá trị cũ
+            $name = !empty($_POST['supplier_name']) ? $_POST['supplier_name'] : $resultOld['supplier_name'];
+            $phone = !empty($_POST['phone']) ? $_POST['phone'] : $resultOld['Phone'];
+            $email = !empty($_POST['email']) ? $_POST['email'] : $resultOld['Email'];
+            $address_detail = !empty($_POST['address_detail']) ? $_POST['address_detail'] : $resultOld['address_detail'];
+            $ward_id = !empty($_POST['ward_id']) ? $_POST['ward_id'] : $resultOld['ward_id'];
+
+            // Cập nhật địa chỉ
+            $sqlAddress = "UPDATE address SET address_detail=?, ward_id=? WHERE address_id=?";
+            $stmtAddress = $myconn->prepare($sqlAddress);
+            $stmtAddress->bind_param("sii", $address_detail, $ward_id, $address_id);
+            $stmtAddress->execute();
+
+            // Cập nhật nhà cung cấp
+            $sqlSupplier = "UPDATE suppliers SET supplier_name=?, Phone=?, Email=? WHERE supplier_id=?";
+            $stmtSupplier = $myconn->prepare($sqlSupplier);
+            $stmtSupplier->bind_param("sssi", $name, $phone, $email, $supplier_id);
+            $stmtSupplier->execute();
+
+            header("Location: supplierManage.php?success=updated");
+            exit();
+        }
+    }
+}
+
+
+// Lấy thông tin nhà cung cấp nếu đang edit
+$editSupplier = null;
+if (isset($_GET['edit'])) {
+    $id = $_GET['edit'];
+    $sql = "SELECT * FROM suppliers WHERE supplier_id = ?";
+    $stmt = $myconn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $editSupplier = $result->fetch_assoc();
+}
+
+// Lấy danh sách nhà cung cấp
+$searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
+$sql = "SELECT s.*, a.*, w.name as ward_name, d.name as district_name, pv.name as province_name,
+        COUNT(p.ProductID) AS TotalProducts,
+        COALESCE(SUM(p.price), 0) AS TotalAmount
+        FROM suppliers s
+        LEFT JOIN products p ON s.supplier_id = p.supplier_id
+        LEFT JOIN address a ON s.address_id = a.address_id
+        join ward w on a.ward_id = w.ward_id
+        join district d on w.district_id = d.district_id
+        join province pv on d.province_id = pv.province_id
+        WHERE s.supplier_name LIKE ? 
+           OR s.phone LIKE ? 
+           OR s.email LIKE ?
+        GROUP BY s.supplier_id
+        ORDER BY s.supplier_id DESC";
+
+
+$stmt = $myconn->prepare($sql);
+$searchParam = "%$searchTerm%";
+$stmt->bind_param("sss", $searchParam, $searchParam, $searchParam);
+$stmt->execute();
+$suppliers = $stmt->get_result();
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Nhà cung cấp</title>
+
+    <link rel="stylesheet" href="../style/header.css">
+    <link rel="stylesheet" href="../style/sidebar.css">
+    <link href="../icon/css/all.css" rel="stylesheet">
+    <link href="../style/generall.css" rel="stylesheet">
+    <link href="../style/main2.css" rel="stylesheet">
+    <link href="../style/LogInfo.css" rel="stylesheet">
+    <link href="asset/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../style/responsiveHomePage.css">
+
+    <style>
+        .supplier-container {
+            padding: 20px;
+            margin-left: 250px;
+            margin-top: 80px;
+        }
+
+        .supplier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background-color: #6aa173;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #5a8f63;
+        }
+
+        .supplier-table {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .supplier-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .supplier-table th {
+            background-color: #6aa173;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .supplier-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .supplier-table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-edit,
+        .btn-view {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background-color: #ffc107;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background-color: #e0a800;
+        }
+
+        .btn-view {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .btn-view:hover {
+            background-color: #138496;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #6aa173;
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: #6aa173;
+            margin: 0;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .btn-cancel {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background-color: #5a6268;
+        }
+
+        .supplier-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #6aa173;
+            font-size: 32px;
+            margin: 0 0 10px 0;
+        }
+
+        .stat-card p {
+            color: #666;
+            margin: 0;
+        }
+
+        .product-list {
+            margin-top: 15px;
+        }
+
+        .product-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        @media (max-width: 768px) {
+            .supplier-container {
+                margin-left: 0;
+                padding: 15px;
+            }
+
+            .supplier-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                max-width: 100%;
+            }
+
+            .supplier-table {
+                overflow-x: auto;
+            }
+
+            .supplier-table table {
+                min-width: 800px;
+            }
+        }
+    </style>
+
+    <style>
+        .btn-info {
+            background-color: #28a745;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .btn-info:hover {
+            background-color: #218838;
+        }
+
+        .info-detail {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .info-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .info-item label {
+            font-weight: 600;
+            color: #6aa173;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .info-item p {
+            margin: 0;
+            color: #333;
+        }
+
+        .info-full-width {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <div class="index-menu">
+            <i class="fa-solid fa-bars" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button"
+                aria-controls="offcanvasExample"></i>
+            <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasExample"
+                aria-labelledby="offcanvasExampleLabel">
+                <div style="border-bottom: 1px solid rgb(176, 176, 176);" class="offcanvas-header">
+                    <h5 class="offcanvas-title" id="offcanvasExampleLabel">Mục lục</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <a href="homePage.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-house" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Tổng quan</p>
+                        </div>
+                    </a>
+                    <a href="wareHouse.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-warehouse" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Kho hàng</p>
+                        </div>
+                    </a>
+                    <a href="customer.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-users" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Người dùng</p>
+                        </div>
+                    </a>
+                    <a href="orderPage.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-list-check" style="font-size: 18px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Đơn hàng</p>
+                        </div>
+                    </a>
+                    <a href="importReceipt.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Nhập hàng</p>
+                        </div>
+                    </a>
+                    <a href="analyzePage.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Thống kê</p>
+                        </div>
+                    </a>
+                    <a href="supplierManage.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection" style="background-color: #6aa173;">
+                                <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Nhà cung cấp</p>
+                        </div>
+                    </a>
+                    <a href="voucherManage.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Mã giảm giá</p>
+                        </div>
+                    </a>
+                    <a href="accountPage.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-circle-user" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Tài khoản</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="header-left-section">
+            <p class="header-left-title">Nhà cung cấp</p>
+        </div>
+        <div class="header-middle-section">
+            <img class="logo-store" src="../../assets/images/LOGO-2.jpg">
+        </div>
+        <div class="header-right-section">
+            <div class="bell-notification">
+                <i class="fa-regular fa-bell" style="color: #64792c; font-size: 45px; width:100%;"></i>
+            </div>
+            <div>
+                <div class="position-employee">
+                    <p id="employee-role">Chức vụ</p>
+                </div>
+                <div class="name-employee">
+                    <p id="employee-name">Ẩn danh</p>
+                </div>
+            </div>
+            <div>
+                <img class="avatar" src="../../assets/images/admin.jpg" alt="" data-bs-toggle="offcanvas"
+                    data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">
+            </div>
+            <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="offcanvasWithBothOptions"
+                aria-labelledby="offcanvasWithBothOptionsLabel">
+                <div style="border-bottom: 1px solid rgb(176, 176, 176);" class="offcanvas-header">
+                    <img class="avatar" src="../../assets/images/admin.jpg" alt="">
+                    <div class="admin">
+                        <h4 class="offcanvas-title" id="offcanvasWithBothOptionsLabel">Username</h4>
+                        <h5 id="employee-displayname">Họ tên</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                </div>
+                <div class="offcanvas-body">
+                    <a href="accountPage.php" class="navbar_user">
+                        <i class="fa-solid fa-user"></i>
+                        <p>Thông tin cá nhân</p>
+                    </a>
+                    <a href="#logoutModal" class="navbar_logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <p>Đăng xuất</p>
+                    </a>
+                    <div id="logoutModal" class="modal">
+                        <div class="modal_content">
+                            <h2>Xác nhận đăng xuất</h2>
+                            <p>Bạn có chắc chắn muốn đăng xuất không?</p>
+                            <div class="modal_actions">
+                                <a href="../php/logout.php" class="btn_2 confirm">Đăng xuất</a>
+                                <a href="#" class="btn_2 cancel">Hủy</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="side-bar">
+        <div class="backToHome">
+            <a href="homePage.php" style="text-decoration: none; color: black;">
+                <div class="container-function-selection">
+                    <button class="button-function-selection" style="margin-top: 35px;">
+                        <i class="fa-solid fa-house" style="font-size: 20px; color: #FAD4AE;"></i>
+                    </button>
+                    <p>Tổng quan</p>
+                </div>
+            </a>
+        </div>
+        <a href="wareHouse.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-warehouse" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Kho hàng</p>
+            </div>
+        </a>
+        <a href="customer.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-users" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Người dùng</p>
+            </div>
+        </a>
+        <a href="orderPage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-list-check" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Đơn hàng</p>
+            </div>
+        </a>
+        <a href="importReceipt.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Nhập hàng</p>
+            </div>
+        </a>
+
+        <a href="analyzePage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Thống kê</p>
+            </div>
+        </a>
+        <a href="supplierManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection" style="background-color: #6aa173;">
+                    <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Nhà cung cấp</p>
+            </div>
+        </a>
+        <a href="voucherManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Mã giảm giá</p>
+            </div>
+        </a>
+        <a href="accountPage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-circle-user" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Tài khoản</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="supplier-container">
+        <?php if (isset($_GET['success'])): ?>
+            <div class="alert">
+                <?php
+                if ($_GET['success'] === 'added') echo "Thêm nhà cung cấp thành công!";
+                if ($_GET['success'] === 'updated') echo "Cập nhật thông tin nhà cung cấp thành công!";
+                ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Statistics -->
+        <div class="supplier-stats">
+            <?php
+            $totalSql = "SELECT COUNT(*) as Total FROM suppliers";
+            $totalResult = $connectDb->query($totalSql);
+            $totalSuppliers = $totalResult->fetch_assoc()['Total'];
+
+            $amountSql = "SELECT SUM(ps.quantity_in_stock * ps.Price) as TotalAmount FROM products ps";
+            $amountResult = $connectDb->query($amountSql);
+            $totalAmount = $amountResult->fetch_assoc()['TotalAmount'] ?? 0;
+            ?>
+            <div class="stat-card">
+                <h3><?php echo $totalSuppliers; ?></h3>
+                <p>Nhà cung cấp</p>
+            </div>
+            <div class="stat-card">
+                <h3><?php echo number_format($totalAmount, 0, ',', '.'); ?></h3>
+                <p>Tổng giá trị nhập hàng (VNĐ)</p>
+            </div>
+        </div>
+
+        <!-- Header with search and add button -->
+        <div class="supplier-header">
+            <form class="search-box" method="GET">
+                <input type="text" name="search" placeholder="Tìm kiếm nhà cung cấp..."
+                    value="<?php echo htmlspecialchars($searchTerm); ?>">
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-search"></i> Tìm kiếm
+                </button>
+            </form>
+            <button class="btn-primary" onclick="openModal('add')">
+                <i class="fa-solid fa-plus"></i> Thêm nhà cung cấp
+            </button>
+        </div>
+
+        <!-- Supplier Table -->
+        <div class="supplier-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên nhà cung cấp</th>
+                        <th>Số điện thoại</th>
+                        <!-- <th>Email</th> -->
+                        <th>Địa chỉ</th>
+                        <!-- <th>Số sản phẩm</th> -->
+                        <!-- <th>Tổng giá trị</th> -->
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($suppliers->num_rows > 0): ?>
+                        <?php while ($row = $suppliers->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo $row['supplier_id']; ?></td>
+                                <td><strong><?php echo htmlspecialchars($row['supplier_name']); ?></strong></td>
+                                <td><?php echo htmlspecialchars($row['phone']); ?></td>
+
+                                <td><?php echo htmlspecialchars($row['address_detail'] . ', ' . $row['ward_name'] . ', ' . $row['district_name'] . ', ' . $row['province_name']);  ?></td>
+
+
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-info" onclick='viewSupplierInfo(<?php echo json_encode($row); ?>)'>
+                                            <i class="fa-solid fa-info-circle"></i> Thông tin
+                                        </button>
+                                        <button class="btn-edit" onclick='openModal("edit", <?php echo json_encode($row); ?>)'>
+                                            <i class="fa-solid fa-edit"></i> Sửa
+                                        </button>
+                                        <button class="btn-view" onclick="viewProducts(<?php echo $row['supplier_id']; ?>)">
+                                            <i class="fa-solid fa-eye"></i> Xem SP
+                                        </button>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 30px;">
+                                Không tìm thấy nhà cung cấp nào
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <style>
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        /* Modal Content */
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Modal Header */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #6aa173;
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: #6aa173;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #6aa173;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group select {
+            cursor: pointer;
+            background-color: white;
+        }
+
+        /* Required indicator */
+        .form-group label span {
+            color: red;
+            margin-left: 3px;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: #6aa173;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background-color: #5a8f63;
+        }
+
+        .btn-cancel {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-cancel:hover {
+            background-color: #5a6268;
+        }
+
+        /* Scrollbar styling cho modal */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #6aa173;
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #5a8f63;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                max-height: 85vh;
+            }
+
+            .modal-header h2 {
+                font-size: 20px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn-primary,
+            .btn-cancel {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Animation khi mở modal */
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-overlay.active .modal-content {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+    </style>
+
+    <!-- Modal Add/Edit Supplier -->
+    <div id="supplierModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm nhà cung cấp mới</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="supplierForm" method="POST">
+                <input type="hidden" name="action" id="formAction" value="add">
+                <input type="hidden" name="supplier_id" id="supplier_id">
+
+                <div class="form-group">
+                    <label>Tên nhà cung cấp <span style="color: red;">*</span></label>
+                    <input type="text" name="supplier_name" id="supplier_name">
+                </div>
+
+                <!-- <div class="form-group">
+                    <label>Người liên hệ <span style="color: red;">*</span></label>
+                    <input type="text" name="contact_person" id="contactPerson" required>
+                </div> -->
+
+                <div class="form-group">
+                    <label>Số điện thoại <span style="color: red;">*</span></label>
+                    <input type="tel" name="phone" id="phone">
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" id="email">
+                </div>
+
+                <div class="form-group">
+                    <label>Địa chỉ chi tiết</label>
+                    <input type="text" name="address_detail" id="address_detail"></input>
+                </div>
+
+                <input type="hidden" name="address_id" id="address_id">
+
+
+                <div class="form-group">
+                    <label>Tỉnh/Thành phố</label>
+                    <select name="province_id" id="province_id">
+                        <option value="">Chọn tỉnh/thành phố</option>
+                        <?php
+                        $provinces = $myconn->query("SELECT province_id, name FROM province ORDER BY name");
+                        while ($p = $provinces->fetch_assoc()) {
+                            echo "<option value='{$p['province_id']}'>{$p['name']}</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Quận/Huyện</label>
+                    <select name="district_id" id="district_id">
+                        <option value="">Chọn quận/huyện</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Phường/Xã</label>
+                    <select name="ward_id" id="ward_id">
+                        <option value="">Chọn phường/xã</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Hủy</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal View Products -->
+    <div id="productsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Danh sách sản phẩm</h2>
+                <button class="close-modal" onclick="closeProductsModal()">&times;</button>
+            </div>
+            <div id="productsList" class="product-list">
+                <!-- Products will be loaded here via AJAX -->
+            </div>
+        </div>
+    </div>
+
+    <div id="supplierInfoModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-info-circle"></i> Thông tin nhà cung cấp</h2>
+                <button class="close-modal" onclick="closeSupplierInfoModal()">&times;</button>
+            </div>
+            <div class="info-detail">
+                <div class="info-item">
+                    <label><i class="fa-solid fa-hashtag"></i> Mã nhà cung cấp</label>
+                    <p id="info_supplier_id"></p>
+                </div>
+                <div class="info-item">
+                    <label><i class="fa-solid fa-building"></i> Tên nhà cung cấp</label>
+                    <p id="info_supplier_name"></p>
+                </div>
+                <div class="info-item">
+                    <label><i class="fa-solid fa-phone"></i> Số điện thoại</label>
+                    <p id="info_phone"></p>
+                </div>
+                <div class="info-item">
+                    <label><i class="fa-solid fa-envelope"></i> Email</label>
+                    <p id="info_email"></p>
+                </div>
+                <div class="info-item info-full-width">
+                    <label><i class="fa-solid fa-location-dot"></i> Địa chỉ đầy đủ</label>
+                    <p id="info_address"></p>
+                </div>
+                <div class="info-item">
+                    <label><i class="fa-solid fa-box"></i> Tổng số sản phẩm</label>
+                    <p id="info_total_products"></p>
+                </div>
+                <div class="info-item">
+                    <label><i class="fa-solid fa-money-bill"></i> Tổng giá trị</label>
+                    <p id="info_total_amount"></p>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn-cancel" onclick="closeSupplierInfoModal()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./asset/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/checklog.js"></script>
+
+    <script>
+        // Load user info
+        document.addEventListener('DOMContentLoaded', () => {
+            const cachedUserInfo = localStorage.getItem('userInfo');
+            if (cachedUserInfo) {
+                const userInfo = JSON.parse(cachedUserInfo);
+                document.querySelector('.name-employee p').textContent = userInfo.fullname;
+                document.querySelector('.position-employee p').textContent = userInfo.role;
+                document.querySelectorAll('.avatar').forEach(img => img.src = userInfo.avatar);
+            }
+        });
+
+        function openModal(action, data = null) {
+            const modal = document.getElementById('supplierModal');
+            const title = document.getElementById('modalTitle');
+            const form = document.getElementById('supplierForm');
+
+            // Lấy các input cần required khi add
+            const requiredFields = [
+                document.getElementById('supplier_name'),
+                document.getElementById('phone'),
+                document.getElementById('address_detail'),
+                document.getElementById('province_id'),
+                document.getElementById('district_id'),
+                document.getElementById('ward_id')
+            ];
+
+            if (action === 'add') {
+                title.textContent = 'Thêm nhà cung cấp mới';
+                document.getElementById('formAction').value = 'add';
+                form.reset();
+
+                // Thêm required
+                requiredFields.forEach(input => input.setAttribute('required', 'required'));
+            } else if (action === 'edit' && data) {
+                title.textContent = 'Chỉnh sửa nhà cung cấp';
+                document.getElementById('formAction').value = 'edit';
+                document.getElementById('supplier_id').value = data.supplier_id;
+                document.getElementById('supplier_name').value = data.supplier_name;
+                document.getElementById('phone').value = data.phone;
+                document.getElementById('email').value = data.Email || '';
+                document.getElementById('address_id').value = data.address_id;
+                document.getElementById('address_detail').value = data.address_detail || '';
+                // Nếu muốn, có thể set province/district/ward
+
+                // Loại bỏ required
+                requiredFields.forEach(input => input.removeAttribute('required'));
+            }
+
+            modal.classList.add('active');
+        }
+
+
+        function closeModal() {
+            document.getElementById('supplierModal').classList.remove('active');
+        }
+
+        function viewProducts(supplier_id) {
+            const modal = document.getElementById('productsModal');
+            const list = document.getElementById('productsList');
+
+            list.innerHTML = '<p style="text-align: center; padding: 20px;">Đang tải...</p>';
+
+            // Fetch products from server
+            fetch(`../php/get_supplier_products.php?supplier_id=${supplier_id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.products && data.products.length > 0) {
+                        let html = '<div style="margin-bottom: 15px;"><strong>Tổng giá trị: ' +
+                            new Intl.NumberFormat('vi-VN').format(data.totalAmount) + ' VNĐ</strong></div>';
+
+                        data.products.forEach(product => {
+                            html += `
+                                <div class="product-item">
+                                <div>
+                                    <strong>${product.ProductName}</strong><br>
+                                    <small>Số lượng: ${product.Quantity} | Đơn giá: ${new Intl.NumberFormat('vi-VN').format(product.UnitPrice)} VNĐ</small>
+                                </div>
+                                <div>
+                                    <strong>${new Intl.NumberFormat('vi-VN').format(product.TotalValue)} VNĐ</strong>
+                                </div>
+                                </div>
+                            `;
+                        });
+                        list.innerHTML = html;
+                    } else {
+                        list.innerHTML = '<p style="text-align: center; padding: 20px;">Chưa có sản phẩm nào</p>';
+                    }
+                })
+                .catch(error => {
+                    list.innerHTML = '<p style="text-align: center; padding: 20px; color: red;">Lỗi khi tải dữ liệu</p>';
+                });
+
+            modal.classList.add('active');
+        }
+
+        function closeProductsModal() {
+            document.getElementById('productsModal').classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const supplierModal = document.getElementById('supplierModal');
+            const productsModal = document.getElementById('productsModal');
+
+            if (event.target === supplierModal) {
+                closeModal();
+            }
+            if (event.target === productsModal) {
+                closeProductsModal();
+            }
+        }
+
+        // Auto hide success message
+        setTimeout(() => {
+            const alert = document.querySelector('.alert');
+            if (alert) {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }
+        }, 3000);
+    </script>
+
+    <!-- //Load quận and phường dựa trên tỉnh đã chọn -->
+    <script>
+        document.getElementById('province_id').addEventListener('change', function() {
+            const provinceId = this.value;
+            const districtSelect = document.getElementById('district_id');
+            districtSelect.innerHTML = '<option value="">Đang tải...</option>';
+            document.getElementById('ward_id').innerHTML = '<option value="">Chọn phường/xã</option>';
+
+            if (provinceId) {
+                fetch(`../php/get_districts.php?province_id=${provinceId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        let html = '<option value="">Chọn quận/huyện</option>';
+                        data.forEach(d => {
+                            html += `<option value="${d.district_id}">${d.name}</option>`;
+                        });
+                        districtSelect.innerHTML = html;
+                    });
+            } else {
+                districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+            }
+        });
+
+        document.getElementById('district_id').addEventListener('change', function() {
+            const districtId = this.value;
+            const wardSelect = document.getElementById('ward_id');
+            wardSelect.innerHTML = '<option value="">Đang tải...</option>';
+
+            if (districtId) {
+                fetch(`../php/get_wards.php?district_id=${districtId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        let html = '<option value="">Chọn phường/xã</option>';
+                        data.forEach(w => {
+                            html += `<option value="${w.ward_id}">${w.name}</option>`;
+                        });
+                        wardSelect.innerHTML = html;
+                    });
+            } else {
+                wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+            }
+        });
+    </script>
+
+
+    <!-- Nếu người dùng chọn tỉnh/ thành phố, thì bắt buộc phải chọn quận/ huyện và phường/ xã. Nếu chưa chọn tỉnh/ thành phố thì không bắt buộc chọn quận/ huyện và phường/ xã. -->
+    <script>
+        const provinceSelect = document.getElementById('province_id');
+        const districtSelect = document.getElementById('district_id');
+        const wardSelect = document.getElementById('ward_id');
+        const supplierForm = document.getElementById('supplierForm');
+
+        provinceSelect.addEventListener('change', function() {
+            const provinceId = this.value;
+
+            if (provinceId) {
+                // Khi chọn tỉnh, bắt buộc chọn huyện và xã
+                districtSelect.setAttribute('required', 'required');
+                wardSelect.setAttribute('required', 'required');
+            } else {
+                // Nếu chưa chọn tỉnh, remove required
+                districtSelect.removeAttribute('required');
+                wardSelect.removeAttribute('required');
+                districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+                wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+            }
+
+            // Load districts
+            if (provinceId) {
+                districtSelect.innerHTML = '<option value="">Đang tải...</option>';
+                wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+                fetch(`../php/get_districts.php?province_id=${provinceId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        let html = '<option value="">Chọn quận/huyện</option>';
+                        data.forEach(d => {
+                            html += `<option value="${d.district_id}">${d.name}</option>`;
+                        });
+                        districtSelect.innerHTML = html;
+                    });
+            }
+        });
+
+        districtSelect.addEventListener('change', function() {
+            const districtId = this.value;
+
+            if (districtId) {
+                wardSelect.setAttribute('required', 'required');
+            } else {
+                wardSelect.removeAttribute('required');
+                wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+            }
+
+            // Load wards
+            if (districtId) {
+                wardSelect.innerHTML = '<option value="">Đang tải...</option>';
+                fetch(`../php/get_wards.php?district_id=${districtId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        let html = '<option value="">Chọn phường/xã</option>';
+                        data.forEach(w => {
+                            html += `<option value="${w.ward_id}">${w.name}</option>`;
+                        });
+                        wardSelect.innerHTML = html;
+                    });
+            }
+        });
+
+        // Validate form trước submit
+        supplierForm.addEventListener('submit', function(e) {
+            if (provinceSelect.value && (!districtSelect.value || !wardSelect.value)) {
+                alert("Vui lòng chọn đầy đủ quận/huyện và phường/xã!");
+                e.preventDefault();
+            }
+        });
+    </script>
+
+    <!-- THÊM JAVASCRIPT (đặt trước thẻ đóng </body>) -->
+    <script>
+        function viewSupplierInfo(data) {
+            document.getElementById('info_supplier_id').textContent = data.supplier_id;
+            document.getElementById('info_supplier_name').textContent = data.supplier_name;
+            document.getElementById('info_phone').textContent = data.phone || 'Chưa cập nhật';
+            document.getElementById('info_email').textContent = data.Email || 'Chưa cập nhật';
+
+            const fullAddress = `${data.address_detail}, ${data.ward_name}, ${data.district_name}, ${data.province_name}`;
+            document.getElementById('info_address').textContent = fullAddress;
+
+            document.getElementById('info_total_products').textContent = data.TotalProducts + ' sản phẩm';
+            document.getElementById('info_total_amount').textContent = new Intl.NumberFormat('vi-VN').format(data.TotalAmount) + ' VNĐ';
+
+            document.getElementById('supplierInfoModal').classList.add('active');
+        }
+
+        function closeSupplierInfoModal() {
+            document.getElementById('supplierInfoModal').classList.remove('active');
+        }
+
+        // Thêm vào phần window.onclick hiện có
+        window.onclick = function(event) {
+            const supplierModal = document.getElementById('supplierModal');
+            const productsModal = document.getElementById('productsModal');
+            const infoModal = document.getElementById('supplierInfoModal');
+
+            if (event.target === supplierModal) {
+                closeModal();
+            }
+            if (event.target === productsModal) {
+                closeProductsModal();
+            }
+            if (event.target === infoModal) {
+                closeSupplierInfoModal();
+            }
+        }
+    </script>
+</body>
+
+</html>

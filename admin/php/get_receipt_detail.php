@@ -14,9 +14,10 @@ if (!isset($_GET['id'])) {
 $receipt_id = intval($_GET['id']);
 
 // Lấy thông tin phiếu nhập
-$sql = "SELECT receipt_id, import_date, total_amount, note 
-        FROM import_receipt 
-        WHERE receipt_id = ?";
+$sql = "SELECT ir.*, s.supplier_name 
+        FROM import_receipt ir
+        LEFT JOIN suppliers s ON ir.supplier_id = s.supplier_id
+        WHERE ir.receipt_id = ?";
 $stmt = $myconn->prepare($sql);
 $stmt->bind_param("i", $receipt_id);
 $stmt->execute();
