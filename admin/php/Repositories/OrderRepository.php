@@ -82,11 +82,21 @@ class OrderRepository {
             
             // Build WHERE clause
             if (!empty($filters['search'])) {
-                $whereConditions[] = "(o.OrderID LIKE ? OR o.CustomerName LIKE ?)";
-                $searchValue = "%" . $filters['search'] . "%";
-                $params[] = $searchValue;
-                $params[] = $searchValue;
-                $types .= "ss";
+                // Check if search is a number (OrderID) - use exact match with =
+                if (is_numeric($filters['search'])) {
+                    $whereConditions[] = "(o.OrderID = ? OR o.CustomerName LIKE ?)";
+                    $params[] = intval($filters['search']);
+                    $searchValue = "%" . $filters['search'] . "%";
+                    $params[] = $searchValue;
+                    $types .= "is";
+                } else {
+                    // For non-numeric search, use LIKE for both OrderID and CustomerName
+                    $whereConditions[] = "(o.OrderID LIKE ? OR o.CustomerName LIKE ?)";
+                    $searchValue = "%" . $filters['search'] . "%";
+                    $params[] = $searchValue;
+                    $params[] = $searchValue;
+                    $types .= "ss";
+                }
             }
             if (!empty($filters['date_from'])) {
                 $whereConditions[] = "DATE(o.DateGeneration) >= ?";
