@@ -639,7 +639,7 @@ $orders = [];
                       <option value="">-- Không dùng voucher --</option>
                     </select>
                     <small id="voucher-message" class="form-text" style="margin-top: 5px;"></small>
-                    <small id="voucher-note" class="form-text" style="margin-top: 5px; color: #ff9800; display: none;"><i class="fas fa-info-circle"></i> ⚠️ Khách hàng mới chưa được áp dụng voucher</small>
+                    <small id="voucher-note" class="form-text" style="margin-top: 5px; color: #ff9800; display: none;"><i class="fas fa-info-circle"></i>  Chương trình voucher hiện chưa áp dụng cho lần mua đầu tiên.</small>
                   </div>
 
                   <div class="row">

@@ -1015,8 +1015,9 @@ async function fetchCustomerHistory(phone) {
         // Update history display
         if (historyResult.success && historyResult.has_purchased) {
             historyDiv.style.display = 'block';
+            const customerNameDisplay = historyResult.customer_name ? `: ${historyResult.customer_name}` : '';
             if (messageElement) {
-                messageElement.textContent = `✓ Khách hàng cũ - Tổng tiền lịch sử: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VNĐ`;
+                messageElement.textContent = `✓ Khách hàng thân thiết${customerNameDisplay} - Tổng tiền lịch sử: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VNĐ`;
                 messageElement.style.color = '#28a745';
             }
             if (detailsElement) {
@@ -1024,8 +1025,9 @@ async function fetchCustomerHistory(phone) {
             }
         } else {
             historyDiv.style.display = 'block';
+            const customerNameDisplay = historyResult.customer_name ? `: ${historyResult.customer_name}` : '';
             if (messageElement) {
-                messageElement.textContent = '⚠ Khách hàng mới - Chưa có lịch sử mua hàng';
+                messageElement.textContent = `⚠ Khách hàng mới${customerNameDisplay} - Chưa có lịch sử mua hàng`;
                 messageElement.style.color = '#ff9800';
             }
             if (detailsElement) {
@@ -1057,6 +1059,20 @@ async function fetchCustomerHistory(phone) {
                 option.dataset.discount = voucher.percen_decrease;
                 voucherSelect.appendChild(option);
             });
+        } else if (voucherResult.success && !historyResult.success) {
+            // Khách hàng mới
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '⚠ Khách hàng mới - Không được áp dụng voucher';
+            option.disabled = true;
+            voucherSelect.appendChild(option);
+        } else if (voucherResult.success && historyResult.has_purchased && voucherResult.eligible_vouchers.length === 0) {
+            // Khách hàng cũ nhưng chưa đủ điều kiện
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = `ℹ Khách chỉ nhận voucher nếu tổng giá trị các đơn hàng trước đó đáp ứng điều kiện chương trình.`;
+            option.disabled = true;
+            voucherSelect.appendChild(option);
         }
         
     } catch (error) {
