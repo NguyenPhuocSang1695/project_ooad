@@ -4,7 +4,7 @@ require_once __DIR__ . '/User.php';
 
 class UserManager
 {
-    private $dbConnection;
+    public $dbConnection;
 
     public function __construct($dbConnection = null)
     {
@@ -118,10 +118,13 @@ class UserManager
     }
 
     /**
-     * Get orders for a username with pagination
+     * Get orders for a user with pagination
+     * @param int $userId User ID
+     * @param int $offset Pagination offset
+     * @param int $limit Pagination limit
      * @return array [orders=>[], total=>int]
      */
-    public function getUserOrders(string $username, int $offset = 0, int $limit = 10): array
+    public function getUserOrders(int $userId, int $offset = 0, int $limit = 10): array
     {
         // Ensure connection
         $conn = $this->dbConnection->getConnection();
@@ -132,18 +135,18 @@ class UserManager
         if (!$conn) return ['orders' => [], 'total' => 0];
 
         // Count
-        $sqlCount = 'SELECT COUNT(*) AS total FROM orders WHERE Username = ?';
-        $resC = $this->dbConnection->queryPrepared($sqlCount, [$username], 's');
+        $sqlCount = 'SELECT COUNT(*) AS total FROM orders WHERE user_id = ?';
+        $resC = $this->dbConnection->queryPrepared($sqlCount, [$userId], 'i');
         $rowC = $resC ? $resC->fetch_assoc() : ['total' => 0];
         $total = (int)($rowC['total'] ?? 0);
 
-        // Data
-        $sql = "SELECT OrderID, Username, Status, PaymentMethod, CustomerName, Phone, DateGeneration, TotalAmount, address_id 
+        // Data - only select columns that exist in current schema
+        $sql = "SELECT OrderID, user_id, PaymentMethod, CustomerName, Phone, DateGeneration, TotalAmount, address_id, voucher_id
                 FROM orders 
-                WHERE Username = ? 
+                WHERE user_id = ? 
                 ORDER BY DateGeneration DESC, OrderID DESC 
                 LIMIT ?, ?";
-        $res = $this->dbConnection->queryPrepared($sql, [$username, $offset, $limit], 'sii');
+        $res = $this->dbConnection->queryPrepared($sql, [$userId, $offset, $limit], 'iii');
         $orders = [];
         if ($res) {
             while ($r = $res->fetch_assoc()) {
@@ -182,9 +185,8 @@ class UserManager
         $password = (string)($data['password'] ?? '');
         $confirm  = (string)($data['confirm_password'] ?? '');
         $role     = strtolower(trim($data['role'] ?? 'customer')) === 'admin' ? 'admin' : 'customer';
-        $statusIn = isset($data['status']) ? (string)$data['status'] : '1';
-        // Map to DB enum: Active | Block
-        $status   = (strtolower($statusIn) === 'block' || $statusIn === '0' || strtolower($statusIn) === 'inactive') ? 'Block' : 'Active';
+        // Default status is always Active when adding new user
+        $status   = 'Active';
 
         // Validate
         if ($fullname === '') {
@@ -226,6 +228,20 @@ class UserManager
             $conn = $this->dbConnection->getConnection();
         }
         if (!$conn) return ['success' => false, 'message' => 'Không thể kết nối CSDL'];
+
+        // Duplicate check: phone number
+        $checkPhoneSql = 'SELECT 1 FROM users WHERE Phone = ? LIMIT 1';
+        $stmtPhone = $conn->prepare($checkPhoneSql);
+        if (!$stmtPhone) return ['success' => false, 'message' => 'Lỗi prepare kiểm tra trùng SĐT: ' . $conn->error];
+        $stmtPhone->bind_param('s', $phone);
+        $stmtPhone->execute();
+        $resPhone = $stmtPhone->get_result();
+        $dupePhone = $resPhone && $resPhone->num_rows > 0;
+        if ($resPhone) $resPhone->free();
+        $stmtPhone->close();
+        if ($dupePhone) {
+            return ['success' => false, 'message' => 'Số điện thoại đã được sử dụng bởi người dùng khác.'];
+        }
 
         // Duplicate check: only when username provided
         if ($username !== '') {
@@ -421,14 +437,12 @@ class UserManager
         if (!$exists) return ['success' => false, 'message' => 'Người dùng không tồn tại'];
 
         $targetRole = (string)($rowUser['Role'] ?? 'customer');
-    $username = $rowUser['Username'] ?? $username; // normalize current username from DB
+        $username = $rowUser['Username'] ?? $username; // normalize current username from DB
         $userId = (int)($rowUser['user_id'] ?? $userId);
 
-        // Permission rules
-        $isSelfAdmin = ($currentRole === 'admin' && $currentUser !== '' && strcasecmp($currentUser, $username) === 0);
-        $isEditingAnotherAdmin = ($targetRole === 'admin' && !$isSelfAdmin);
-
-        // Username change validation
+        // Permission rules - accept both 'admin' from DB and 'nhân viên' from session
+        $isSelfAdmin = (($currentRole === 'admin' || $currentRole === 'nhân viên') && $currentUser !== '' && strcasecmp($currentUser, $username) === 0);
+        $isEditingAnotherAdmin = ($targetRole === 'admin' && !$isSelfAdmin);        // Username change validation
         $willChangeUsername = ($newUsername !== '' && strcasecmp($newUsername, $username) !== 0);
         if ($willChangeUsername) {
             if (!$isSelfAdmin) {
@@ -549,8 +563,8 @@ class UserManager
             }
         }
 
-        // Only admin can delete
-        if ($currentRole !== 'admin') {
+        // Only admin can delete - check both 'admin' role from DB and 'nhân viên' from session
+        if ($currentRole !== 'admin' && $currentRole !== 'nhân viên') {
             return ['success' => false, 'message' => 'Không có quyền xóa người dùng'];
         }
 

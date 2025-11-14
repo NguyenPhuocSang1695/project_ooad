@@ -31,51 +31,28 @@
     table-layout: fixed; /* For better column control */
 }
 
-.user-table th {
-    padding: 12px 15px;
-    text-align: left;
-    font-weight: 500;
-    background-color: #35635A;
-    color: white;
-    border-bottom: none;
-    font-size: 14px;
-    white-space: nowrap;
-}
+
 
 /* Column widths */
-.user-table th:nth-child(1), /* Tên đăng nhập */
+.user-table th:nth-child(1), /* Họ và tên */
 .user-table td:nth-child(1) {
-    width: 15%;
+    width: 25%;
 }
 
-.user-table th:nth-child(2), /* Họ và tên */
+.user-table th:nth-child(2), /* Số điện thoại */
 .user-table td:nth-child(2) {
     width: 20%;
 }
 
-.user-table th:nth-child(3), /* Số điện thoại */
+.user-table th:nth-child(3), /* Vai trò */
 .user-table td:nth-child(3) {
-    width: 15%;
-}
-
-.user-table th:nth-child(4), /* Email */
-.user-table td:nth-child(4) {
     width: 20%;
 }
 
-.user-table th:nth-child(5), /* Vai trò */
-.user-table td:nth-child(5) {
-    width: 12%;
-}
-
-.user-table th:nth-child(6), /* Trạng thái */
-.user-table td:nth-child(6) {
-    width: 10%;
-}
-
-.user-table th:nth-child(7), /* Thao tác */
-.user-table td:nth-child(7) {
-    width: 8%;
+.user-table th:nth-child(4), /* Thao tác */
+.user-table td:nth-child(4) {
+    width: 35%;
+    text-align: center;
 }
 
 .user-table th:first-child {
@@ -89,10 +66,31 @@
 .user-table td {
     padding: 12px 15px;
     border-bottom: 1px solid #eee;
+    border-right: 1px solid #eee;
     color: #333;
     font-size: 14px;
     vertical-align: middle;
     text-align: left;
+}
+
+.user-table td:last-child {
+    border-right: none;
+}
+
+.user-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 500;
+    background-color: #35635A;
+    color: white;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.user-table th:last-child {
+    border-right: none;
 }
 
 .user-table tbody tr:last-child td {
@@ -137,22 +135,66 @@
 
 /* Action buttons */
 .action-buttons {
-    display: flex;
-    gap: 8px;
+    display: flex !important;
+    gap: 10px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+}
+
+.btn-edit,
+.btn-delete-user {
+    padding: 8px 16px !important;
+    border: none !important;
+    border-radius: 8px !important;
+    color: white !important;
+    cursor: pointer !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    text-decoration: none !important;
+    outline: none !important;
 }
 
 .btn-edit {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 6px;
-    background-color: #35635A;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s;
+    background: linear-gradient(135deg, #35635A 0%, #6AA173 100%) !important;
+    box-shadow: 0 2px 6px rgba(53, 99, 90, 0.3) !important;
 }
 
 .btn-edit:hover {
-    background-color: #6AA173;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(53, 99, 90, 0.4) !important;
+    background: linear-gradient(135deg, #2d5449 0%, #5a8f62 100%) !important;
+}
+
+.btn-edit:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 3px rgba(53, 99, 90, 0.3) !important;
+}
+
+.btn-delete-user {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.3) !important;
+}
+
+.btn-delete-user:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.5) !important;
+    background: linear-gradient(135deg, #d62c1a 0%, #a93226 100%) !important;
+}
+
+.btn-delete-user:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 3px rgba(231, 76, 60, 0.3) !important;
+}
+
+.btn-edit i,
+.btn-delete-user i {
+    font-size: 12px !important;
+    margin-right: 2px !important;
 }
 
 /* Search results info */
