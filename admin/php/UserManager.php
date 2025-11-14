@@ -193,7 +193,7 @@ class UserManager
             return ['success' => false, 'message' => 'Họ và tên không được để trống.'];
         }
         if ($phone === '' || !preg_match('/^0\d{9}$/', $phone)) {
-            return ['success' => false, 'message' => 'Số điện thoại không hợp lệ.'];
+            return ['success' => false, 'message' => 'Số điện thoại không hợp lệ. Phải có 10 chữ số và bắt đầu bằng số 0.'];
         }
         if ($role === 'admin') {
             // Admin must have username and password
@@ -382,19 +382,14 @@ class UserManager
      */
     public function updateUser(array $data): array
     {
-        // Ensure we have a mysqli connection
-        $conn = $this->dbConnection->getConnection();
-        if (!$conn && method_exists($this->dbConnection, 'connect')) {
+        // Ensure we have a connection
+        if (!$this->dbConnection->getConnection()) {
             $this->dbConnection->connect();
-            $conn = $this->dbConnection->getConnection();
-        }
-        if (!$conn) {
-            return ['success' => false, 'message' => 'Không thể kết nối CSDL'];
         }
 
-    // Keys and potential new username
-    $userId = isset($data['user_id']) ? (int)$data['user_id'] : 0;
-    $username = trim($data['username'] ?? '');
+        // Keys and potential new username
+        $userId = isset($data['user_id']) ? (int)$data['user_id'] : 0;
+        $username = trim($data['username'] ?? '');
         $newUsername = trim($data['new_username'] ?? '');
         $fullname = trim($data['fullname'] ?? '');
         $phone    = trim($data['phone'] ?? '');
@@ -418,27 +413,59 @@ class UserManager
             return ['success' => false, 'message' => 'Vui lòng nhập đầy đủ thông tin bắt buộc'];
         }
 
-        // check user exists
-        if ($userId > 0) {
-            $stmt = $conn->prepare('SELECT user_id, Username, Role FROM users WHERE user_id = ?');
-            if (!$stmt) return ['success' => false, 'message' => 'Lỗi truy vấn người dùng: ' . $conn->error];
-            $stmt->bind_param('i', $userId);
-        } else {
-            $stmt = $conn->prepare('SELECT user_id, Username, Role FROM users WHERE Username = ?');
-            if (!$stmt) return ['success' => false, 'message' => 'Lỗi truy vấn người dùng: ' . $conn->error];
-            $stmt->bind_param('s', $username);
+        // Validate phone number format: 10 digits starting with 0
+        if (!preg_match('/^0\d{9}$/', $phone)) {
+            return ['success' => false, 'message' => 'Số điện thoại không hợp lệ. Phải có 10 chữ số và bắt đầu bằng số 0.'];
         }
-        $stmt->execute();
-        $res = $stmt->get_result();
-        $rowUser = $res->fetch_assoc();
-        $exists = (bool)$rowUser;
-        $res->free();
-        $stmt->close();
-        if (!$exists) return ['success' => false, 'message' => 'Người dùng không tồn tại'];
+
+        // Check user exists using OOP method
+        try {
+            if ($userId > 0) {
+                $res = $this->dbConnection->queryPrepared(
+                    'SELECT user_id, Username, Role FROM users WHERE user_id = ?',
+                    [$userId],
+                    'i'
+                );
+            } else {
+                $res = $this->dbConnection->queryPrepared(
+                    'SELECT user_id, Username, Role FROM users WHERE Username = ?',
+                    [$username],
+                    's'
+                );
+            }
+            
+            $rowUser = $res->fetch_assoc();
+            $exists = (bool)$rowUser;
+            $res->free();
+            
+            if (!$exists) {
+                return ['success' => false, 'message' => 'Người dùng không tồn tại'];
+            }
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => 'Lỗi truy vấn người dùng: ' . $e->getMessage()];
+        }
 
         $targetRole = (string)($rowUser['Role'] ?? 'customer');
         $username = $rowUser['Username'] ?? $username; // normalize current username from DB
         $userId = (int)($rowUser['user_id'] ?? $userId);
+
+        // Check if phone number is already used by another user using OOP method
+        try {
+            $resPhone = $this->dbConnection->queryPrepared(
+                'SELECT user_id FROM users WHERE Phone = ? AND user_id != ? LIMIT 1',
+                [$phone, $userId],
+                'si'
+            );
+            
+            $phoneDuplicate = $resPhone->fetch_assoc();
+            $resPhone->free();
+            
+            if ($phoneDuplicate) {
+                return ['success' => false, 'message' => 'Số điện thoại đã được sử dụng bởi người dùng khác.'];
+            }
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => 'Lỗi kiểm tra số điện thoại: ' . $e->getMessage()];
+        }
 
         // Permission rules - accept both 'admin' from DB and 'nhân viên' from session
         $isSelfAdmin = (($currentRole === 'admin' || $currentRole === 'nhân viên') && $currentUser !== '' && strcasecmp($currentUser, $username) === 0);
@@ -452,17 +479,21 @@ class UserManager
             if (!preg_match('/^[A-Za-z0-9_\-.]{3,32}$/', $newUsername)) {
                 return ['success' => false, 'message' => 'Tên đăng nhập mới không hợp lệ'];
             }
-            // Check duplicate username
-            $stmtC = $conn->prepare('SELECT 1 FROM users WHERE Username = ? LIMIT 1');
-            if (!$stmtC) return ['success' => false, 'message' => 'Lỗi kiểm tra username: ' . $conn->error];
-            $stmtC->bind_param('s', $newUsername);
-            $stmtC->execute();
-            $resC = $stmtC->get_result();
-            $dupe = (bool)$resC->fetch_row();
-            $resC->free();
-            $stmtC->close();
-            if ($dupe) {
-                return ['success' => false, 'message' => 'Tên đăng nhập mới đã tồn tại'];
+            // Check duplicate username using OOP method
+            try {
+                $resC = $this->dbConnection->queryPrepared(
+                    'SELECT 1 FROM users WHERE Username = ? LIMIT 1',
+                    [$newUsername],
+                    's'
+                );
+                $dupe = (bool)$resC->fetch_row();
+                $resC->free();
+                
+                if ($dupe) {
+                    return ['success' => false, 'message' => 'Tên đăng nhập mới đã tồn tại'];
+                }
+            } catch (Exception $e) {
+                return ['success' => false, 'message' => 'Lỗi kiểm tra username: ' . $e->getMessage()];
             }
         } else {
             $newUsername = $username; // no change
@@ -482,35 +513,37 @@ class UserManager
             }
         }
 
+        // Get mysqli connection for transaction
+        $conn = $this->dbConnection->getConnection();
+        
         // Begin transaction
         $conn->begin_transaction();
         try {
             // Update user basic fields only (no address)
             if ($status === null) {
                 // Do not change Status column
-                $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Username = ? WHERE user_id = ?';
-                $stmtU = $conn->prepare($sqlU);
-                if (!$stmtU) throw new Exception('Lỗi prepare cập nhật người dùng: ' . $conn->error);
-                $stmtU->bind_param('ssssi', $fullname, $phone, $role, $newUsername, $userId);
+                $this->dbConnection->queryPrepared(
+                    'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Username = ? WHERE user_id = ?',
+                    [$fullname, $phone, $role, $newUsername, $userId],
+                    'ssssi'
+                );
             } else {
                 // Include Status in update
-                $sqlU = 'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, Username = ? WHERE user_id = ?';
-                $stmtU = $conn->prepare($sqlU);
-                if (!$stmtU) throw new Exception('Lỗi prepare cập nhật người dùng: ' . $conn->error);
-                $stmtU->bind_param('sssssi', $fullname, $phone, $role, $status, $newUsername, $userId);
+                $this->dbConnection->queryPrepared(
+                    'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, Username = ? WHERE user_id = ?',
+                    [$fullname, $phone, $role, $status, $newUsername, $userId],
+                    'sssssi'
+                );
             }
-            if (!$stmtU->execute()) throw new Exception('Lỗi cập nhật người dùng: ' . $stmtU->error);
-            $stmtU->close();
 
             // Update password if required
             if ($willChangePassword) {
                 $hash = password_hash($password, PASSWORD_BCRYPT);
-                $sqlP = 'UPDATE users SET PasswordHash = ? WHERE user_id = ?';
-                $stmtP = $conn->prepare($sqlP);
-                if (!$stmtP) throw new Exception('Lỗi prepare cập nhật mật khẩu: ' . $conn->error);
-                $stmtP->bind_param('si', $hash, $userId);
-                if (!$stmtP->execute()) throw new Exception('Lỗi cập nhật mật khẩu: ' . $stmtP->error);
-                $stmtP->close();
+                $this->dbConnection->queryPrepared(
+                    'UPDATE users SET PasswordHash = ? WHERE user_id = ?',
+                    [$hash, $userId],
+                    'si'
+                );
             }
 
             $conn->commit();
