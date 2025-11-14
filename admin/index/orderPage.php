@@ -581,13 +581,13 @@ $orders = [];
                       <div class="col-md-6 form-check">
                         <input class="form-check-input" type="radio" name="delivery_type" id="delivery_pickup" value="pickup" checked>
                         <label class="form-check-label" for="delivery_pickup">
-                          Tận nơi (Khách tự đến lấy)
+                          Mua tại cửa hàng
                         </label>
                       </div>
                       <div class="col-md-6 form-check">
                         <input class="form-check-input" type="radio" name="delivery_type" id="delivery_address" value="address">
                         <label class="form-check-label" for="delivery_address">
-                          Giao tận nơi (Nhập địa chỉ chỉ)
+                          Giao hàng 
                         </label>
                       </div>
                     </div>
@@ -623,15 +623,42 @@ $orders = [];
                       <label for="payment-method" class="form-label">Phương thức thanh toán:</label>
                       <select class="form-control" id="payment-method" name="payment_method" required>
                         <option value="">Chọn phương thức</option>
-                        <option value="CASH">Thanh toán tiền mặt</option>
+                        <option value="CASH">Thanh toán tại quầy</option>
                         <option value="COD">Thanh toán khi nhận hàng (COD)</option>
                         <option value="BANKING">Chuyển khoản ngân hàng</option>
-                        <option value="MOMO">Ví điện tử MoMo</option>
-                        <option value="VNPAY">VNPay</option>
                       </select>
                     </div>
                   </div>
 
+                  <!-- Banking Payment -->
+                  <div id="banking-info-section" style="display: none; background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h6 style="margin-bottom: 15px; font-weight: bold;">Thông tin chuyển khoản:</h6>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+                      <div>
+                        <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
+                          <strong>Số tài khoản:</strong> 1028974123
+                        </p>
+                        <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
+                          <strong>Tên tài khoản:</strong> Nguyễn Văn A
+                        </p>
+                        <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
+                          <strong>Ngân hàng:</strong> Vietcombank
+                        </p>
+                        <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
+                          <strong>Chi nhánh:</strong> Bắc Bình Dương
+                        </p>
+                        <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
+                          <strong>Nội dung chuyển khoản:</strong> Mua hàng
+                        </p>
+             
+                      </div>
+                      <div style="display: flex; justify-content: center; align-items: center;">
+                        <div id="qr-container" style="text-align: center;">
+                          <img id="admin-qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=Vietcombank|1028974123|0|Mua%20hang" alt="QR Code" style="max-width: 280px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   <div class="mb-3">
                     <label for="voucher-select" class="form-label">Mã giảm giá (Voucher):</label>

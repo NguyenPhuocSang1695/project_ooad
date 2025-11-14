@@ -11,8 +11,6 @@ function formatPaymentMethod(method) {
   const paymentMethods = {
     'cod': 'Thanh toán khi nhận hàng',
     'banking': 'Chuyển khoản ngân hàng',
-    'momo': 'Ví điện tử MoMo',
-    'vnpay': 'VNPay',
     'cash': 'Tiền mặt'
   };
   
