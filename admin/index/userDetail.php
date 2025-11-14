@@ -304,9 +304,7 @@ include 'header_sidebar.php';
                     $paymentText = match($paymentMethod) {
                       'cash' => 'Tiền mặt',
                       'cod' => 'Thanh toán khi nhận hàng',
-                      'banking' => 'Chuyển khoản ngân hàng',
-                      'momo' => 'Ví điện tử MoMo',
-                      'vnpay' => 'VNPay',
+                      'bank' => 'Chuyển khoản ngân hàng',
                       default => htmlspecialchars($order['PaymentMethod'])
                     };
                     echo $paymentText;
@@ -402,11 +400,9 @@ include 'header_sidebar.php';
     if (!method) return 'Không rõ';
     const normalizedMethod = method.toLowerCase().trim();
     const paymentMethods = {
+      'cash': 'Tiền mặt',
       'cod': 'Thanh toán khi nhận hàng',
-      'banking': 'Chuyển khoản ngân hàng',
-      'momo': 'Ví điện tử MoMo',
-      'vnpay': 'VNPay',
-      'cash': 'Tiền mặt'
+      'bank': 'Chuyển khoản ngân hàng'
     };
     return paymentMethods[normalizedMethod] || method;
   }
