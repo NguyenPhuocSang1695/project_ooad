@@ -40,14 +40,14 @@ class VoucherManager extends Voucher
 
                 return [
                     'success' => true,
-                    'message' => 'Thêm voucher thành công!',
+                    'message' => 'Thêm mã giảm giá thành công!',
                     'id' => $insertedId
                 ];
             } else {
                 $stmt->close();
                 return [
                     'success' => false,
-                    'message' => 'Lỗi khi thêm voucher!'
+                    'message' => 'Lỗi khi thêm mã giảm giá!'
                 ];
             }
         } catch (Exception $e) {
@@ -67,7 +67,7 @@ class VoucherManager extends Voucher
         if (empty($id)) {
             return [
                 'success' => false,
-                'message' => 'Thiếu ID voucher.'
+                'message' => 'Thiếu ID mã giảm giá.'
             ];
         }
 
@@ -78,7 +78,7 @@ class VoucherManager extends Voucher
             if (!$oldData) {
                 return [
                     'success' => false,
-                    'message' => 'Voucher không tồn tại.'
+                    'message' => 'Mã giảm giá không tồn tại.'
                 ];
             }
 
@@ -103,7 +103,7 @@ class VoucherManager extends Voucher
             if ($result) {
                 return [
                     'success' => true,
-                    'message' => 'Cập nhật voucher thành công!'
+                    'message' => 'Cập nhật mã giảm giá thành công!'
                 ];
             } else {
                 return [
@@ -128,7 +128,7 @@ class VoucherManager extends Voucher
         if (empty($id) || !is_numeric($id)) {
             return [
                 'success' => false,
-                'message' => 'ID voucher không hợp lệ!'
+                'message' => 'ID mã giảm giá không hợp lệ!'
             ];
         }
 
@@ -145,7 +145,7 @@ class VoucherManager extends Voucher
                 $check_stmt->close();
                 return [
                     'success' => false,
-                    'message' => 'Voucher không tồn tại hoặc đã bị xóa!'
+                    'message' => 'Mã giảm giá không tồn tại hoặc đã bị xóa!'
                 ];
             }
             $check_stmt->close();
@@ -158,13 +158,13 @@ class VoucherManager extends Voucher
                 $delete_stmt->close();
                 return [
                     'success' => true,
-                    'message' => 'Xóa voucher thành công!'
+                    'message' => 'Xóa mã giảm giá thành công!'
                 ];
             } else {
                 $delete_stmt->close();
                 return [
                     'success' => false,
-                    'message' => 'Xóa voucher thất bại!'
+                    'message' => 'Xóa mã giảm giá thất bại!'
                 ];
             }
         } catch (Exception $e) {

@@ -117,7 +117,7 @@ $totalReceipts = $receiptManager->count();
 
     <style>
         .import-container {
-            margin-left: 250px;
+            margin-left: 75px;
             margin-top: 100px;
             padding: 20px;
             background-color: #f5f5f5;
@@ -406,6 +406,18 @@ $totalReceipts = $receiptManager->count();
 
             .receipt-table {
                 font-size: 12px;
+            }
+        }
+
+        @media (max-width: 320px) {
+            #filterMonth {
+                width: 50px;
+            }
+        }
+
+        @media (min-width: 426px) and (max-width: 768px) {
+            .import-container {
+                margin-left: 75px;
             }
         }
     </style>

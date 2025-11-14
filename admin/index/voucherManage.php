@@ -297,7 +297,7 @@ $voucherResult = $myconn->query($sqlVouchers);
     <div class="voucher-wrapper">
       <!-- FORM THÊM VOUCHER -->
       <div class="voucher-form-container">
-        <h2>🎟️ Thêm Voucher Mới</h2>
+        <h2>🎟️ Thêm Mã Giảm Giá Mới</h2>
         <form class="voucher-form">
           <div class="form-group">
             <label for="name">Tên voucher:</label>
@@ -324,7 +324,7 @@ $voucherResult = $myconn->query($sqlVouchers);
 
           <div class="form-btns">
             <button type="submit" class="btn-submit">
-              <i class="fa-solid fa-plus"></i> Thêm Voucher
+              <i class="fa-solid fa-plus"></i> Thêm mã giảm giá
             </button>
           </div>
         </form>
@@ -379,7 +379,7 @@ $voucherResult = $myconn->query($sqlVouchers);
           <?php else: ?>
             <div class="empty-state">
               <i class="fa-solid fa-inbox"></i>
-              <p>Chưa có voucher nào</p>
+              <p>Chưa có mã giảm giá nào</p>
             </div>
           <?php endif; ?>
         </div>
@@ -702,6 +702,14 @@ $voucherResult = $myconn->query($sqlVouchers);
       }
     }
 
+    @media (min-width: 426px) and (max-width: 768px) {
+
+      .voucher-form-container,
+      .voucher-list-container {
+        margin: 0 0 0 65px;
+      }
+    }
+
     @media (max-width: 768px) {
       .voucher-wrapper {
         padding: 20px;
@@ -719,7 +727,7 @@ $voucherResult = $myconn->query($sqlVouchers);
   <!-- POPUP CHỈNH SỬA VOUCHER -->
   <div id="editVoucherModal" class="modal_voucher" style="display:none;">
     <div class="modal-content">
-      <h2>✏️ Chỉnh sửa Voucher</h2>
+      <h2>✏️ Chỉnh sửa mã giảm giá</h2>
       <form id="editVoucherForm">
         <input type="hidden" id="edit_id" name="id">
 
