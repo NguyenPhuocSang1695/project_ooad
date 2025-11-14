@@ -1,110 +1,57 @@
 <?php
+
 include '../php/connect.php';
+require_once '../php/SupplierManager.php';
 // include '../php/check_session.php';
 
 $connectDb = new DatabaseConnection();
 $connectDb->connect();
 $myconn = $connectDb->getConnection();
 
+// Khởi tạo SupplierManager
+$supplierManager = new SupplierManager($myconn);
+
 // Xử lý thêm/sửa nhà cung cấp
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action'])) {
-        $name = $_POST['supplier_name'];
-        $phone = $_POST['phone'];
-        $email = $_POST['email'];
-        $address_detail = $_POST['address_detail']; // input chi tiết địa chỉ
-        $ward_id = $_POST['ward_id']; // select ward
+// === XỬ LÝ POST (thay toàn bộ khối if POST) ===
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $supplierData = [
+        'supplier_name'  => $_POST['supplier_name'] ?? '',
+        'phone'          => $_POST['phone'] ?? '',
+        'email'          => $_POST['email'] ?? null,
+        'address_detail' => $_POST['address_detail'] ?? null,
+        'ward_id'        => $_POST['ward_id'] ?? 0,
+    ];
 
-        if ($_POST['action'] === 'add') {
-            // 1. Thêm địa chỉ vào bảng address
-            $sqlAddress = "INSERT INTO address (address_detail, ward_id) VALUES (?, ?)";
-            $stmtAddress = $myconn->prepare($sqlAddress);
-            $stmtAddress->bind_param("si", $address_detail, $ward_id);
-            $stmtAddress->execute();
-            $address_id = $stmtAddress->insert_id; // lấy id vừa insert
-
-            // 2. Thêm nhà cung cấp với address_id
-            $sqlSupplier = "INSERT INTO suppliers (supplier_name, Phone, Email, address_id) VALUES (?, ?, ?, ?)";
-            $stmtSupplier = $myconn->prepare($sqlSupplier);
-            $stmtSupplier->bind_param("sssi", $name, $phone, $email, $address_id);
-            $stmtSupplier->execute();
-            header("Location: supplierManage.php?success=added");
-            exit();
-        } elseif ($_POST['action'] === 'edit') {
-            $supplier_id = $_POST['supplier_id'];
-            $address_id = $_POST['address_id'];
-
-            // Lấy thông tin cũ từ DB
-            $sqlOld = "SELECT s.supplier_name, s.Phone, s.Email, a.address_detail, a.ward_id
-               FROM suppliers s
-               JOIN address a ON s.address_id = a.address_id
-               WHERE s.supplier_id=?";
-            $stmtOld = $myconn->prepare($sqlOld);
-            $stmtOld->bind_param("i", $supplier_id);
-            $stmtOld->execute();
-            $resultOld = $stmtOld->get_result()->fetch_assoc();
-
-            // Nếu input trống thì dùng giá trị cũ
-            $name = !empty($_POST['supplier_name']) ? $_POST['supplier_name'] : $resultOld['supplier_name'];
-            $phone = !empty($_POST['phone']) ? $_POST['phone'] : $resultOld['Phone'];
-            $email = !empty($_POST['email']) ? $_POST['email'] : $resultOld['Email'];
-            $address_detail = !empty($_POST['address_detail']) ? $_POST['address_detail'] : $resultOld['address_detail'];
-            $ward_id = !empty($_POST['ward_id']) ? $_POST['ward_id'] : $resultOld['ward_id'];
-
-            // Cập nhật địa chỉ
-            $sqlAddress = "UPDATE address SET address_detail=?, ward_id=? WHERE address_id=?";
-            $stmtAddress = $myconn->prepare($sqlAddress);
-            $stmtAddress->bind_param("sii", $address_detail, $ward_id, $address_id);
-            $stmtAddress->execute();
-
-            // Cập nhật nhà cung cấp
-            $sqlSupplier = "UPDATE suppliers SET supplier_name=?, Phone=?, Email=? WHERE supplier_id=?";
-            $stmtSupplier = $myconn->prepare($sqlSupplier);
-            $stmtSupplier->bind_param("sssi", $name, $phone, $email, $supplier_id);
-            $stmtSupplier->execute();
-
-            header("Location: supplierManage.php?success=updated");
-            exit();
-        }
+    if ($_POST['action'] === 'add') {
+        $result = $supplierManager->create($supplierData);
+    } elseif ($_POST['action'] === 'edit') {
+        $supplier_id = $_POST['supplier_id'] ?? 0;
+        $result = $supplierManager->update($supplier_id, $supplierData);
     }
-}
 
+    // TRẢ JSON (không redirect)
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => $result['success'],
+        'message' => $result['message'] ?? ($result['success'] ? 'Thành công!' : 'Lỗi!')
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 // Lấy thông tin nhà cung cấp nếu đang edit
 $editSupplier = null;
 if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
-    $sql = "SELECT * FROM suppliers WHERE supplier_id = ?";
-    $stmt = $myconn->prepare($sql);
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $editSupplier = $result->fetch_assoc();
+    $editSupplier = $supplierManager->getById($id);
 }
 
 // Lấy danh sách nhà cung cấp
 $searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
-$sql = "SELECT s.*, a.*, w.name as ward_name, d.name as district_name, pv.name as province_name,
-        COUNT(p.ProductID) AS TotalProducts,
-        COALESCE(SUM(p.price), 0) AS TotalAmount
-        FROM suppliers s
-        LEFT JOIN products p ON s.supplier_id = p.supplier_id
-        LEFT JOIN address a ON s.address_id = a.address_id
-        join ward w on a.ward_id = w.ward_id
-        join district d on w.district_id = d.district_id
-        join province pv on d.province_id = pv.province_id
-        WHERE s.supplier_name LIKE ? 
-           OR s.phone LIKE ? 
-           OR s.email LIKE ?
-        GROUP BY s.supplier_id
-        ORDER BY s.supplier_id DESC";
+$suppliers = $supplierManager->getAll($searchTerm);
 
-
-$stmt = $myconn->prepare($sql);
-$searchParam = "%$searchTerm%";
-$stmt->bind_param("sss", $searchParam, $searchParam, $searchParam);
-$stmt->execute();
-$suppliers = $stmt->get_result();
+// Lấy thống kê
+$totalSuppliers = $supplierManager->count();
+$totalAmount = $supplierManager->getTotalValue();
 ?>
 
 <!DOCTYPE html>
@@ -672,14 +619,7 @@ $suppliers = $stmt->get_result();
 
     <!-- MAIN CONTENT -->
     <div class="supplier-container">
-        <?php if (isset($_GET['success'])): ?>
-            <div class="alert">
-                <?php
-                if ($_GET['success'] === 'added') echo "Thêm nhà cung cấp thành công!";
-                if ($_GET['success'] === 'updated') echo "Cập nhật thông tin nhà cung cấp thành công!";
-                ?>
-            </div>
-        <?php endif; ?>
+
 
         <!-- Statistics -->
         <div class="supplier-stats">
@@ -732,40 +672,37 @@ $suppliers = $stmt->get_result();
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if ($suppliers->num_rows > 0): ?>
-                        <?php while ($row = $suppliers->fetch_assoc()): ?>
+                    <?php if (count($suppliers) > 0): ?>
+                        <?php foreach ($suppliers as $supplier): ?>
                             <tr>
-                                <td><?php echo $row['supplier_id']; ?></td>
-                                <td><strong><?php echo htmlspecialchars($row['supplier_name']); ?></strong></td>
-                                <td><?php echo htmlspecialchars($row['phone']); ?></td>
-
-                                <td><?php echo htmlspecialchars($row['address_detail'] . ', ' . $row['ward_name'] . ', ' . $row['district_name'] . ', ' . $row['province_name']);  ?></td>
-
-
+                                <td><?php echo $supplier->getSupplierId(); ?></td>
+                                <td><strong><?php echo htmlspecialchars($supplier->getSupplierName()); ?></strong></td>
+                                <td><?php echo htmlspecialchars($supplier->getPhone()); ?></td>
+                                <td><?php echo htmlspecialchars($supplier->getFullAddress()); ?></td>
                                 <td>
                                     <div class="action-buttons">
-                                        <button class="btn-info" onclick='viewSupplierInfo(<?php echo json_encode($row); ?>)'>
+                                        <button class="btn-info" onclick='viewSupplierInfo(<?php echo json_encode($supplier->toArray()); ?>)'>
                                             <i class="fa-solid fa-info-circle"></i> Thông tin
                                         </button>
-                                        <button class="btn-edit" onclick='openModal("edit", <?php echo json_encode($row); ?>)'>
+                                        <button class="btn-edit" onclick='openModal("edit", <?php echo json_encode($supplier->toArray()); ?>)'>
                                             <i class="fa-solid fa-edit"></i> Sửa
                                         </button>
-                                        <button class="btn-view" onclick="viewProducts(<?php echo $row['supplier_id']; ?>)">
+                                        <button class="btn-view" onclick="viewProducts(<?php echo $supplier->getSupplierId(); ?>)">
                                             <i class="fa-solid fa-eye"></i> Xem SP
                                         </button>
-
                                     </div>
                                 </td>
                             </tr>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="9" style="text-align: center; padding: 30px;">
+                            <td colspan="5" style="text-align: center; padding: 30px;">
                                 Không tìm thấy nhà cung cấp nào
                             </td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
+
             </table>
         </div>
     </div>
@@ -999,7 +936,7 @@ $suppliers = $stmt->get_result();
                 <h2 id="modalTitle">Thêm nhà cung cấp mới</h2>
                 <button class="close-modal" onclick="closeModal()">&times;</button>
             </div>
-            <form id="supplierForm" method="POST">
+            <form id="supplierForm" method="POST" onsubmit="submitSupplier(event)">
                 <input type="hidden" name="action" id="formAction" value="add">
                 <input type="hidden" name="supplier_id" id="supplier_id">
 
@@ -1015,7 +952,7 @@ $suppliers = $stmt->get_result();
 
                 <div class="form-group">
                     <label>Số điện thoại <span style="color: red;">*</span></label>
-                    <input type="tel" name="phone" id="phone">
+                    <input type="tel" name="phone" id="phone" length="10">
                 </div>
 
                 <div class="form-group">
@@ -1028,7 +965,6 @@ $suppliers = $stmt->get_result();
                     <input type="text" name="address_detail" id="address_detail"></input>
                 </div>
 
-                <input type="hidden" name="address_id" id="address_id">
 
 
                 <div class="form-group">
@@ -1167,9 +1103,43 @@ $suppliers = $stmt->get_result();
                 document.getElementById('supplier_name').value = data.supplier_name;
                 document.getElementById('phone').value = data.phone;
                 document.getElementById('email').value = data.Email || '';
-                document.getElementById('address_id').value = data.address_id;
                 document.getElementById('address_detail').value = data.address_detail || '';
                 // Nếu muốn, có thể set province/district/ward
+
+
+                // Load tỉnh/huyện/xã từ data
+                const loadLocation = async () => {
+                    const provinceSelect = document.getElementById('province_id');
+                    const districtSelect = document.getElementById('district_id');
+                    const wardSelect = document.getElementById('ward_id');
+
+                    // Set tỉnh
+                    provinceSelect.value = data.province_id;
+                    if (data.province_id) {
+                        const districts = await fetch(`../php/get_districts.php?province_id=${data.province_id}`).then(r => r.json());
+                        districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+                        districts.forEach(d => {
+                            const opt = document.createElement('option');
+                            opt.value = d.district_id;
+                            opt.textContent = d.name;
+                            if (d.district_id == data.district_id) opt.selected = true;
+                            districtSelect.appendChild(opt);
+                        });
+
+                        if (data.district_id) {
+                            const wards = await fetch(`../php/get_wards.php?district_id=${data.district_id}`).then(r => r.json());
+                            wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
+                            wards.forEach(w => {
+                                const opt = document.createElement('option');
+                                opt.value = w.ward_id;
+                                opt.textContent = w.name;
+                                if (w.ward_id == data.ward_id) opt.selected = true;
+                                wardSelect.appendChild(opt);
+                            });
+                        }
+                    }
+                };
+                loadLocation();
 
                 // Loại bỏ required
                 requiredFields.forEach(input => input.removeAttribute('required'));
@@ -1402,6 +1372,35 @@ $suppliers = $stmt->get_result();
             }
             if (event.target === infoModal) {
                 closeSupplierInfoModal();
+            }
+        }
+    </script>
+
+    <script>
+        async function submitSupplier(e) {
+            e.preventDefault();
+
+            const form = document.getElementById('supplierForm');
+            const formData = new FormData(form);
+
+            try {
+                const res = await fetch('supplierManage.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                // HIỆN ALERT VỚI LỖI NHIỀU DÒNG
+                alert(data.message);
+
+                if (data.success) {
+                    closeModal();
+                    location.reload(); // reload bảng
+                }
+            } catch (err) {
+                alert('Lỗi kết nối! Vui lòng thử lại.');
+                console.error(err);
             }
         }
     </script>
