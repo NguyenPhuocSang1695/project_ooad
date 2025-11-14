@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
           location.reload();
         }
       } catch (error) {
-        alert("Lỗi khi thêm voucher!");
+        alert("Lỗi khi thêm mã giảm giá!");
         console.error(error);
       }
     });
@@ -103,7 +103,7 @@ if (editForm) {
 // --- Xóa voucher ---
 // --- Xóa voucher ---
 async function deleteVoucher(id, name) {
-  if (confirm(`Bạn có chắc chắn muốn xóa voucher "${name}" không?`)) {
+  if (confirm(`Bạn có chắc chắn muốn xóa mã giảm giá "${name}" không?`)) {
     try {
       const formData = new FormData();
       formData.append("id", id);
@@ -117,7 +117,7 @@ async function deleteVoucher(id, name) {
       alert(result.trim());
       location.reload(); // reload lại trang để cập nhật danh sách
     } catch (error) {
-      alert("Lỗi khi xóa voucher!");
+      alert("Lỗi khi xóa mã giảm giá!");
       console.error(error);
     }
   }

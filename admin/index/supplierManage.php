@@ -74,7 +74,7 @@ $totalAmount = $supplierManager->getTotalValue();
     <style>
         .supplier-container {
             padding: 20px;
-            margin-left: 250px;
+            margin-left: 75px;
             margin-top: 80px;
         }
 
@@ -324,7 +324,6 @@ $totalAmount = $supplierManager->getTotalValue();
 
         @media (max-width: 768px) {
             .supplier-container {
-                margin-left: 0;
                 padding: 15px;
             }
 
@@ -661,24 +660,25 @@ $totalAmount = $supplierManager->getTotalValue();
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th class="idncc">ID</th>
                         <th>Tên nhà cung cấp</th>
-                        <th>Số điện thoại</th>
+                        <th class="sdtncc">Số điện thoại</th>
                         <!-- <th>Email</th> -->
-                        <th>Địa chỉ</th>
+                        <!-- <th>Địa chỉ</th> -->
                         <!-- <th>Số sản phẩm</th> -->
                         <!-- <th>Tổng giá trị</th> -->
                         <th>Thao tác</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (count($suppliers) > 0): ?>
                         <?php foreach ($suppliers as $supplier): ?>
                             <tr>
-                                <td><?php echo $supplier->getSupplierId(); ?></td>
+                                <td class="idncc-2"><?php echo $supplier->getSupplierId(); ?></td>
                                 <td><strong><?php echo htmlspecialchars($supplier->getSupplierName()); ?></strong></td>
-                                <td><?php echo htmlspecialchars($supplier->getPhone()); ?></td>
-                                <td><?php echo htmlspecialchars($supplier->getFullAddress()); ?></td>
+                                <td class="sdtncc-2"><?php echo htmlspecialchars($supplier->getPhone()); ?></td>
+
                                 <td>
                                     <div class="action-buttons">
                                         <button class="btn-info" onclick='viewSupplierInfo(<?php echo json_encode($supplier->toArray()); ?>)'>
@@ -692,6 +692,7 @@ $totalAmount = $supplierManager->getTotalValue();
                                         </button>
                                     </div>
                                 </td>
+                                <td></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -908,6 +909,19 @@ $totalAmount = $supplierManager->getTotalValue();
             .btn-cancel {
                 width: 100%;
                 justify-content: center;
+            }
+        }
+
+        @media (min-width: 426px) and (max-width: 768px) {
+            .supplier-table td {
+                margin-left: 70px;
+            }
+
+            thead .sdtncc,
+            .sdtncc-2,
+            .idncc,
+            .idncc-2 {
+                display: none;
             }
         }
 
