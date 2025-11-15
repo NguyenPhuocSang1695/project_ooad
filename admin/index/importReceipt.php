@@ -1104,7 +1104,7 @@ $totalReceipts = $receiptManager->count();
                 return false;
             }
 
-            if (confirm('Xác nhận tạo phiếu nhập này?')) {
+            if (confirm('Bạn có chắc chắn muốn lưu phiếu nhập này không?')) {
                 return true;
             } else {
                 e.preventDefault();
@@ -1198,7 +1198,7 @@ $totalReceipts = $receiptManager->count();
                         <select name="products[${productCount}][product_id]" required onchange="updateSubtotal(${productCount})">
                             <option value="">Chọn sản phẩm</option>
                             <?php
-                            $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
+                            $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName asc";
                             $result_products = $connectDb->query($sql_products);
                             while ($product = $result_products->fetch_assoc()) {
                                 echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
@@ -1269,7 +1269,7 @@ $totalReceipts = $receiptManager->count();
                         <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
                             <option value="">Chọn sản phẩm</option>
                             <?php
-                            $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
+                            $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName asc";
                             $result_products = $connectDb->query($sql_products);
                             while ($product = $result_products->fetch_assoc()) {
                                 echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
