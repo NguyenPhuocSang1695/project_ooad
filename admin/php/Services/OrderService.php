@@ -22,7 +22,7 @@ class OrderService {
     /**
      * Create new order with details
      */
-    public function createOrder($userId, $customerName, $phone, $paymentMethod, $products, $addressId = null, $status = 'execute', $voucherId = null) {
+    public function createOrder($userId, $customerName, $phone, $paymentMethod, $products, $addressId = null, $status = 'execute', $voucherId = null, $deliveryType = 'pickup') {
         try {
             $conn = $this->db->getConnection();
             $conn->begin_transaction();
@@ -36,6 +36,7 @@ class OrderService {
                 'Status' => $status,
                 'address_id' => $addressId,
                 'voucher_id' => $voucherId,
+                'delivery_type' => $deliveryType,
                 'TotalAmount' => 0
             ]);
 

@@ -22,7 +22,7 @@ class OrderRepository {
                 throw new Exception("Database connection failed");
             }
             
-            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod, o.voucher_id, o.user_id,
+            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod, o.voucher_id, o.user_id, o.delivery_type,
                              a.address_detail, 
                              w.name as ward_name, 
                              d.name as district_name, 
@@ -152,7 +152,7 @@ class OrderRepository {
             $stmt->close();
             
             // Get orders with pagination
-            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod, o.voucher_id,
+            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod, o.voucher_id, o.user_id, o.delivery_type,
                              a.address_detail, w.name as ward_name, d.name as district_name, p.name as province_name " 
                     . $baseQuery . $whereClause . " ORDER BY o.DateGeneration DESC LIMIT ? OFFSET ?";
             
@@ -203,8 +203,8 @@ class OrderRepository {
             $order->validate();
             
             $conn = $this->db->getConnection();
-            $query = "INSERT INTO orders (user_id, CustomerName, Phone, PaymentMethod, address_id, voucher_id, DateGeneration, TotalAmount) 
-                      VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)";
+            $query = "INSERT INTO orders (user_id, CustomerName, Phone, PaymentMethod, address_id, voucher_id, delivery_type, DateGeneration, TotalAmount) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
             
             $stmt = $conn->prepare($query);
             if (!$stmt) {
@@ -217,9 +217,11 @@ class OrderRepository {
             $paymentMethod = $order->getPaymentMethod();
             $addressId = $order->getAddressId();
             $voucherId = $order->getVoucherId();
+            $deliveryType = $order->getDeliveryType();
             $totalAmount = $order->getTotalAmount();
             
-            $stmt->bind_param("issssii", $userId, $customerName, $phone, $paymentMethod, $addressId, $voucherId, $totalAmount);
+            // Bind params: user_id(i), CustomerName(s), Phone(s), PaymentMethod(s), address_id(i), voucher_id(i), delivery_type(s), TotalAmount(d)
+            $stmt->bind_param("isssiisd", $userId, $customerName, $phone, $paymentMethod, $addressId, $voucherId, $deliveryType, $totalAmount);
             
             if (!$stmt->execute()) {
                 throw new Exception("Insert failed: " . $stmt->error);
