@@ -87,7 +87,7 @@ body {
       width: 120px;
       height: 120px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #cfa048 0%, #9b6a10 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -158,13 +158,13 @@ body {
 
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 16px;
       margin-bottom: 20px;
     }
 
     .stat-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #f7bb4d 0%, #e6c05a 100%);
       padding: 20px;
       border-radius: 10px;
       color: #fff;
@@ -172,11 +172,11 @@ body {
     }
 
     .stat-card.green {
-      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+      background: linear-gradient(135deg, #d3ad5b 0%, #dfc744 100%);
     }
 
     .stat-card.orange {
-      background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+      background: linear-gradient(135deg, #e0974e 0%, #FAD4AE 100%);
     }
 
     .stat-value {

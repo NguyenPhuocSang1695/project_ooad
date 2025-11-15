@@ -3,7 +3,7 @@ require_once 'connect.php';
 header('Content-Type: application/json; charset=utf-8');
 
 /**
- * API: Get customer purchase history
+
  * POST /admin/php/get_customer_history.php
  * 
  * Input:
@@ -15,6 +15,7 @@ header('Content-Type: application/json; charset=utf-8');
  *   "has_purchased": true/false,
  *   "total_spent": 0,
  *   "order_count": 0,
+ *   "customer_name": "Tên khách hàng (nếu tìm thấy)",
  *   "orders": [...]
  * }
  */
@@ -35,7 +36,8 @@ try {
             'message' => 'Thiếu customer_phone',
             'has_purchased' => false,
             'total_spent' => 0,
-            'order_count' => 0
+            'order_count' => 0,
+            'customer_name' => null
         ], JSON_UNESCAPED_UNICODE);
         exit();
     }
@@ -43,7 +45,22 @@ try {
     $db = new DatabaseConnection();
     $db->connect();
     
-
+    // Tìm FullName từ bảng users
+    $userResult = $db->queryPrepared(
+        "SELECT FullName FROM users WHERE Phone = ? LIMIT 1",
+        [$customerPhone]
+    );
+    
+    $customerName = null;
+    $isInUserTable = false;
+    
+    if ($userResult && $userResult->num_rows > 0) {
+        $userRow = $userResult->fetch_assoc();
+        $customerName = $userRow['FullName'];
+        $isInUserTable = true;  // Số điện thoại tồn tại trong bảng users
+    }
+    
+    // Lấy lịch sử mua từ bảng orders để hiển thị thông tin
     $result = $db->queryPrepared(
         "SELECT OrderID, TotalAmount, DateGeneration FROM orders 
          WHERE Phone = ? 
@@ -61,13 +78,16 @@ try {
         }
     }
     
-    $hasPurchased = count($orders) > 0;
+    // hasPurchased dựa trên việc có tồn tại trong users table hay không
+    // Nếu không trong users thì dù có order cũng là khách hàng mới
+    $hasPurchased = $isInUserTable;
     
     echo json_encode([
         'success' => true,
         'has_purchased' => $hasPurchased,
         'total_spent' => $totalSpent,
         'order_count' => count($orders),
+        'customer_name' => $customerName,
         'orders' => $orders
     ], JSON_UNESCAPED_UNICODE);
     
@@ -78,7 +98,8 @@ try {
         'message' => 'Lỗi server: ' . $e->getMessage(),
         'has_purchased' => false,
         'total_spent' => 0,
-        'order_count' => 0
+        'order_count' => 0,
+        'customer_name' => null
     ], JSON_UNESCAPED_UNICODE);
 }
 ?>

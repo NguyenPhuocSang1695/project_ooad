@@ -1,84 +1,101 @@
 <?php
+// Include các file cần thiết
 include '../php/connect.php';
+require_once '../php/ImportReceiptManager.php';
 // include '../php/check_session.php';
 
+// Khởi tạo kết nối database
 $connectDb = new DatabaseConnection();
 $connectDb->connect();
 $myconn = $connectDb->getConnection();
 
-// Xử lý thêm phiếu nhập
+// Khởi tạo ImportReceiptManager
+$receiptManager = new ImportReceiptManager($myconn);
+
+// ==================== XỬ LÝ REQUEST ====================
+
+// Xử lý THÊM phiếu nhập
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add') {
-    $import_date = $_POST['import_date'];
-    $total_amount = $_POST['total_amount'];
-    $note = $_POST['note'];
+    $result = $receiptManager->create(
+        $_POST['import_date'],
+        $_POST['total_amount'],
+        $_POST['note'],
+        $_POST['suppliers'],
+        $_POST['products'] ?? []
+    );
 
-    // Thêm phiếu nhập
-    $sql = "INSERT INTO import_receipt (import_date, total_amount, note) VALUES (?, ?, ?)";
-    $stmt = $myconn->prepare($sql);
-    $stmt->bind_param("sds", $import_date, $total_amount, $note);
-
-    if ($stmt->execute()) {
-        $receipt_id = $stmt->insert_id;
-
-        // Thêm chi tiết phiếu nhập
-        if (isset($_POST['products']) && is_array($_POST['products'])) {
-            foreach ($_POST['products'] as $product) {
-                $product_id = $product['product_id'];
-                $quantity = $product['quantity'];
-                $import_price = $product['import_price'];
-                $subtotal = $quantity * $import_price;
-
-                $sql_detail = "INSERT INTO import_receipt_detail (receipt_id, product_id, quantity, import_price, subtotal) 
-                              VALUES (?, ?, ?, ?, ?)";
-                $stmt_detail = $myconn->prepare($sql_detail);
-                $stmt_detail->bind_param("iiidd", $receipt_id, $product_id, $quantity, $import_price, $subtotal);
-                $stmt_detail->execute();
-
-                // Cập nhật số lượng tồn kho
-                $sql_update = "UPDATE products SET quantity_in_stock = quantity_in_stock + ? WHERE ProductID = ?";
-                $stmt_update = $myconn->prepare($sql_update);
-                $stmt_update->bind_param("ii", $quantity, $product_id);
-                $stmt_update->execute();
-            }
-        }
-
-        header("Location: importReceipt.php?success=1");
+    if ($result['success']) {
+        echo "<script>
+            alert('Thêm phiếu nhập thành công!');
+            window.location.href = 'importReceipt.php';
+          </script>";
+        exit();
+    } else {
+        $error_message = $result['message'];
+        echo "<script>alert('$error_message'); window.history.back();</script>";
         exit();
     }
 }
 
-// Xử lý xóa phiếu nhập
-if (isset($_GET['delete'])) {
-    $receipt_id = $_GET['delete'];
+// Xử lý CẬP NHẬT phiếu nhập
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update') {
+    $result = $receiptManager->update(
+        $_POST['receipt_id'],
+        $_POST['import_date'],
+        $_POST['total_amount'],
+        $_POST['note'],
+        $_POST['suppliers'],
+        $_POST['products'] ?? []
+    );
 
-    // Lấy thông tin chi tiết để trừ lại số lượng
-    $sql = "SELECT product_id, quantity FROM import_receipt_detail WHERE receipt_id = ?";
-    $stmt = $myconn->prepare($sql);
-    $stmt->bind_param("i", $receipt_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    while ($row = $result->fetch_assoc()) {
-        $sql_update = "UPDATE products SET quantity_in_stock = quantity_in_stock - ? WHERE ProductID = ?";
-        $stmt_update = $myconn->prepare($sql_update);
-        $stmt_update->bind_param("ii", $row['quantity'], $row['product_id']);
-        $stmt_update->execute();
+    if ($result['success']) {
+        echo "<script>
+            alert('Cập nhật phiếu nhập thành công!');
+            window.location.href = 'importReceipt.php';
+          </script>";
+        exit();
+    } else {
+        $error_message = $result['message'];
+        echo "<script>alert('$error_message'); window.history.back();</script>";
+        exit();
     }
-
-    // Xóa chi tiết và phiếu nhập
-    $sql_delete_detail = "DELETE FROM import_receipt_detail WHERE receipt_id = ?";
-    $stmt = $myconn->prepare($sql_delete_detail);
-    $stmt->bind_param("i", $receipt_id);
-    $stmt->execute();
-
-    $sql_delete = "DELETE FROM import_receipt WHERE receipt_id = ?";
-    $stmt = $myconn->prepare($sql_delete);
-    $stmt->bind_param("i", $receipt_id);
-    $stmt->execute();
-
-    header("Location: importReceipt.php?deleted=1");
-    exit();
 }
+
+// Xử lý XÓA phiếu nhập
+if (isset($_GET['delete'])) {
+    $receiptId = intval($_GET['delete']);
+    $result = $receiptManager->delete($receiptId);
+
+    if ($result['success']) {
+        echo "<script>
+            alert('Xóa phiếu nhập thành công!');
+            window.location.href = 'importReceipt.php';
+          </script>";
+        exit();
+    } else {
+        $error_message = $result['message'];
+        echo "<script>alert('$error_message'); window.history.back();</script>";
+        exit();
+    }
+}
+
+// ==================== LẤY DỮ LIỆU CHO VIEW ====================
+
+// Lấy danh sách phiếu nhập
+$receipts = $receiptManager->getAll('import_date', 'DESC');
+
+// Lấy danh sách nhà cung cấp
+$suppliers = $receiptManager->getSuppliers();
+
+// Lấy danh sách sản phẩm
+$products = $receiptManager->getProducts();
+
+// Tính tổng giá trị nhập hàng
+$grandTotal = $receiptManager->getTotalValue();
+
+// Đếm tổng số phiếu nhập
+$totalReceipts = $receiptManager->count();
+
 ?>
 
 <!DOCTYPE html>
@@ -100,7 +117,7 @@ if (isset($_GET['delete'])) {
 
     <style>
         .import-container {
-            margin-left: 250px;
+            margin-left: 75px;
             margin-top: 100px;
             padding: 20px;
             background-color: #f5f5f5;
@@ -391,6 +408,18 @@ if (isset($_GET['delete'])) {
                 font-size: 12px;
             }
         }
+
+        @media (max-width: 320px) {
+            #filterMonth {
+                width: 50px;
+            }
+        }
+
+        @media (min-width: 426px) and (max-width: 768px) {
+            .import-container {
+                margin-left: 75px;
+            }
+        }
     </style>
 </head>
 
@@ -447,12 +476,29 @@ if (isset($_GET['delete'])) {
                             <p style="color:black">Nhập hàng</p>
                         </div>
                     </a>
+
                     <a href="analyzePage.php" style="text-decoration: none; color: black;">
                         <div class="container-function-selection">
                             <button class="button-function-selection">
                                 <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
                             </button>
                             <p>Thống kê</p>
+                        </div>
+                    </a>
+                    <a href="supplierManage.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Nhà cung cấp</p>
+                        </div>
+                    </a>
+                    <a href="voucherManage.php" style="text-decoration: none; color: black;">
+                        <div class="container-function-selection">
+                            <button class="button-function-selection">
+                                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+                            </button>
+                            <p>Mã giảm giá</p>
                         </div>
                     </a>
                     <a href="accountPage.php" style="text-decoration: none; color: black;">
@@ -566,12 +612,29 @@ if (isset($_GET['delete'])) {
                 <p>Nhập hàng</p>
             </div>
         </a>
+
         <a href="analyzePage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
                 <button class="button-function-selection">
                     <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
                 </button>
                 <p>Thống kê</p>
+            </div>
+        </a>
+        <a href="supplierManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Nhà cung cấp</p>
+            </div>
+        </a>
+        <a href="voucherManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+                <button class="button-function-selection">
+                    <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+                </button>
+                <p>Mã giảm giá</p>
             </div>
         </a>
         <a href="accountPage.php" style="text-decoration: none; color: black;">
@@ -628,25 +691,25 @@ if (isset($_GET['delete'])) {
                 </thead>
                 <tbody>
                     <?php
-                    $sql = "SELECT * FROM import_receipt ORDER BY import_date DESC";
+                    $sql = "SELECT * FROM import_receipt ORDER BY receipt_id DESC";
                     $result = $connectDb->query($sql);
 
                     if ($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()) {
                             echo "<tr data-month='" . date('n', strtotime($row['import_date'])) . "'>
-                      <td>PN{$row['receipt_id']}</td>
-                      <td>" . date('d/m/Y H:i', strtotime($row['import_date'])) . "</td>
-                      <td>" . number_format($row['total_amount'], 0, ',', '.') . " VNĐ</td>
-                      <td>" . ($row['note'] ? $row['note'] : 'Không có ghi chú') . "</td>
-                      <td>
-                        <button class='btn-action btn-view' onclick='viewReceipt({$row['receipt_id']})'>
-                          <i class='fa-solid fa-eye'></i> Xem
-                        </button>
-                        <button class='btn-action btn-edit' onclick='editReceipt({$row['receipt_id']})'>
-                            <i class='fa-solid fa-pen-to-square'></i> Sửa
-                        </button>
-                      </td>
-                    </tr>";
+                                <td>PN{$row['receipt_id']}</td>
+                                <td>" . date('d/m/Y H:i', strtotime($row['import_date'])) . "</td>
+                                <td>" . number_format($row['total_amount'], 0, ',', '.') . " VND</td>
+                                <td>" . ($row['note'] ? $row['note'] : 'Không có ghi chú') . "</td>
+                                <td>
+                                    <button class='btn-action btn-view' onclick='viewReceipt({$row['receipt_id']})'>
+                                    <i class='fa-solid fa-eye'></i> Xem
+                                    </button>
+                                    <button class='btn-action btn-edit' onclick='editReceipt({$row['receipt_id']})'>
+                                        <i class='fa-solid fa-pen-to-square'></i> Sửa
+                                    </button>
+                                </td>
+                                </tr>";
                         }
                     } else {
                         echo "<tr><td colspan='5' style='text-align: center;'>Chưa có phiếu nhập nào</td></tr>";
@@ -662,7 +725,7 @@ if (isset($_GET['delete'])) {
             $grand_total = $result_total->fetch_assoc()['grand_total'];
             ?>
             <div class="total-summary">
-                <h4>Tổng giá trị nhập hàng: <?php echo number_format($grand_total, 0, ',', '.'); ?> VNĐ</h4>
+                <h4>Tổng giá trị nhập hàng: <?php echo number_format($grand_total, 0, ',', '.'); ?> VND</h4>
             </div>
         </div>
     </div>
@@ -688,6 +751,27 @@ if (isset($_GET['delete'])) {
                     </div>
                 </div>
 
+                <div class="form-row">
+                    <p>
+                    <h4>Nhà cung cấp</h4>
+                    </p>
+                    <select name="suppliers" id="suppliers" style="padding:5px; width:100%;">
+                        <option value="">-- Chọn nhà cung cấp --</option>
+                        <?php
+                        $sql = "SELECT supplier_id, supplier_name FROM suppliers";
+                        $result = $connectDb->query($sql);
+
+                        if ($result->num_rows > 0) {
+                            while ($row = $result->fetch_assoc()) {
+                                echo '<option value="' . $row['supplier_id'] . '">' . $row['supplier_name'] . '</option>';
+                            }
+                        } else {
+                            echo '<option value="">Không có nhà cung cấp</option>';
+                        }
+                        ?>
+                    </select>
+                </div>
+
                 <div class="product-items">
                     <h4>Danh sách sản phẩm nhập</h4>
                     <div id="productList">
@@ -697,7 +781,7 @@ if (isset($_GET['delete'])) {
                                 <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
                                     <option value="">Chọn sản phẩm</option>
                                     <?php
-                                    $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
+                                    $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName";
                                     $result_products = $connectDb->query($sql_products);
                                     while ($product = $result_products->fetch_assoc()) {
                                         echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
@@ -711,7 +795,7 @@ if (isset($_GET['delete'])) {
                             </div>
                             <div class="form-group">
                                 <label>Giá nhập <span style="color: red;">*</span></label>
-                                <input type="number" name="products[0][import_price]" required min="0" step="1000" onchange="updateSubtotal(0)">
+                                <input type="number" name="products[0][import_price]" required min="0" onchange="updateSubtotal(0)">
                             </div>
                             <div class="form-group">
                                 <label>Thành tiền</label>
@@ -728,7 +812,7 @@ if (isset($_GET['delete'])) {
                 </div>
 
                 <div class="total-summary">
-                    <h4>Tổng tiền: <span id="totalAmount">0</span> VNĐ</h4>
+                    <h4>Tổng tiền: <span id="totalAmount">0</span> VND</h4>
                     <input type="hidden" name="total_amount" id="totalAmountInput" value="0">
                 </div>
 
@@ -915,33 +999,37 @@ if (isset($_GET['delete'])) {
                 .then(data => {
                     if (data.success) {
                         let html = `
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Mã phiếu nhập:</label>
-                  <p style="font-size: 16px; font-weight: 500;">PN${data.receipt.receipt_id}</p>
-                </div>
-                <div class="form-group">
-                  <label>Ngày nhập:</label>
-                  <p style="font-size: 16px; font-weight: 500;">${data.receipt.import_date}</p>
-                </div>
-              </div>
-              <div class="form-group">
-                <label>Ghi chú:</label>
-                <p style="font-size: 16px;">${data.receipt.note || 'Không có ghi chú'}</p>
-              </div>
-              <h4 style="margin-top: 20px; color: #64792c;">Danh sách sản phẩm</h4>
-              <table class="receipt-table">
-                <thead>
-                  <tr>
-                    <th>STT</th>
-                    <th>Tên sản phẩm</th>
-                    <th>Số lượng</th>
-                    <th>Giá nhập</th>
-                    <th>Thành tiền</th>
-                  </tr>
-                </thead>
-                <tbody>
-            `;
+                            <div class="form-row">
+                                <div class="form-group">
+                                <label>Mã phiếu nhập:</label>
+                                <p style="font-size: 16px; font-weight: 500;">PN${data.receipt.receipt_id}</p>
+                                </div>
+                                <div class="form-group">
+                                <label>Ngày nhập:</label>
+                                <p style="font-size: 16px; font-weight: 500;">${data.receipt.import_date}</p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Nhà cung cấp:</label>
+                                <p style="font-size: 16px;">${data.receipt.supplier_name || 'Không có nhà cung cấp'}</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Ghi chú:</label>
+                                <p style="font-size: 16px;">${data.receipt.note || 'Không có ghi chú'}</p>
+                            </div>
+                            <h4 style="margin-top: 20px; color: #64792c;">Danh sách sản phẩm</h4>
+                            <table class="receipt-table">
+                                <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Số lượng</th>
+                                    <th>Giá nhập</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                        `;
 
                         data.details.forEach((item, index) => {
                             html += `
@@ -949,8 +1037,8 @@ if (isset($_GET['delete'])) {
                   <td>${index + 1}</td>
                   <td>${item.product_name}</td>
                   <td>${item.quantity}</td>
-                  <td>${parseFloat(item.import_price).toLocaleString('vi-VN')} VNĐ</td>
-                  <td>${parseFloat(item.subtotal).toLocaleString('vi-VN')} VNĐ</td>
+                  <td>${parseFloat(item.import_price).toLocaleString('vi-VN')} VND</td>
+                  <td>${parseFloat(item.subtotal).toLocaleString('vi-VN')} VND</td>
                 </tr>
               `;
                         });
@@ -959,7 +1047,7 @@ if (isset($_GET['delete'])) {
                 </tbody>
               </table>
               <div class="total-summary">
-                <h4>Tổng tiền: ${parseFloat(data.receipt.total_amount).toLocaleString('vi-VN')} VNĐ</h4>
+                <h4>Tổng tiền: ${parseFloat(data.receipt.total_amount).toLocaleString('vi-VN')} VND</h4>
               </div>
               <div class="form-actions">
                 <button type="button" class="btn-cancel" onclick="closeViewModal()">Đóng</button>
@@ -1016,7 +1104,7 @@ if (isset($_GET['delete'])) {
                 return false;
             }
 
-            if (confirm('Xác nhận tạo phiếu nhập này?')) {
+            if (confirm('Bạn có chắc chắn muốn lưu phiếu nhập này không?')) {
                 return true;
             } else {
                 e.preventDefault();
@@ -1024,6 +1112,12 @@ if (isset($_GET['delete'])) {
             }
         });
 
+
+
+
+
+
+        // Thêm vào sau hàm editReceipt
         function editReceipt(receiptId) {
             fetch(`../php/get_receipt_detail.php?id=${receiptId}`)
                 .then(response => response.json())
@@ -1046,11 +1140,22 @@ if (isset($_GET['delete'])) {
                         }
                         receiptIdInput.value = receiptId;
 
+                        // BỎ REQUIRED cho các trường khi edit
+                        document.querySelectorAll('#importForm [required]').forEach(field => {
+                            field.removeAttribute('required');
+                        });
+
                         // Điền thông tin phiếu nhập
                         const importDate = new Date(data.receipt.import_date_raw);
                         const formattedDate = importDate.toISOString().slice(0, 16);
                         document.querySelector('input[name="import_date"]').value = formattedDate;
                         document.querySelector('input[name="note"]').value = data.receipt.note || '';
+
+                        // Điền nhà cung cấp
+                        const supplierSelect = document.querySelector('select[name="suppliers"]');
+                        if (data.receipt.supplier_id) {
+                            supplierSelect.value = data.receipt.supplier_id;
+                        }
 
                         // Xóa các sản phẩm cũ
                         const productList = document.getElementById('productList');
@@ -1059,11 +1164,7 @@ if (isset($_GET['delete'])) {
 
                         // Thêm các sản phẩm từ phiếu nhập
                         data.details.forEach((item, index) => {
-                            if (index === 0) {
-                                addProductForEdit(item, true);
-                            } else {
-                                addProductForEdit(item, false);
-                            }
+                            addProductForEdit(item, index === 0);
                         });
 
                         // Cập nhật tổng tiền
@@ -1085,47 +1186,50 @@ if (isset($_GET['delete'])) {
                 });
         }
 
-        // Hàm thêm sản phẩm khi edit
+        // Hàm thêm sản phẩm khi edit (không có required)
         function addProductForEdit(item, isFirst) {
             const productList = document.getElementById('productList');
             const newProduct = document.createElement('div');
             newProduct.className = 'product-item';
 
             newProduct.innerHTML = `
-        <div class="form-group">
-            <label>Sản phẩm <span style="color: red;">*</span></label>
-            <select name="products[${productCount}][product_id]" required onchange="updateSubtotal(${productCount})">
-                <option value="">Chọn sản phẩm</option>
-                <?php
-                $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
-                $result_products = $connectDb->query($sql_products);
-                while ($product = $result_products->fetch_assoc()) {
-                    echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
-                }
-                ?>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Số lượng <span style="color: red;">*</span></label>
-            <input type="number" name="products[${productCount}][quantity]" required min="1" value="1" onchange="updateSubtotal(${productCount})">
-        </div>
-        <div class="form-group">
-            <label>Giá nhập <span style="color: red;">*</span></label>
-            <input type="number" name="products[${productCount}][import_price]" required min="0" step="1000" onchange="updateSubtotal(${productCount})">
-        </div>
-        <div class="form-group">
-            <label>Thành tiền</label>
-            <input type="text" class="subtotal" readonly value="0">
-        </div>
-        <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: ${isFirst ? 'none' : 'block'};">
-            <i class="fa-solid fa-times"></i>
-        </button>
-    `;
+                    <div class="form-group">
+                        <label>Sản phẩm</label>
+                        <select name="products[${productCount}][product_id]" required onchange="updateSubtotal(${productCount})">
+                            <option value="">Chọn sản phẩm</option>
+                            <?php
+                            $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName asc";
+                            $result_products = $connectDb->query($sql_products);
+                            while ($product = $result_products->fetch_assoc()) {
+                                echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Số lượng</label>
+                        <input type="number" name="products[${productCount}][quantity]" min="1" value="1" onchange="updateSubtotal(${productCount})">
+                    </div>
+                    <div class="form-group">
+                        <label>Giá nhập</label>
+                        <input type="number" name="products[${productCount}][import_price]" min="0" onchange="updateSubtotal(${productCount})">
+                    </div>
+                    <div class="form-group">
+                        <label>Thành tiền</label>
+                        <input type="text" class="subtotal" readonly value="0">
+                    </div>
+                    <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: ${isFirst ? 'none' : 'block'};">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                `;
 
             productList.appendChild(newProduct);
 
-            // Set giá trị
-            newProduct.querySelector('select[name*="product_id"]').value = item.product_id;
+            // Set giá trị cho select sản phẩm
+            const select = newProduct.querySelector('select[name*="product_id"]');
+            select.value = item.product_id;
+
+            // Set giá trị cho các trường khác
             newProduct.querySelector('input[name*="quantity"]').value = item.quantity;
             newProduct.querySelector('input[name*="import_price"]').value = item.import_price;
             newProduct.querySelector('.subtotal').value = parseFloat(item.subtotal).toLocaleString('vi-VN');
@@ -1133,7 +1237,7 @@ if (isset($_GET['delete'])) {
             productCount++;
         }
 
-        // Sửa lại hàm closeModal để reset form
+        // Sửa lại hàm closeModal để khôi phục required khi đóng
         function closeModal() {
             document.getElementById('addModal').style.display = 'none';
             document.getElementById('importForm').reset();
@@ -1151,41 +1255,45 @@ if (isset($_GET['delete'])) {
                 receiptIdInput.remove();
             }
 
-            // Reset product list
+            // KHÔI PHỤC REQUIRED cho chế độ thêm mới
+            const form = document.getElementById('importForm');
+            form.querySelector('input[name="import_date"]').setAttribute('required', '');
+
+            // Reset product list với required
             productCount = 1;
             const productList = document.getElementById('productList');
             productList.innerHTML = `
-        <div class="product-item">
-            <div class="form-group">
-                <label>Sản phẩm <span style="color: red;">*</span></label>
-                <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
-                    <option value="">Chọn sản phẩm</option>
-                    <?php
-                    $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
-                    $result_products = $connectDb->query($sql_products);
-                    while ($product = $result_products->fetch_assoc()) {
-                        echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
-                    }
-                    ?>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Số lượng <span style="color: red;">*</span></label>
-                <input type="number" name="products[0][quantity]" required min="1" value="1" onchange="updateSubtotal(0)">
-            </div>
-            <div class="form-group">
-                <label>Giá nhập <span style="color: red;">*</span></label>
-                <input type="number" name="products[0][import_price]" required min="0" step="1000" onchange="updateSubtotal(0)">
-            </div>
-            <div class="form-group">
-                <label>Thành tiền</label>
-                <input type="text" class="subtotal" readonly value="0">
-            </div>
-            <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: none;">
-                <i class="fa-solid fa-times"></i>
-            </button>
-        </div>
-    `;
+                <div class="product-item">
+                    <div class="form-group">
+                        <label>Sản phẩm <span style="color: red;">*</span></label>
+                        <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
+                            <option value="">Chọn sản phẩm</option>
+                            <?php
+                            $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName asc";
+                            $result_products = $connectDb->query($sql_products);
+                            while ($product = $result_products->fetch_assoc()) {
+                                echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Số lượng <span style="color: red;">*</span></label>
+                        <input type="number" name="products[0][quantity]" required min="1" value="1" onchange="updateSubtotal(0)">
+                    </div>
+                    <div class="form-group">
+                        <label>Giá nhập <span style="color: red;">*</span></label>
+                        <input type="number" name="products[0][import_price]" required min="0" onchange="updateSubtotal(0)">
+                    </div>
+                    <div class="form-group">
+                        <label>Thành tiền</label>
+                        <input type="text" class="subtotal" readonly value="0">
+                    </div>
+                    <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: none;">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            `;
             updateTotalAmount();
         }
     </script>

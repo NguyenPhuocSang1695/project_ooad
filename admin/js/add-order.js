@@ -456,7 +456,56 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Payment method change - Show/Hide QR Code
+    document.getElementById('payment-method')?.addEventListener('change', function() {
+        const bankingSection = document.getElementById('banking-info-section');
+        const totalAmount = document.getElementById('total-amount')?.textContent || '0';
+        
+        if (this.value === 'BANKING') {
+            bankingSection.style.display = 'block';
+            // Update QR code with current total
+            const cleanAmount = totalAmount.replace(/[^0-9]/g, '');
+            const qrImage = document.getElementById('admin-qr-code');
+            const bankAccountNumber = '1028974123';
+            const bankName = 'Vietcombank';
+            const qrText = bankAccountNumber + '|' + bankName + '|' + cleanAmount + '|Mua%20hang';
+            const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(qrText);
+            qrImage.src = qrUrl;
+            
+            // Update amount display
+            document.getElementById('admin-total-amount').textContent = totalAmount;
+            console.log('[PAYMENT] Banking selected, QR updated');
+        } else {
+            bankingSection.style.display = 'none';
+            console.log('[PAYMENT] Other method selected, QR hidden');
+        }
+    });
+
+    // Update QR when total amount changes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.target.id === 'total-amount' && document.getElementById('payment-method').value === 'BANKING') {
+                const totalAmount = mutation.target.textContent;
+                const cleanAmount = totalAmount.replace(/[^0-9]/g, '');
+                const qrImage = document.getElementById('admin-qr-code');
+                const bankAccountNumber = '1028974123';
+                const bankName = 'Vietcombank';
+                const qrText = bankAccountNumber + '|' + bankName + '|' + cleanAmount + '|Mua%20hang';
+                const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(qrText);
+                qrImage.src = qrUrl;
+                document.getElementById('admin-total-amount').textContent = totalAmount;
+            }
+        });
+    });
+
+    // Observe total amount for changes
+    const totalAmountElement = document.getElementById('total-amount');
+    if (totalAmountElement) {
+        observer.observe(totalAmountElement, { characterData: true, subtree: true, childList: true });
+    }
 });
+
 
 // Load provinces/cities
 function loadProvinces() {
@@ -773,6 +822,26 @@ function updateTotalAmount() {
     if (originalTotalElement) {
         originalTotalElement.value = parseInt(total).toLocaleString('vi-VN') + ' VNĐ';
     }
+
+    // Update QR code if Banking payment is selected
+    const paymentMethod = document.getElementById('payment-method')?.value;
+    if (paymentMethod === 'BANKING') {
+        const cleanAmount = parseInt(total).toString();
+        const qrImage = document.getElementById('admin-qr-code');
+        const bankAccountNumber = '1028974123';
+        const bankName = 'Vietcombank';
+        const qrText = bankAccountNumber + '|' + bankName + '|' + cleanAmount + '|Mua%20hang';
+        const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(qrText);
+        if (qrImage) {
+            qrImage.src = qrUrl;
+        }
+        
+        // Update displayed amount in banking section
+        const adminTotalAmount = document.getElementById('admin-total-amount');
+        if (adminTotalAmount) {
+            adminTotalAmount.textContent = parseInt(total).toLocaleString('vi-VN');
+        }
+    }
     
     console.log('[TOTAL] Updated to:', total);
 }
@@ -1015,8 +1084,9 @@ async function fetchCustomerHistory(phone) {
         // Update history display
         if (historyResult.success && historyResult.has_purchased) {
             historyDiv.style.display = 'block';
+            const customerNameDisplay = historyResult.customer_name ? `: ${historyResult.customer_name}` : '';
             if (messageElement) {
-                messageElement.textContent = `✓ Khách hàng cũ - Tổng tiền lịch sử: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VNĐ`;
+                messageElement.textContent = `✓ Khách hàng thân thiết${customerNameDisplay} - Tổng tiền lịch sử: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VNĐ`;
                 messageElement.style.color = '#28a745';
             }
             if (detailsElement) {
@@ -1024,8 +1094,9 @@ async function fetchCustomerHistory(phone) {
             }
         } else {
             historyDiv.style.display = 'block';
+            const customerNameDisplay = historyResult.customer_name ? `: ${historyResult.customer_name}` : '';
             if (messageElement) {
-                messageElement.textContent = '⚠ Khách hàng mới - Chưa có lịch sử mua hàng';
+                messageElement.textContent = `⚠ Khách hàng mới${customerNameDisplay} - Chưa có lịch sử mua hàng`;
                 messageElement.style.color = '#ff9800';
             }
             if (detailsElement) {
@@ -1057,6 +1128,20 @@ async function fetchCustomerHistory(phone) {
                 option.dataset.discount = voucher.percen_decrease;
                 voucherSelect.appendChild(option);
             });
+        } else if (voucherResult.success && !historyResult.success) {
+            // Khách hàng mới
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '⚠ Khách hàng mới - Không được áp dụng voucher';
+            option.disabled = true;
+            voucherSelect.appendChild(option);
+        } else if (voucherResult.success && historyResult.has_purchased && voucherResult.eligible_vouchers.length === 0) {
+            // Khách hàng cũ nhưng chưa đủ điều kiện
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = `ℹ Khách chỉ nhận voucher nếu tổng giá trị các đơn hàng trước đó đáp ứng điều kiện chương trình.`;
+            option.disabled = true;
+            voucherSelect.appendChild(option);
         }
         
     } catch (error) {

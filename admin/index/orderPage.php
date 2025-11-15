@@ -3,8 +3,8 @@
 session_name('admin_session');
 
 $pagination = [
-    'currentPage' => 1,
-    'totalPages' => 1
+  'currentPage' => 1,
+  'totalPages' => 1
 ];
 $orders = [];
 ?>
@@ -30,7 +30,7 @@ $orders = [];
       text-decoration: none;
 
     }
- 
+
     .container-function-selection {
       cursor: pointer;
       font-size: 10px;
@@ -402,6 +402,14 @@ $orders = [];
             <p>Đơn hàng</p>
           </div>
         </a>
+        <a href="importReceipt.php" style="text-decoration: none; color: black;">
+          <div class="container-function-selection">
+            <button class="button-function-selection">
+              <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+            </button>
+            <p>Nhập hàng</p>
+          </div>
+        </a>
         <a href="analyzePage.php" style="text-decoration: none; color: black;">
           <div class="container-function-selection">
             <button class="button-function-selection">
@@ -410,14 +418,22 @@ $orders = [];
             <p>Thống kê</p>
           </div>
         </a>
-            <a href="voucherManage.php" style="text-decoration: none; color: black;">
-      <div class="container-function-selection">
-        <button class="button-function-selection">
-          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
-        </button>
-        <p>Mã giảm giá</p>
-      </div>
-    </a>
+        <a href="supplierManage.php" style="text-decoration: none; color: black;">
+          <div class="container-function-selection">
+            <button class="button-function-selection">
+              <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+            </button>
+            <p>Nhà cung cấp</p>
+          </div>
+        </a>
+        <a href="voucherManage.php" style="text-decoration: none; color: black;">
+          <div class="container-function-selection">
+            <button class="button-function-selection">
+              <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+            </button>
+            <p>Mã giảm giá</p>
+          </div>
+        </a>
         <a href="accountPage.php" style="text-decoration: none; color: black;">
           <div class="container-function-selection">
             <button class="button-function-selection">
@@ -466,6 +482,14 @@ $orders = [];
           <p>Đơn hàng</p>
         </div>
       </a>
+      <a href="importReceipt.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection">
+            <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Nhập hàng</p>
+        </div>
+      </a>
       <a href="analyzePage.php" style="text-decoration: none; color: black;">
         <div class="container-function-selection">
           <button class="button-function-selection">
@@ -474,14 +498,22 @@ $orders = [];
           <p>Thống kê</p>
         </div>
       </a>
-          <a href="voucherManage.php" style="text-decoration: none; color: black;">
-      <div class="container-function-selection">
-        <button class="button-function-selection">
-          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
-        </button>
-        <p>Mã giảm giá</p>
-      </div>
-    </a>
+      <a href="supplierManage.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection">
+            <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Nhà cung cấp</p>
+        </div>
+      </a>
+      <a href="voucherManage.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection">
+            <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Mã giảm giá</p>
+        </div>
+      </a>
       <a href="accountPage.php" style="text-decoration: none; color: black;">
         <div class="container-function-selection">
           <button class="button-function-selection">
@@ -498,10 +530,10 @@ $orders = [];
         </div>
         <div class="filter-section" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
           <div style="width: 20rem; position: relative;">
-            <input 
-              type="text" 
-              class="form-control" 
-              id="search-input" 
+            <input
+              type="text"
+              class="form-control"
+              id="search-input"
               placeholder="Tìm kiếm mã đơn hàng hoặc tên khách hàng..."
               style="padding-left: 35px; border-radius: 6px; border: 2px solid #e0e0e0; transition: all 0.3s ease;">
             <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #999;"></i>
@@ -549,13 +581,13 @@ $orders = [];
                       <div class="col-md-6 form-check">
                         <input class="form-check-input" type="radio" name="delivery_type" id="delivery_pickup" value="pickup" checked>
                         <label class="form-check-label" for="delivery_pickup">
-                          Tận nơi (Khách tự đến lấy)
+                          Mua tại cửa hàng
                         </label>
                       </div>
                       <div class="col-md-6 form-check">
                         <input class="form-check-input" type="radio" name="delivery_type" id="delivery_address" value="address">
                         <label class="form-check-label" for="delivery_address">
-                          Giao tận nơi (Nhập địa chỉ chỉ)
+                          Giao hàng 
                         </label>
                       </div>
                     </div>
@@ -565,49 +597,76 @@ $orders = [];
                     <label class="form-label">Địa chỉ giao hàng:</label>
                     <div class="row">
                       <div class="col-md-4 mb-2">
-                        <select id="add-province" name="province" class="form-control" >
+                        <select id="add-province" name="province" class="form-control">
                           <option value="">Chọn tỉnh/thành</option>
                         </select>
                       </div>
                       <div class="col-md-4 mb-2">
-                        <select id="add-district" name="district" class="form-control" >
+                        <select id="add-district" name="district" class="form-control">
                           <option value="">Chọn quận/huyện</option>
                         </select>
                       </div>
                       <div class="col-md-4 mb-2">
-                        <select id="add-ward" name="ward" class="form-control" >
+                        <select id="add-ward" name="ward" class="form-control">
                           <option value="">Chọn phường/xã</option>
                         </select>
                       </div>
                     </div>
                     <div class="mt-2">
-                      <input type="text" class="form-control" id="address-detail" name="address_detail" 
-                             placeholder="Số nhà, tên đường..." >
+                      <input type="text" class="form-control" id="address-detail" name="address_detail"
+                        placeholder="Số nhà, tên đường...">
                     </div>
                   </div>
-                  
+
                   <div class="mb-3">
                     <div class="col-md-6 mb-3">
                       <label for="payment-method" class="form-label">Phương thức thanh toán:</label>
                       <select class="form-control" id="payment-method" name="payment_method" required>
                         <option value="">Chọn phương thức</option>
-                        <option value="CASH">Thanh toán tiền mặt</option>
+                        <option value="CASH">Thanh toán tại quầy</option>
                         <option value="COD">Thanh toán khi nhận hàng (COD)</option>
                         <option value="BANKING">Chuyển khoản ngân hàng</option>
-                        <option value="MOMO">Ví điện tử MoMo</option>
-                        <option value="VNPAY">VNPay</option>
                       </select>
                     </div>
                   </div>
 
+                  <!-- Banking Payment -->
+                  <div id="banking-info-section" style="display: none; background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h6 style="margin-bottom: 15px; font-weight: bold;">Thông tin chuyển khoản:</h6>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+                      <div>
+                        <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
+                          <strong>Số tài khoản:</strong> 1028974123
+                        </p>
+                        <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
+                          <strong>Tên tài khoản:</strong> Nguyễn Văn A
+                        </p>
+                        <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
+                          <strong>Ngân hàng:</strong> Vietcombank
+                        </p>
+                        <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
+                          <strong>Chi nhánh:</strong> Bắc Bình Dương
+                        </p>
+                        <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
+                          <strong>Nội dung chuyển khoản:</strong> Mua hàng
+                        </p>
              
+                      </div>
+                      <div style="display: flex; justify-content: center; align-items: center;">
+                        <div id="qr-container" style="text-align: center;">
+                          <img id="admin-qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=Vietcombank|1028974123|0|Mua%20hang" alt="QR Code" style="max-width: 280px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div class="mb-3">
                     <label for="voucher-select" class="form-label">Mã giảm giá (Voucher):</label>
                     <select class="form-control" id="voucher-select" name="voucher_id">
                       <option value="">-- Không dùng voucher --</option>
                     </select>
                     <small id="voucher-message" class="form-text" style="margin-top: 5px;"></small>
-                    <small id="voucher-note" class="form-text" style="margin-top: 5px; color: #ff9800; display: none;"><i class="fas fa-info-circle"></i> ⚠️ Khách hàng mới chưa được áp dụng voucher</small>
+                    <small id="voucher-note" class="form-text" style="margin-top: 5px; color: #ff9800; display: none;"><i class="fas fa-info-circle"></i>  Chương trình voucher hiện chưa áp dụng cho lần mua đầu tiên.</small>
                   </div>
 
                   <div class="row">
@@ -636,8 +695,8 @@ $orders = [];
                           </div>
                         </div>
                         <div class="col-md-3">
-                          <input type="number" class="form-control product-quantity" name="quantities[]" 
-                                 placeholder="Số lượng" min="1" required>
+                          <input type="number" class="form-control product-quantity" name="quantities[]"
+                            placeholder="Số lượng" min="1" required>
                         </div>
                         <div class="col-md-3">
                           <input type="text" class="form-control product-price" readonly>
@@ -746,17 +805,17 @@ $orders = [];
             <tbody id="order-table-body">
               <?php
               if (!empty($orders)) {
-                  foreach ($orders as $o) {
-                      echo '<tr>';
-                      echo '<td>#' . htmlspecialchars($o['OrderID']) . '</td>';
-                      echo '<td class="hide-index-tablet">' . htmlspecialchars($o['CustomerName']) . '</td>';
-                      echo '<td>' . htmlspecialchars($o['DateGeneration']) . '</td>';
-                      echo '<td class="hide-index-mobile">' . number_format($o['TotalAmount']) . '</td>';
-                      echo '<td>' . htmlspecialchars($o['Phone']) . '</td>';
-                      echo '</tr>';
-                  }
+                foreach ($orders as $o) {
+                  echo '<tr>';
+                  echo '<td>#' . htmlspecialchars($o['OrderID']) . '</td>';
+                  echo '<td class="hide-index-tablet">' . htmlspecialchars($o['CustomerName']) . '</td>';
+                  echo '<td>' . htmlspecialchars($o['DateGeneration']) . '</td>';
+                  echo '<td class="hide-index-mobile">' . number_format($o['TotalAmount']) . '</td>';
+                  echo '<td>' . htmlspecialchars($o['Phone']) . '</td>';
+                  echo '</tr>';
+                }
               } else {
-                  echo '<tr><td colspan="5">Không có đơn hàng</td></tr>';
+                echo '<tr><td colspan="5">Không có đơn hàng</td></tr>';
               }
               ?>
             </tbody>
