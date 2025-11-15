@@ -376,7 +376,7 @@ $myconn = $connectDb->getConnection();
                     <p>{$row['ProductName']} <span class='label product'>Sản phẩm</span></p>
                     <p>Danh mục: {$row['CategoryName']}</p>
                     <p> | </p>
-                    <p>Giá: " . number_format($row['Price'], 0, ',', '.') . " VNĐ</p>
+                    <p>Giá: " . number_format($row['Price'], 0, ',', '.') . " VND</p>
                   </div>
                   <div><a href='wareHouse.php?edit={$row['ProductID']}' style='text-decoration: none; color: black;'>
                     <button class='button-handle'><p>Chi tiết</p></button></a>

@@ -697,19 +697,19 @@ $totalReceipts = $receiptManager->count();
                     if ($result->num_rows > 0) {
                         while ($row = $result->fetch_assoc()) {
                             echo "<tr data-month='" . date('n', strtotime($row['import_date'])) . "'>
-                      <td>PN{$row['receipt_id']}</td>
-                      <td>" . date('d/m/Y H:i', strtotime($row['import_date'])) . "</td>
-                      <td>" . number_format($row['total_amount'], 0, ',', '.') . " VNĐ</td>
-                      <td>" . ($row['note'] ? $row['note'] : 'Không có ghi chú') . "</td>
-                      <td>
-                        <button class='btn-action btn-view' onclick='viewReceipt({$row['receipt_id']})'>
-                          <i class='fa-solid fa-eye'></i> Xem
-                        </button>
-                        <button class='btn-action btn-edit' onclick='editReceipt({$row['receipt_id']})'>
-                            <i class='fa-solid fa-pen-to-square'></i> Sửa
-                        </button>
-                      </td>
-                    </tr>";
+                                <td>PN{$row['receipt_id']}</td>
+                                <td>" . date('d/m/Y H:i', strtotime($row['import_date'])) . "</td>
+                                <td>" . number_format($row['total_amount'], 0, ',', '.') . " VND</td>
+                                <td>" . ($row['note'] ? $row['note'] : 'Không có ghi chú') . "</td>
+                                <td>
+                                    <button class='btn-action btn-view' onclick='viewReceipt({$row['receipt_id']})'>
+                                    <i class='fa-solid fa-eye'></i> Xem
+                                    </button>
+                                    <button class='btn-action btn-edit' onclick='editReceipt({$row['receipt_id']})'>
+                                        <i class='fa-solid fa-pen-to-square'></i> Sửa
+                                    </button>
+                                </td>
+                                </tr>";
                         }
                     } else {
                         echo "<tr><td colspan='5' style='text-align: center;'>Chưa có phiếu nhập nào</td></tr>";
@@ -725,7 +725,7 @@ $totalReceipts = $receiptManager->count();
             $grand_total = $result_total->fetch_assoc()['grand_total'];
             ?>
             <div class="total-summary">
-                <h4>Tổng giá trị nhập hàng: <?php echo number_format($grand_total, 0, ',', '.'); ?> VNĐ</h4>
+                <h4>Tổng giá trị nhập hàng: <?php echo number_format($grand_total, 0, ',', '.'); ?> VND</h4>
             </div>
         </div>
     </div>
@@ -781,7 +781,7 @@ $totalReceipts = $receiptManager->count();
                                 <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
                                     <option value="">Chọn sản phẩm</option>
                                     <?php
-                                    $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
+                                    $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName";
                                     $result_products = $connectDb->query($sql_products);
                                     while ($product = $result_products->fetch_assoc()) {
                                         echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
@@ -812,7 +812,7 @@ $totalReceipts = $receiptManager->count();
                 </div>
 
                 <div class="total-summary">
-                    <h4>Tổng tiền: <span id="totalAmount">0</span> VNĐ</h4>
+                    <h4>Tổng tiền: <span id="totalAmount">0</span> VND</h4>
                     <input type="hidden" name="total_amount" id="totalAmountInput" value="0">
                 </div>
 
@@ -1037,8 +1037,8 @@ $totalReceipts = $receiptManager->count();
                   <td>${index + 1}</td>
                   <td>${item.product_name}</td>
                   <td>${item.quantity}</td>
-                  <td>${parseFloat(item.import_price).toLocaleString('vi-VN')} VNĐ</td>
-                  <td>${parseFloat(item.subtotal).toLocaleString('vi-VN')} VNĐ</td>
+                  <td>${parseFloat(item.import_price).toLocaleString('vi-VN')} VND</td>
+                  <td>${parseFloat(item.subtotal).toLocaleString('vi-VN')} VND</td>
                 </tr>
               `;
                         });
@@ -1047,7 +1047,7 @@ $totalReceipts = $receiptManager->count();
                 </tbody>
               </table>
               <div class="total-summary">
-                <h4>Tổng tiền: ${parseFloat(data.receipt.total_amount).toLocaleString('vi-VN')} VNĐ</h4>
+                <h4>Tổng tiền: ${parseFloat(data.receipt.total_amount).toLocaleString('vi-VN')} VND</h4>
               </div>
               <div class="form-actions">
                 <button type="button" class="btn-cancel" onclick="closeViewModal()">Đóng</button>
@@ -1104,7 +1104,7 @@ $totalReceipts = $receiptManager->count();
                 return false;
             }
 
-            if (confirm('Xác nhận tạo phiếu nhập này?')) {
+            if (confirm('Bạn có chắc chắn muốn lưu phiếu nhập này không?')) {
                 return true;
             } else {
                 e.preventDefault();
@@ -1198,7 +1198,7 @@ $totalReceipts = $receiptManager->count();
                         <select name="products[${productCount}][product_id]" required onchange="updateSubtotal(${productCount})">
                             <option value="">Chọn sản phẩm</option>
                             <?php
-                            $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
+                            $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName asc";
                             $result_products = $connectDb->query($sql_products);
                             while ($product = $result_products->fetch_assoc()) {
                                 echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
@@ -1269,7 +1269,7 @@ $totalReceipts = $receiptManager->count();
                         <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
                             <option value="">Chọn sản phẩm</option>
                             <?php
-                            $sql_products = "SELECT ProductID, ProductName, Price FROM products WHERE Status = 'appear' ORDER BY ProductName";
+                            $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName asc";
                             $result_products = $connectDb->query($sql_products);
                             while ($product = $result_products->fetch_assoc()) {
                                 echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
