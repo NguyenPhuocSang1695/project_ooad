@@ -390,6 +390,442 @@ $totalAmount = $supplierManager->getTotalValue();
         .info-full-width {
             grid-column: 1 / -1;
         }
+
+        /* ================== RESPONSIVE TABLET & MOBILE ================== */
+        @media (max-width: 1024px) {
+
+            /* Ẩn sidebar cố định, chỉ giữ offcanvas */
+            .side-bar {
+                display: none !important;
+            }
+
+            /* Nội dung chính không còn bị đẩy bởi sidebar */
+            .supplier-container {
+                margin-left: 0 !important;
+                margin-top: 70px;
+                padding: 15px;
+            }
+
+            /* Header co lại trên tablet */
+            .header-left-title {
+                font-size: 1.4rem;
+            }
+
+            .header-right-section {
+                gap: 10px;
+            }
+
+            .bell-notification i {
+                font-size: 32px;
+            }
+
+            /* Thống kê 2 cột thay vì 1 hàng dài */
+            .supplier-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            /* Header tìm kiếm + nút thêm */
+            .supplier-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                max-width: 100%;
+            }
+
+            .search-box input {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .btn-primary {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+
+            /* Table responsive - chuyển thành dạng card trên tablet nhỏ */
+            .supplier-table {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .supplier-table table {
+                min-width: 700px;
+                /* giảm từ 800px xuống */
+            }
+
+            /* Ẩn cột ít quan trọng trên tablet nhỏ */
+            .idncc,
+            .idncc-2,
+            .sdtncc,
+            .sdtncc-2 {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .supplier-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .supplier-header {
+                gap: 10px;
+            }
+
+            /* Table dạng card thay vì bảng truyền thống */
+            .supplier-table table {
+                min-width: unset;
+                width: 100%;
+                border: 0;
+            }
+
+            .supplier-table thead {
+                display: none;
+            }
+
+            .supplier-table tr {
+                display: block;
+                background: white;
+                margin-bottom: 15px;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                padding: 15px;
+                border: 1px solid #eee;
+            }
+
+            .supplier-table td {
+                display: block;
+                text-align: right;
+                padding: 8px 0;
+                border-bottom: none;
+                position: relative;
+                padding-left: 50%;
+            }
+
+            .supplier-table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 15px;
+                width: 45%;
+                font-weight: 600;
+                color: #6aa173;
+                text-align: left;
+            }
+
+            /* Gán nhãn cho từng cột */
+            .supplier-table td:nth-child(1)::before {
+                content: "ID:";
+            }
+
+            .supplier-table td:nth-child(2)::before {
+                content: "Tên NCC:";
+            }
+
+            .supplier-table td:nth-child(3)::before {
+                content: "Điện thoại:";
+            }
+
+            .supplier-table td:nth-child(4) {
+                padding-left: 15px;
+                text-align: center;
+            }
+
+            .action-buttons {
+                justify-content: center;
+                margin-top: 10px;
+            }
+
+            .action-buttons button {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            /* Modal nhỏ hơn */
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .info-detail {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                flex-wrap: wrap;
+                padding: 10px;
+            }
+
+            .header-middle-section img {
+                height: 40px;
+            }
+
+            .header-left-title {
+                font-size: 1.2rem;
+            }
+
+            .stat-card h3 {
+                font-size: 24px;
+            }
+
+            .btn-primary {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-buttons button {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+
+        /* Fix cho iPad Pro 1024px vẫn bị đẩy */
+        @media (max-width: 1024px) and (orientation: portrait) {
+            .supplier-container {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
+
+    <style>
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        /* Modal Content */
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Modal Header */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #6aa173;
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: #6aa173;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            line-height: 1;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #6aa173;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group select {
+            cursor: pointer;
+            background-color: white;
+        }
+
+        /* Required indicator */
+        .form-group label span {
+            color: red;
+            margin-left: 3px;
+        }
+
+        /* Form Actions */
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: #6aa173;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background-color: #5a8f63;
+        }
+
+        .btn-cancel {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-cancel:hover {
+            background-color: #5a6268;
+        }
+
+        /* Scrollbar styling cho modal */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #6aa173;
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #5a8f63;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                max-height: 85vh;
+            }
+
+            .modal-header h2 {
+                font-size: 20px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn-primary,
+            .btn-cancel {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (min-width: 426px) and (max-width: 768px) {
+            .supplier-table td {
+                margin-left: 70px;
+            }
+
+            thead .sdtncc,
+            .sdtncc-2,
+            .idncc,
+            .idncc-2 {
+                display: none;
+            }
+        }
+
+        /* Animation khi mở modal */
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-overlay.active .modal-content {
+            animation: modalFadeIn 0.3s ease-out;
+        }
     </style>
 </head>
 
@@ -637,7 +1073,7 @@ $totalAmount = $supplierManager->getTotalValue();
             </div>
             <div class="stat-card">
                 <h3><?php echo number_format($totalAmount, 0, ',', '.'); ?></h3>
-                <p>Tổng giá trị nhập hàng (VNĐ)</p>
+                <p>Tổng giá trị nhập hàng (VND)</p>
             </div>
         </div>
 
@@ -667,19 +1103,18 @@ $totalAmount = $supplierManager->getTotalValue();
                         <!-- <th>Địa chỉ</th> -->
                         <!-- <th>Số sản phẩm</th> -->
                         <!-- <th>Tổng giá trị</th> -->
-                        <th>Thao tác</th>
-                        <th></th>
+                        <th class="d-flex justify-content-center align-items-center">Thao tác</th>
+
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (count($suppliers) > 0): ?>
                         <?php foreach ($suppliers as $supplier): ?>
                             <tr>
-                                <td class="idncc-2"><?php echo $supplier->getSupplierId(); ?></td>
-                                <td><strong><?php echo htmlspecialchars($supplier->getSupplierName()); ?></strong></td>
-                                <td class="sdtncc-2"><?php echo htmlspecialchars($supplier->getPhone()); ?></td>
-
-                                <td>
+                                <td class="idncc-2" data-label="ID"><?php echo $supplier->getSupplierId(); ?></td>
+                                <td data-label="Tên nhà cung cấp"><strong><?php echo htmlspecialchars($supplier->getSupplierName()); ?></strong></td>
+                                <td class="sdtncc-2" data-label="SĐT"><?php echo htmlspecialchars($supplier->getPhone()); ?></td>
+                                <td class="d-flex flex-row justify-content-center align-items-center" style="padding-left:15px;">
                                     <div class="action-buttons">
                                         <button class="btn-info" onclick='viewSupplierInfo(<?php echo json_encode($supplier->toArray()); ?>)'>
                                             <i class="fa-solid fa-info-circle"></i> Thông tin
@@ -692,7 +1127,6 @@ $totalAmount = $supplierManager->getTotalValue();
                                         </button>
                                     </div>
                                 </td>
-                                <td></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -708,240 +1142,7 @@ $totalAmount = $supplierManager->getTotalValue();
         </div>
     </div>
 
-    <style>
-        /* Modal Overlay */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
 
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        /* Modal Content */
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Modal Header */
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #6aa173;
-            padding-bottom: 15px;
-        }
-
-        .modal-header h2 {
-            color: #6aa173;
-            margin: 0;
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            color: #999;
-            line-height: 1;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.3s;
-        }
-
-        .close-modal:hover {
-            color: #333;
-        }
-
-        /* Form Groups */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #6aa173;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .form-group select {
-            cursor: pointer;
-            background-color: white;
-        }
-
-        /* Required indicator */
-        .form-group label span {
-            color: red;
-            margin-left: 3px;
-        }
-
-        /* Form Actions */
-        .form-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 25px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-
-        /* Buttons */
-        .btn-primary {
-            background-color: #6aa173;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.3s;
-            font-weight: 500;
-        }
-
-        .btn-primary:hover {
-            background-color: #5a8f63;
-        }
-
-        .btn-cancel {
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
-            font-weight: 500;
-        }
-
-        .btn-cancel:hover {
-            background-color: #5a6268;
-        }
-
-        /* Scrollbar styling cho modal */
-        .modal-content::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .modal-content::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .modal-content::-webkit-scrollbar-thumb {
-            background: #6aa173;
-            border-radius: 10px;
-        }
-
-        .modal-content::-webkit-scrollbar-thumb:hover {
-            background: #5a8f63;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .modal-content {
-                width: 95%;
-                padding: 20px;
-                max-height: 85vh;
-            }
-
-            .modal-header h2 {
-                font-size: 20px;
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
-
-            .btn-primary,
-            .btn-cancel {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        @media (min-width: 426px) and (max-width: 768px) {
-            .supplier-table td {
-                margin-left: 70px;
-            }
-
-            thead .sdtncc,
-            .sdtncc-2,
-            .idncc,
-            .idncc-2 {
-                display: none;
-            }
-        }
-
-        /* Animation khi mở modal */
-        @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .modal-overlay.active .modal-content {
-            animation: modalFadeIn 0.3s ease-out;
-        }
-    </style>
 
     <!-- Modal Add/Edit Supplier -->
     <div id="supplierModal" class="modal-overlay">
@@ -1179,17 +1380,17 @@ $totalAmount = $supplierManager->getTotalValue();
                 .then(data => {
                     if (data.products && data.products.length > 0) {
                         let html = '<div style="margin-bottom: 15px;"><strong>Tổng giá trị: ' +
-                            new Intl.NumberFormat('vi-VN').format(data.totalAmount) + ' VNĐ</strong></div>';
+                            new Intl.NumberFormat('vi-VN').format(data.totalAmount) + ' VND</strong></div>';
 
                         data.products.forEach(product => {
                             html += `
                                 <div class="product-item">
                                 <div>
                                     <strong>${product.ProductName}</strong><br>
-                                    <small>Số lượng: ${product.Quantity} | Đơn giá: ${new Intl.NumberFormat('vi-VN').format(product.UnitPrice)} VNĐ</small>
+                                    <small>Số lượng: ${product.Quantity} | Đơn giá: ${new Intl.NumberFormat('vi-VN').format(product.UnitPrice)} VND</small>
                                 </div>
                                 <div>
-                                    <strong>${new Intl.NumberFormat('vi-VN').format(product.TotalValue)} VNĐ</strong>
+                                    <strong>${new Intl.NumberFormat('vi-VN').format(product.TotalValue)} VND</strong>
                                 </div>
                                 </div>
                             `;
@@ -1363,7 +1564,7 @@ $totalAmount = $supplierManager->getTotalValue();
             document.getElementById('info_address').textContent = fullAddress;
 
             document.getElementById('info_total_products').textContent = data.TotalProducts + ' sản phẩm';
-            document.getElementById('info_total_amount').textContent = new Intl.NumberFormat('vi-VN').format(data.TotalAmount) + ' VNĐ';
+            document.getElementById('info_total_amount').textContent = new Intl.NumberFormat('vi-VN').format(data.TotalAmount) + ' VND';
 
             document.getElementById('supplierInfoModal').classList.add('active');
         }

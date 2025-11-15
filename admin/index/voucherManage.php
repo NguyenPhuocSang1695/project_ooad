@@ -300,7 +300,7 @@ $voucherResult = $myconn->query($sqlVouchers);
         <h2>🎟️ Thêm Mã Giảm Giá Mới</h2>
         <form class="voucher-form">
           <div class="form-group">
-            <label for="name">Tên voucher:</label>
+            <label for="name">Tên mã giảm giá:</label>
             <input type="text" id="name" name="name" required placeholder="VD: GiamGia20">
           </div>
 
@@ -310,7 +310,7 @@ $voucherResult = $myconn->query($sqlVouchers);
           </div>
 
           <div class="form-group">
-            <label for="condition">Điều kiện (VNĐ):</label>
+            <label for="condition">Điều kiện: Khách hàng thân thiết có tổng số tiền đã mua hàng lớn hơn hoặc bằng (VND)</label>
             <input type="number" id="condition" name="condition" min="0" required placeholder="VD: 500000">
           </div>
 
@@ -361,8 +361,8 @@ $voucherResult = $myconn->query($sqlVouchers);
                     <span class="detail-value discount"><?php echo $voucher['percen_decrease']; ?>%</span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">Điều kiện:</span>
-                    <span class="detail-value">Tổng số tiền đã mua hàng lớn hơn hoặc bằng <?php echo number_format($voucher['conditions'], 0, ',', '.'); ?>đ</span>
+                    <span class="detail-label">Điều kiện: Khách hàng thân thiết có tổng số tiền đã mua hàng lớn hơn hoặc bằng </span>
+                    <span class="detail-value"><?php echo number_format($voucher['conditions'], 0, ',', '.'); ?> VND</span>
                   </div>
                 </div>
 
@@ -720,6 +720,14 @@ $voucherResult = $myconn->query($sqlVouchers);
         grid-template-columns: 1fr;
       }
     }
+
+    @media (min-width: 1024px) {
+
+      .voucher-form-container,
+      .voucher-list-container {
+        margin: 0 0 0 60px
+      }
+    }
   </style>
 
 
@@ -732,7 +740,7 @@ $voucherResult = $myconn->query($sqlVouchers);
         <input type="hidden" id="edit_id" name="id">
 
         <div class="form-group">
-          <label for="edit_name">Tên voucher:</label>
+          <label for="edit_name">Tên mã giảm giá:</label>
           <input type="text" id="edit_name" name="name" required>
         </div>
 
@@ -742,7 +750,7 @@ $voucherResult = $myconn->query($sqlVouchers);
         </div>
 
         <div class="form-group">
-          <label for="edit_condition">Điều kiện (VNĐ):</label>
+          <label for="edit_condition">Điều kiện: Khách hàng thân thiết có tổng số tiền đã mua hàng lớn hơn hoặc bằng (VND)</label>
           <input type="number" id="edit_condition" name="condition" min="0" required>
         </div>
 
