@@ -58,10 +58,10 @@ try {
     // Set default values for pickup orders with empty customer info
     if ($deliveryType === 'pickup') {
         if (empty($customerName)) {
-            $customerName = 'Vãng lai';
+            $customerName = 'Không có';
         }
         if (empty($customerPhone)) {
-            $customerPhone = 'Vãng lai';
+            $customerPhone = 'Không có';
         }
     }
 
@@ -76,10 +76,10 @@ try {
         throw new Exception('User not authenticated - Username not found in session');
     }
 
-    // Check if customer phone exists in users table - if yes, get user_id, if no, set to null
+    // Check if customer phone exists in users table - if yes, get user_id and name if not provided
     $userId = null;
     $myconn = $db->getConnection();
-    $phoneStmt = $myconn->prepare("SELECT user_id FROM users WHERE Phone = ?");
+    $phoneStmt = $myconn->prepare("SELECT user_id, FullName FROM users WHERE Phone = ?");
     $phoneStmt->bind_param("s", $customerPhone);
     $phoneStmt->execute();
     $phoneResult = $phoneStmt->get_result();
@@ -88,7 +88,14 @@ try {
         // Customer already exists
         $phoneData = $phoneResult->fetch_assoc();
         $userId = $phoneData['user_id'];
-        error_log("[ADD_ORDER] Customer found: Phone=" . $customerPhone . ", user_id=" . $userId);
+        
+        // If customer name is not provided, use name from users table
+        if (empty($customerName) || $customerName === 'Không có') {
+            $customerName = $phoneData['FullName'] ?? 'Không có';
+            error_log("[ADD_ORDER] Customer found: Phone=" . $customerPhone . ", user_id=" . $userId . ", auto-filled name: " . $customerName);
+        } else {
+            error_log("[ADD_ORDER] Customer found: Phone=" . $customerPhone . ", user_id=" . $userId . ", provided name: " . $customerName);
+        }
     } else {
         // New customer - set user_id to null
         $userId = null;
@@ -119,11 +126,10 @@ try {
     }
 
     // Use OrderService to create order
-    $orderService = new OrderService($db);
-    $status = 'execute';
+    $orderService = new OrderManager($db);
     $voucherId = $data['voucher_id'] ?? null;
     
-    error_log("[ADD_ORDER] Creating order with status: " . $status . ", voucher_id: " . ($voucherId ?? 'null') . ", user_id: " . ($userId ?? 'null') . ", delivery_type: " . $deliveryType);
+    error_log("[ADD_ORDER] Creating order with voucher_id: " . ($voucherId ?? 'null') . ", user_id: " . ($userId ?? 'null') . ", delivery_type: " . $deliveryType);
     
     $orderId = $orderService->createOrder(
         $userId,
@@ -132,7 +138,6 @@ try {
         $data['payment_method'],
         $data['products'],
         $addressId,
-        $status,
         $voucherId,
         $deliveryType
     );
