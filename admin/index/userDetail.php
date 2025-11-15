@@ -398,12 +398,16 @@ include 'header_sidebar.php';
   // Hàm chuyển đổi phương thức thanh toán sang Tiếng Việt
   function formatPaymentMethod(method) {
     if (!method) return 'Không rõ';
+    
+    // Normalize method to lowercase for comparison
     const normalizedMethod = method.toLowerCase().trim();
+    
     const paymentMethods = {
       'cash': 'Tiền mặt',
       'cod': 'Thanh toán khi nhận hàng',
       'bank': 'Chuyển khoản ngân hàng'
     };
+    
     return paymentMethods[normalizedMethod] || method;
   }
 
@@ -440,6 +444,7 @@ include 'header_sidebar.php';
         // Update modal content
         const modalBody = document.querySelector('#orderDetailModal .modal-body');
         if (modalBody) {
+          
           modalBody.innerHTML = `
             <div style="padding: 20px;">
               <!-- Order Info Section -->
@@ -455,7 +460,7 @@ include 'header_sidebar.php';
                     <p style="margin: 5px 0; font-weight: 600; color: #333;">${new Date(order.orderDate).toLocaleString('vi-VN')}</p>
                   </div>
                   <div>
-                    <label style="color: #666; font-size: 12px; text-transform: uppercase;">Phương thức thanh toán</label>
+                    <label style="color: #666; font-size: 12px; text-transform: uppercase;">Phương thức thanh toán: </label>
                     <p style="margin: 5px 0; font-weight: 600; color: #333;">${formatPaymentMethod(order.paymentMethod)}</p>
                   </div>
                 </div>
@@ -466,11 +471,11 @@ include 'header_sidebar.php';
                 <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">👤 Thông tin khách hàng</h5>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                   <div>
-                    <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên</label>
+                    <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên: </label>
                     <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerName}</p>
                   </div>
                   <div>
-                    <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại</label>
+                    <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại: </label>
                     <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerPhone}</p>
                   </div>
                 </div>
@@ -478,7 +483,7 @@ include 'header_sidebar.php';
               
               <!-- Address Section -->
               <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
-                <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📍 Địa chỉ giao hàng</h5>
+                <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📍 Địa chỉ giao hàng: </h5>
                 <p style="margin: 0; color: #333; line-height: 1.6;">${order.address}</p>
               </div>
               
@@ -535,7 +540,7 @@ include 'header_sidebar.php';
               <!-- Total Section -->
               <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span style="font-size: 16px; font-weight: 600; color: #333;">Thành tiền</span>
+                  <span style="font-size: 16px; font-weight: 600; color: #333;">Thành tiền: </span>
                   <span style="font-size: 24px; font-weight: 700; color: #667eea;">${parseInt(order.totalAmount).toLocaleString('vi-VN')} VNĐ</span>
                 </div>
               </div>
