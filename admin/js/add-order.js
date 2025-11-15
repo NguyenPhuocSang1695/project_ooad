@@ -927,14 +927,18 @@ async function submitOrder() {
         
         // Prepare payload
         const voucherSelectElement = document.getElementById('voucher-select');
-        const voucherId = voucherSelectElement?.value ? parseInt(voucherSelectElement.value) : null;
+        let voucherId = null;
+        
+        if (voucherSelectElement?.value) {
+            const parsedId = parseInt(voucherSelectElement.value);
+            voucherId = !isNaN(parsedId) ? parsedId : null;
+        }
         
         const payload = {
             customer_name: customerName,
             customer_phone: customerPhone,
             payment_method: paymentMethod,
             status: status,
-            voucher_id: voucherId,
             delivery_type: deliveryType,
             products: products,
             address: {
@@ -942,6 +946,11 @@ async function submitOrder() {
                 address_detail: document.getElementById('address-detail')?.value?.trim() || ''
             }
         };
+        
+        // Add voucher_id only if it's a valid number
+        if (voucherId !== null && !isNaN(voucherId) && voucherId > 0) {
+            payload.voucher_id = voucherId;
+        }
         
         console.log('[PAYLOAD] Ready to send');
         console.log('[PAYLOAD] Voucher ID:', voucherId);

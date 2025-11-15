@@ -8,7 +8,8 @@ require_once 'Services/OrderService.php';
 try {
     $db = new DatabaseConnection();
     $db->connect();
-    $orderService = new OrderService($db);
+    require_once 'Services/OrderService.php';
+    $orderService = new OrderManager($db);
     
     $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
     $limit = 5;
@@ -18,7 +19,7 @@ try {
     if (!empty($_GET['search'])) $filters['search'] = $_GET['search'];
     if (!empty($_GET['date_from'])) $filters['date_from'] = $_GET['date_from'];
     if (!empty($_GET['date_to'])) $filters['date_to'] = $_GET['date_to'];
-    if (!empty($_GET['order_status']) && $_GET['order_status'] !== 'all') $filters['order_status'] = $_GET['order_status'];
+  //  if (!empty($_GET['order_status']) && $_GET['order_status'] !== 'all') $filters['order_status'] = $_GET['order_status'];
     if (!empty($_GET['price_min'])) $filters['price_min'] = floatval($_GET['price_min']);
     if (!empty($_GET['price_max'])) $filters['price_max'] = floatval($_GET['price_max']);
     if (!empty($_GET['voucher_filter'])) $filters['voucher_filter'] = $_GET['voucher_filter'];

@@ -622,7 +622,7 @@ $orders = [];
                     <div class="col-md-6 mb-3">
                       <label for="payment-method" class="form-label">Phương thức thanh toán:</label>
                       <select class="form-control" id="payment-method" name="payment_method" required>
-                        <option value="">Chọn phương thức</option>
+    
                         <option value="CASH">Thanh toán tại quầy</option>
                         <option value="COD">Thanh toán khi nhận hàng (COD)</option>
                         <option value="BANKING">Chuyển khoản ngân hàng</option>
@@ -796,7 +796,7 @@ $orders = [];
             <thead>
               <tr>
                 <th>Mã đơn hàng</th>
-                <th class="hide-index-tablet ">Người mua</th>
+                <th class="hide-index-tablet ">Tên khách hàng</th>
                 <th>Ngày tạo</th>
                 <th class="hide-index-mobile">Giá tiền (VND)</th>
                 <th>Số điện thoại</th>

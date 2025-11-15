@@ -17,7 +17,7 @@ try {
         throw new Exception('Order ID is required');
     }
 
-    $orderService = new OrderService($db);
+    $orderService = new OrderManager($db);
     $orderData = $orderService->getOrderWithDetails($orderId);
     
     /** @var Order $order */

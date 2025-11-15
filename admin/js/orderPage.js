@@ -11,7 +11,7 @@ function formatPaymentMethod(method) {
   const paymentMethods = {
     'cod': 'Thanh toán khi nhận hàng',
     'banking': 'Chuyển khoản ngân hàng',
-    'cash': 'Tiền mặt'
+    'cash': 'Thanh toán tại quầy'
   };
   
   return paymentMethods[normalizedMethod] || method;
@@ -1049,14 +1049,18 @@ function showOrderDetailModal(orderId) {
             <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
               <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">👤 Thông tin khách hàng</h5>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div>
-                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên: </label>
-                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerName}</p>
-                </div>
-                <div>
-                  <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại: </label>
-                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerPhone}</p>
-                </div>
+                ${(order.customerName && String(order.customerName).trim() !== 'Không có ') ? `
+                  <div>
+                    <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên: </label>
+                    <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerName}</p>
+                  </div>
+                ` : ''}
+                ${(order.customerPhone && String(order.customerPhone).trim() !== 'Không có' && String(order.customerPhone).trim() !== '0000000000') ? `
+                  <div>
+                    <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại: </label>
+                    <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerPhone}</p>
+                  </div>
+                ` : ''}
               </div>
             </div>
             
