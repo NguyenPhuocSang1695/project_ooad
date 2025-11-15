@@ -559,11 +559,11 @@ $orders = [];
                   <div class="row">
                     <div class="col-md-6 mb-3">
                       <label for="customer-phone" class="form-label">Số điện thoại:</label>
-                      <input type="tel" class="form-control" id="customer-phone" name="customer_phone" pattern="[0-9]*" maxlength="10" required>
+                      <input type="tel" class="form-control" id="customer-phone" name="customer_phone" pattern="[0-9]*" maxlength="10">
                     </div>
                     <div class="col-md-6 mb-3">
                       <label for="customer-name" class="form-label">Tên khách hàng:</label>
-                      <input type="text" class="form-control" id="customer-name" name="customer_name" required>
+                      <input type="text" class="form-control" id="customer-name" name="customer_name">
                     </div>
                   </div>
 

@@ -15,6 +15,7 @@ class Order {
     private $dateGeneration;
     private $totalAmount;
     private $voucherId;
+    private $deliveryType;
     
     // Address details (from JOIN)
     private $addressDetail;
@@ -34,6 +35,7 @@ class Order {
         $this->dateGeneration = $data['DateGeneration'] ?? $data['date_generation'] ?? null;
         $this->totalAmount = $data['TotalAmount'] ?? $data['total_amount'] ?? 0;
         $this->voucherId = $data['voucher_id'] ?? null;
+        $this->deliveryType = $data['delivery_type'] ?? 'pickup';
         
         // Address details
         $this->addressDetail = $data['address_detail'] ?? null;
@@ -54,6 +56,7 @@ class Order {
     public function getDateGeneration() { return $this->dateGeneration; }
     public function getTotalAmount() { return $this->totalAmount; }
     public function getVoucherId() { return $this->voucherId; }
+    public function getDeliveryType() { return $this->deliveryType; }
     
     // Address detail getters
     public function getAddressDetail() { return $this->addressDetail; }
@@ -73,17 +76,14 @@ class Order {
     public function setDateGeneration($dateGeneration) { $this->dateGeneration = $dateGeneration; }
     public function setTotalAmount($totalAmount) { $this->totalAmount = $totalAmount; }
     public function setVoucherId($voucherId) { $this->voucherId = $voucherId; }
+    public function setDeliveryType($deliveryType) { $this->deliveryType = $deliveryType; }
 
     /**
      * Validate order data
      */
     public function validate() {
-        if (empty($this->customerName)) {
-            throw new Exception('Tên khách hàng không được để trống');
-        }
-        if (empty($this->phone) || !preg_match('/^[0-9]{10}$/', $this->phone)) {
-            throw new Exception('Số điện thoại phải là 10 chữ số');
-        }
+        // Note: customerName and phone validation is done in add-order.php
+        // based on delivery_type, so we don't validate them here
         if (empty($this->paymentMethod)) {
             throw new Exception('Phương thức thanh toán không được để trống');
         }
@@ -121,6 +121,7 @@ class Order {
             'DateGeneration' => $this->dateGeneration,
             'TotalAmount' => $this->totalAmount,
             'voucher_id' => $this->voucherId,
+            'delivery_type' => $this->deliveryType,
             'address_detail' => $this->addressDetail,
             'ward_name' => $this->wardName,
             'district_name' => $this->districtName,
