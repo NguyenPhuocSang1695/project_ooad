@@ -939,7 +939,6 @@ async function submitOrder() {
             customer_phone: customerPhone,
             payment_method: paymentMethod,
             status: status,
-            delivery_type: deliveryType,
             products: products,
             address: {
                 ward_id: document.getElementById('add-ward')?.value || '',

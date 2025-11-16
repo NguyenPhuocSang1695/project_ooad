@@ -33,7 +33,7 @@ class OrderManager extends BaseOrderEntity {
      */
     public function findOrder($orderId) {
         try {
-            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod, o.voucher_id, o.user_id, o.delivery_type,
+            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod, o.voucher_id, o.user_id,
                              a.address_detail, 
                              w.name as ward_name, 
                              d.name as district_name, 
@@ -70,12 +70,7 @@ class OrderManager extends BaseOrderEntity {
             }
             $offset = ($page - 1) * $limit;
             
-            $baseQuery = "FROM orders o 
-                          LEFT JOIN address a ON o.address_id = a.address_id 
-                          LEFT JOIN ward w ON a.ward_id = w.ward_id 
-                          LEFT JOIN district d ON w.district_id = d.district_id 
-                          LEFT JOIN province p ON d.province_id = p.province_id 
-                          WHERE 1=1";
+            $baseQuery = "FROM orders o LEFT JOIN address a ON o.address_id = a.address_id LEFT JOIN ward w ON a.ward_id = w.ward_id LEFT JOIN district d ON w.district_id = d.district_id LEFT JOIN province p ON d.province_id = p.province_id WHERE 1=1";
             
             $whereConditions = [];
             $params = [];
@@ -150,9 +145,7 @@ class OrderManager extends BaseOrderEntity {
             $stmt->close();
             
             // Get orders with pagination
-            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod, o.voucher_id, o.user_id, o.delivery_type,
-                             a.address_detail, w.name as ward_name, d.name as district_name, p.name as province_name " 
-                    . $baseQuery . $whereClause . " ORDER BY o.DateGeneration DESC LIMIT ? OFFSET ?";
+            $query = "SELECT o.OrderID, o.DateGeneration, o.TotalAmount, o.CustomerName, o.Phone, o.PaymentMethod, o.voucher_id, o.user_id, a.address_detail, w.name as ward_name, d.name as district_name, p.name as province_name " . $baseQuery . $whereClause . " ORDER BY o.DateGeneration DESC LIMIT ? OFFSET ?";
             
             $stmt = $conn->prepare($query);
             if (!$stmt) {
@@ -199,8 +192,8 @@ class OrderManager extends BaseOrderEntity {
             $order->validate();
             
             $conn = $this->db->getConnection();
-            $query = "INSERT INTO orders (user_id, CustomerName, Phone, PaymentMethod, address_id, voucher_id, delivery_type, DateGeneration, TotalAmount) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
+            $query = "INSERT INTO orders (user_id, CustomerName, Phone, PaymentMethod, address_id, voucher_id, DateGeneration, TotalAmount) 
+                      VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)";
             
             $stmt = $conn->prepare($query);
             if (!$stmt) {
@@ -213,12 +206,11 @@ class OrderManager extends BaseOrderEntity {
             $paymentMethod = $order->getPaymentMethod();
             $addressId = $order->getAddressId();
             $voucherId = $order->getVoucherId();
-            $deliveryType = $order->getDeliveryType();
             $totalAmount = $order->getTotalAmount();
            // $status = $order->getStatus();
             
-            // Bind: user_id(i), CustomerName(s), Phone(s), PaymentMethod(s), address_id(i), voucher_id(i), delivery_type(s), TotalAmount(d), Status(s)
-            $stmt->bind_param("isssiisd", $userId, $customerName, $phone, $paymentMethod, $addressId, $voucherId, $deliveryType, $totalAmount);
+            // Bind: user_id(i), CustomerName(s), Phone(s), PaymentMethod(s), address_id(i), voucher_id(i), TotalAmount(d)
+            $stmt->bind_param("isssiid", $userId, $customerName, $phone, $paymentMethod, $addressId, $voucherId, $totalAmount);
             
             if (!$stmt->execute()) {
                 throw new Exception("Insert failed: " . $stmt->error);
@@ -542,7 +534,7 @@ class OrderManager extends BaseOrderEntity {
     /**
      * Create new order with details
      */
-    public function createOrder($userId, $customerName, $phone, $paymentMethod, $products, $addressId = null,  $voucherId = null, $deliveryType = 'pickup') {
+    public function createOrder($userId, $customerName, $phone, $paymentMethod, $products, $addressId = null, $voucherId = null) {
         try {
             $conn = $this->db->getConnection();
             
@@ -569,7 +561,6 @@ class OrderManager extends BaseOrderEntity {
                 // 'Status' => $status,
                 'address_id' => $addressId,
                 'voucher_id' => $voucherId,
-                'delivery_type' => $deliveryType,
                 'TotalAmount' => 0
             ]);
 
@@ -726,8 +717,8 @@ class OrderManager extends BaseOrderEntity {
                     'madonhang' => $order->getOrderId(),
                     'ngaytao' => $order->getDateGeneration(),
                     'giatien' => $order->getTotalAmount(),
-                    'receiver_name' => $order->getCustomerName(),
-                    'receiver_phone' => $order->getPhone(),
+                    'receiver_name' => (!empty($order->getCustomerName()) && trim($order->getCustomerName()) !== '') ? $order->getCustomerName() : 'Không rõ',
+                    'receiver_phone' => (!empty($order->getPhone()) && trim($order->getPhone()) !== '') ? $order->getPhone() : 'Không rõ',
                     'receiver_address' => $fullAddress,
                     'voucher' => $voucherInfo
                 ];
