@@ -4,24 +4,39 @@ let allProducts = [];
 
 // Beautiful Notification System
 function showNotification(type, message) {
+    // Remove existing notification if any
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+
     const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
+    notification.className = `notification ${type}`;
     
     let icon = '✓';
-    if (type === 'error') icon = '✗';
-    if (type === 'info') icon = 'ℹ';
-    if (type === 'warning') icon = '⚠';
+    let title = 'Thành công!';
+    if (type === 'error') {
+        icon = '✕';
+        title = 'Có lỗi xảy ra!';
+    }
+    if (type === 'info') {
+        icon = 'ℹ';
+        title = 'Thông tin';
+    }
+    if (type === 'warning') {
+        icon = '⚠';
+        title = 'Cảnh báo!';
+    }
     
-    const iconSpan = document.createElement('span');
-    iconSpan.className = `notification-icon ${type === 'success' ? 'animate-tick' : ''}`;
-    iconSpan.textContent = icon;
-    
-    const messageSpan = document.createElement('span');
-    messageSpan.className = 'notification-message';
-    messageSpan.textContent = message;
-    
-    notification.appendChild(iconSpan);
-    notification.appendChild(messageSpan);
+    notification.innerHTML = `
+        <div class="notification-icon">${icon}</div>
+        <div class="notification-content">
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.classList.remove('show'); setTimeout(() => this.parentElement.remove(), 300)">×</button>
+        <div class="notification-progress"></div>
+    `;
     
     document.body.appendChild(notification);
     
@@ -30,11 +45,13 @@ function showNotification(type, message) {
         notification.classList.add('show');
     }, 10);
     
-    // Auto remove
+    // Auto remove after 5 seconds
     setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-    }, 3500);
+        if (notification.parentElement) {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
 }
 
 // Enhanced Success Notification
@@ -79,272 +96,12 @@ function showEnhancedSuccessNotification(orderId, totalAmount, productCount) {
     
     // Auto remove
     setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 500);
+        if (notification.parentElement) {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 500);
+        }
     }, 5000);
 }
-
-// Add notification styles
-const style = document.createElement('style');
-style.textContent = `
-    .notification {
-        position: fixed;
-        bottom: 30px;
-        right: 20px;
-        padding: 12px 18px;
-        border-radius: 6px;
-        color: white;
-        font-size: 13px;
-        font-weight: 500;
-        z-index: 9999;
-        opacity: 0;
-        transform: translateX(400px) scale(0.9);
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        max-width: 350px;
-        word-wrap: break-word;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .notification.show {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-    
-    .notification-success {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .notification-error {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-    
-    .notification-info {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-    
-    .notification-warning {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        color: #333;
-    }
-    
-    .notification-icon {
-        font-size: 16px;
-        font-weight: bold;
-        min-width: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .notification-icon.animate-tick {
-        animation: checkmark 0.6s ease-out;
-    }
-    
-    @keyframes checkmark {
-        0% {
-            transform: scale(0) rotate(-45deg);
-            opacity: 0;
-        }
-        50% {
-            transform: scale(1.2) rotate(0deg);
-        }
-        100% {
-            transform: scale(1) rotate(0deg);
-            opacity: 1;
-        }
-    }
-    
-    .notification-message {
-        flex: 1;
-    }
-    
-    .enhanced-notification {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0.7);
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        z-index: 10000;
-        width: 400px;
-        max-width: 90vw;
-        opacity: 0;
-        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        overflow: hidden;
-    }
-    
-    .enhanced-notification.show {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-    
-    .enhanced-notification::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .notification-header {
-        padding: 30px 30px 20px;
-        text-align: center;
-    }
-    
-    .success-icon-wrapper {
-        display: inline-block;
-        margin-bottom: 15px;
-    }
-    
-    .success-checkmark {
-        width: 80px;
-        height: 80px;
-        display: block;
-        stroke-width: 3;
-        stroke-miterlimit: 10;
-    }
-    
-    .checkmark-circle {
-        display: none;
-    }
-    
-    .checkmark-check {
-        transform-origin: 50% 50%;
-        stroke-dasharray: 48;
-        stroke-dashoffset: 48;
-        stroke: #4CAF50;
-        stroke-width: 4;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        animation: strokeCheck 0.6s ease-out forwards;
-    }
-    
-    @keyframes strokeCheck {
-        0% {
-            stroke-dashoffset: 48;
-            opacity: 0;
-            transform: scale(0.5);
-        }
-        50% {
-            opacity: 1;
-        }
-        100% {
-            stroke-dashoffset: 0;
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-    
-    
-    @keyframes scale {
-        0%, 100% {
-            transform: none;
-        }
-        50% {
-            transform: scale3d(1.1, 1.1, 1);
-        }
-    }
-    
-    .notification-title {
-        font-size: 24px;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 10px;
-    }
-    
-    .notification-body {
-        padding: 0 30px 20px;
-        background: #f8f9fa;
-    }
-    
-    .order-detail-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 0;
-        border-bottom: 1px solid #e9ecef;
-    }
-    
-    .order-detail-item:last-child {
-        border-bottom: none;
-    }
-    
-    .detail-label {
-        font-size: 14px;
-        color: #6c757d;
-        font-weight: 500;
-    }
-    
-    .detail-value {
-        font-size: 15px;
-        color: #2c3e50;
-        font-weight: 600;
-    }
-    
-    .detail-value.highlight {
-        color: #667eea;
-        font-size: 18px;
-    }
-    
-    .notification-footer {
-        padding: 20px 30px;
-        text-align: center;
-        background: white;
-    }
-    
-    .success-message {
-        font-size: 14px;
-        color: #4CAF50;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-    
-    @media (max-width: 768px) {
-        .enhanced-notification {
-            width: 350px;
-        }
-        
-        .notification-title {
-            font-size: 20px;
-        }
-        
-        .success-checkmark {
-            width: 60px;
-            height: 60px;
-        }
-        
-        .notification-body {
-            padding: 0 20px 15px;
-        }
-        
-        .notification-header {
-            padding: 20px 20px 15px;
-        }
-        
-        .notification-footer {
-            padding: 15px 20px;
-        }
-        
-        .notification {
-            bottom: 15px;
-            right: 10px;
-            left: 10px;
-            max-width: none;
-            padding: 10px 15px;
-            font-size: 12px;
-        }
-    }
-`;
-document.head.appendChild(style);
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('[INIT] Add Order JS loaded');
@@ -982,12 +739,31 @@ async function submitOrder() {
         
         // Check response
         if (!result.success) {
-            console.error('[FAILED] Server returned success=false');
-            console.error('[ERROR_MESSAGE]', result.message);
-            throw new Error(result.message || 'Unknown error');
+            if (result.warning) {
+                // This is a warning - handle 2 cases
+                console.warn('[WARNING]', result.message);
+                console.warn('[TYPE]', result.type);
+                console.warn('[DETAILS]', result.details);
+                const detailsText = result.details.join('\n');
+                
+                // Trường hợp 1: Sản phẩm hết hàng
+                if (result.type === 'out_of_stock') {
+                    showNotification('warning', result.message + '\n' + detailsText);
+                }
+                // Trường hợp 2: Số lượng mua vượt quá tồn kho
+                else if (result.type === 'insufficient_stock') {
+                    showNotification('warning', result.message + '\n' + detailsText);
+                }
+            } else {
+                // This is an error
+                console.error('[FAILED] Server returned success=false');
+                console.error('[ERROR_MESSAGE]', result.message);
+                showNotification('error', 'Lỗi: ' + (result.message || 'Unknown error'));
+            }
+            return;
         }
         
-        // Success!
+        // Trường hợp 3: Success - Tất cả sản phẩm có đủ hàng
         console.log('[SUCCESS] Order created! ID:', result.order_id);
         
         const totalAmount = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
