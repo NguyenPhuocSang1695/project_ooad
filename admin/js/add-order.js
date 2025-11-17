@@ -920,7 +920,7 @@ async function fetchCustomerHistory(phone) {
             voucherResult.eligible_vouchers.forEach(voucher => {
                 const option = document.createElement('option');
                 option.value = voucher.id;
-                option.textContent = `${voucher.name} - Giảm ${voucher.percen_decrease}% (Tối thiểu: ${voucher.conditions.toLocaleString('vi-VN')}đ)`;
+                option.textContent = `MGG${voucher.id} - ${voucher.name} - Giảm ${voucher.percen_decrease}% (Tối thiểu: ${voucher.conditions.toLocaleString('vi-VN')}đ)`;
                 option.dataset.discount = voucher.percen_decrease;
                 voucherSelect.appendChild(option);
             });
