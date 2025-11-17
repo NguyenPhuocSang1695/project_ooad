@@ -41,7 +41,7 @@ if (!defined('INCLUDE_CHECK')) {
             </div>
           </div>
           <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-12">
               <label for="role" class="form-label">Vai trò</label>
               <select class="form-select" id="role" name="role" required>
                 <option value="">Chọn vai trò</option>
@@ -49,13 +49,6 @@ if (!defined('INCLUDE_CHECK')) {
                 <option value="customer">Khách hàng</option>
               </select>
               <div class="form-text">Mật khẩu chỉ bắt buộc khi vai trò là Admin</div>
-            </div>
-            <div class="col-md-6">
-              <label for="status" class="form-label">Trạng thái</label>
-              <select class="form-select" id="status" name="status" required>
-                <option value="Active">Hoạt động</option>
-                <option value="Block">Không hoạt động</option>
-              </select>
             </div>
           </div>
   </form>

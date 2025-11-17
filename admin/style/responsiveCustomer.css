@@ -1,28 +1,17 @@
 /* -----------------Phan responsive--------------- */
+/* Tablet (>= 768px and < 1024px) - Show all columns */
 @media only screen and (min-width: 48em) and (max-width: 63.9375em) {
-
-  .user-table th:nth-child(4),
-  .user-table td:nth-child(4) {
-    display: none;
-  }
+  /* Keep all columns visible on tablet */
 }
 
-/* Laptop (>= 1024px and < 1440px) */
+/* Laptop (>= 1024px and < 1440px) - Show all columns */
 @media only screen and (min-width: 64em) and (max-width: 89.9375em) {
-
-  .user-table th:nth-child(4),
-  .user-table td:nth-child(4) {
-    display: none;
-  }
+  /* Keep all columns visible on laptop */
 }
 
-/* Desktop (>= 1440px) */
+/* Desktop (>= 1440px) - Show all columns */
 @media only screen and (min-width: 90em) {
-
-  .user-table th:nth-child(4),
-  .user-table td:nth-child(4) {
-    display: table-cell;
-  }
+  /* Keep all columns visible on desktop */
 }
 
 /* Smartphones (min >= 320px) (max <480px) */

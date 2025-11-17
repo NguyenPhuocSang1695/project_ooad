@@ -17,8 +17,8 @@ class User {
         $this->email = $data['Email'] ?? '';
         $this->phone = $data['Phone'] ?? '';
         $this->role = $data['Role'] ?? 'customer';
-        $this->status = $data['Status'] ?? 'Active';
-        $this->address = $data['Address'] ?? '';
+        // $this->status = $data['Status'] ?? 'Active';
+        // $this->address = $data['Address'] ?? '';
     }
     public function getId() {
         return $this->id;

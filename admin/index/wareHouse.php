@@ -75,12 +75,36 @@ global $mysqli;
               <p style="color:black">Đơn hàng</p>
             </div>
           </a>
+          <a href="importReceipt.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Nhập hàng</p>
+            </div>
+          </a>
           <a href="analyzePage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
               <button class="button-function-selection">
                 <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
               </button>
               <p>Thống kê</p>
+            </div>
+          </a>
+          <a href="supplier.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Nhà cung cấp</p>
+            </div>
+          </a>
+          <a href="voucherManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Mã giảm giá</p>
             </div>
           </a>
           <a href="voucherManage.php" style="text-decoration: none; color: black;">
@@ -193,12 +217,28 @@ global $mysqli;
         <p>Đơn hàng</p>
       </div>
     </a>
+    <a href="importReceipt.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Nhập hàng</p>
+      </div>
+    </a>
     <a href="analyzePage.php" style="text-decoration: none; color: black;">
       <div class="container-function-selection">
         <button class="button-function-selection">
           <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
         </button>
         <p>Thống kê</p>
+      </div>
+    </a>
+    <a href="supplierManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Nhà cung cấp</p>
       </div>
     </a>
     <a href="voucherManage.php" style="text-decoration: none; color: black;">
@@ -257,6 +297,8 @@ global $mysqli;
               <option value="all">Tất cả</option>
               <option value="appear">Đang hiện</option>
               <option value="hidden">Đã ẩn</option>
+              <option value="out_of_stock">Hết hàng</option>
+              <option value="near_out_of_stock">Sắp hết hàng (số lượng ít hơn 5)</option>
             </select>
           </div>
 
@@ -482,7 +524,7 @@ global $mysqli;
   <!-- Edit Product Overlay -->
   <div class="product-details-overlay" id="editProductOverlay">
     <div class="product-details-content">
-      <button type="button" class="close-btn" onclick="closeEditOverlay()">
+      <button type="button" class="close-btn btn-secondary" onclick="closeEditOverlay()">
         <i class="fa-solid fa-xmark"></i>
       </button>
       <div class="card">
@@ -649,7 +691,7 @@ global $mysqli;
       reader.readAsDataURL(file);
     });
 
-    // Handle edit product form submission safely (prevent default and use AJAX)
+    // Xử lí form chỉnh sửa sản phẩm 
     (function() {
       const editForm = document.getElementById('editProductForm');
       if (!editForm) return;
@@ -774,7 +816,7 @@ global $mysqli;
                     <i class="fa-solid fa-trash"></i>
                   </button>
                 </td>
-          `;
+                `;
               tbody.appendChild(tr);
             });
           } else {
@@ -961,7 +1003,66 @@ global $mysqli;
       }
     })();
     // Load lần đầu (respect currentPage)
+    // Thêm vào cuối phần script, trước dòng loadProducts(currentPage);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Lấy parameter từ URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const editProductId = urlParams.get('edit');
+
+      if (editProductId) {
+        editProduct(editProductId);
+        // Xóa parameter edit khỏi URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+
+      // Lấy parameter status từ URL
+      const statusParam = urlParams.get('status');
+      if (statusParam) {
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+          statusFilter.value = statusParam;
+          currentPage = 1;
+          loadProducts(1);
+          return; // Dừng ở đây để không load 2 lần
+        }
+      }
+    });
     loadProducts(currentPage);
+  </script>
+
+  <script>
+    // Kiểm tra nếu có parameter edit trong URL
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const editProductId = urlParams.get('edit');
+
+      if (editProductId) {
+        // Tự động mở popup chỉnh sửa với productId từ URL
+        editProduct(editProductId);
+
+        // Xóa parameter khỏi URL để tránh mở lại khi refresh
+        const newUrl = window.location.pathname + window.location.search.replace(/[?&]edit=\d+/, '');
+        window.history.replaceState({}, document.title, newUrl);
+      }
+
+      // Phần code xử lý status filter hiện tại
+      const statusParam = urlParams.get('status');
+      if (statusParam) {
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+          statusFilter.value = statusParam;
+          currentPage = 1;
+          loadProducts(1);
+        }
+      }
+
+      // Load products nếu không có filter nào
+      if (!editProductId && !statusParam) {
+        loadProducts(currentPage);
+      }
+    });
   </script>
 </body>
 

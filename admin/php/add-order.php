@@ -24,14 +24,9 @@ try {
         throw new Exception('Invalid JSON data');
     }
 
+    error_log("[ADD_ORDER] Incoming data: " . json_encode($data));
 
     // Validate required fields
-    if (empty($data['customer_name'])) {
-        throw new Exception('Missing customer_name');
-    }
-    if (empty($data['customer_phone'])) {
-        throw new Exception('Missing customer_phone');
-    }
     if (empty($data['payment_method'])) {
         throw new Exception('Missing payment_method');
     }
@@ -40,36 +35,114 @@ try {
     }
 
     // Format customer phone - ensure it starts with 0
-    $customerPhone = $data['customer_phone'];
+    $customerPhone = $data['customer_phone'] ?? '';
     if (!empty($customerPhone) && $customerPhone[0] !== '0') {
         $customerPhone = '0' . $customerPhone;
     }
+    
+    // Set customer name and phone
+    $customerName = $data['customer_name'] ?? '';
+    $customerPhone = !empty($customerPhone) ? $customerPhone : '';
 
     // Connect to database
     $db = new DatabaseConnection();
     $db->connect();
 
-    // Get username from session
+    // Check stock for all products and categorize warnings
+    $myconn = $db->getConnection();
+    $outOfStockProducts = [];      // Trường hợp 1: Sản phẩm hết hàng (quantity = 0)
+    $insufficientStockProducts = []; // Trường hợp 2: Số lượng mua vượt quá tồn kho
+    
+    foreach ($data['products'] as $product) {
+        $productId = intval($product['product_id']);
+        $quantity = intval($product['quantity']);
+        
+        $stockStmt = $myconn->prepare("SELECT quantity_in_stock, ProductName FROM products WHERE ProductID = ?");
+        $stockStmt->bind_param("i", $productId);
+        $stockStmt->execute();
+        $stockResult = $stockStmt->get_result();
+        
+        if ($stockResult->num_rows === 0) {
+            throw new Exception("Sản phẩm ID #" . $productId . " không tồn tại");
+        }
+        
+        $productData = $stockResult->fetch_assoc();
+        $availableStock = intval($productData['quantity_in_stock']);
+        $productName = $productData['ProductName'];
+        
+        // Trường hợp 1: Sản phẩm hết hàng (quantity_in_stock = 0)
+        if ($availableStock == 0) {
+            $outOfStockProducts[] = '';
+        }
+        // Trường hợp 2: Số lượng mua vượt quá tồn kho nhưng còn hàng
+        else if ($quantity > $availableStock) {
+            $insufficientStockProducts[] = $productName . " - Chỉ còn " . $availableStock . " sản phẩm trong kho";
+        }
+        
+        $stockStmt->close();
+    }
+    
+    // Trường hợp 1: Nếu có sản phẩm hết hàng
+    if (!empty($outOfStockProducts)) {
+        http_response_code(200);
+        echo json_encode([
+            'success' => false,
+            'warning' => true,
+            'type' => 'out_of_stock',
+            'message' => 'Thông báo:  Sản phẩm đã hết hàng',
+            'details' => $outOfStockProducts
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    
+    // Trường hợp 2: Nếu số lượng mua vượt quá tồn kho
+    if (!empty($insufficientStockProducts)) {
+        http_response_code(200);
+        echo json_encode([
+            'success' => false,
+            'warning' => true,
+            'type' => 'insufficient_stock',
+            'message' => 'Thông báo: ',
+            'details' => $insufficientStockProducts
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    
+    // Trường hợp 3: Tất cả sản phẩm có đủ hàng - cứ tạo đơn bình thường
+
+    // Get username from session (for logging/auditing purposes)
     $username = isset($_SESSION['Username']) ? $_SESSION['Username'] : null;
     
     if (!$username) {
         throw new Exception('User not authenticated - Username not found in session');
     }
-    
-    // Get user_id from username
+
+    // Check if customer phone exists in users table - if yes, get user_id and name if not provided
+    $userId = null;
     $myconn = $db->getConnection();
-    $userStmt = $myconn->prepare("SELECT user_id FROM users WHERE Username = ?");
-    $userStmt->bind_param("s", $username);
-    $userStmt->execute();
-    $userResult = $userStmt->get_result();
+    $phoneStmt = $myconn->prepare("SELECT user_id, FullName FROM users WHERE Phone = ?");
+    $phoneStmt->bind_param("s", $customerPhone);
+    $phoneStmt->execute();
+    $phoneResult = $phoneStmt->get_result();
     
-    if ($userResult->num_rows === 0) {
-        throw new Exception('User not found in database');
+    if ($phoneResult->num_rows > 0) {
+        // Customer already exists
+        $phoneData = $phoneResult->fetch_assoc();
+        $userId = $phoneData['user_id'];
+        
+        // If customer name is not provided, use name from users table
+        if (empty($customerName) || $customerName === 'Không có') {
+            $customerName = $phoneData['FullName'] ?? 'Không có';
+            error_log("[ADD_ORDER] Customer found: Phone=" . $customerPhone . ", user_id=" . $userId . ", auto-filled name: " . $customerName);
+        } else {
+            error_log("[ADD_ORDER] Customer found: Phone=" . $customerPhone . ", user_id=" . $userId . ", provided name: " . $customerName);
+        }
+    } else {
+        // New customer - set user_id to null
+        $userId = null;
+        error_log("[ADD_ORDER] New customer: Phone=" . $customerPhone . ", user_id=null");
     }
-    
-    $userData = $userResult->fetch_assoc();
-    $userId = $userData['user_id'];
-    $userStmt->close();
+    $phoneStmt->close();
 
     // Handle address if provided
     $addressId = null;
@@ -94,20 +167,18 @@ try {
     }
 
     // Use OrderService to create order
-    $orderService = new OrderService($db);
-    $status = 'execute';
+    $orderService = new OrderManager($db);
     $voucherId = $data['voucher_id'] ?? null;
     
-    error_log("[ADD_ORDER] Creating order with status: " . $status . ", voucher_id: " . ($voucherId ?? 'null'));
+    error_log("[ADD_ORDER] Creating order with voucher_id: " . ($voucherId ?? 'null') . ", user_id: " . ($userId ?? 'null'));
     
     $orderId = $orderService->createOrder(
         $userId,
-        $data['customer_name'],
+        $customerName,
         $customerPhone,
         $data['payment_method'],
         $data['products'],
         $addressId,
-        $status,
         $voucherId
     );
     
