@@ -9,7 +9,9 @@ class Supplier
     private $addressDetail;
     private $wardId;
     private $wardName;
+    private $districtId;
     private $districtName;
+    private $provinceId;
     private $provinceName;
     private $totalProducts = 0;
     private $totalAmount = 0;
@@ -25,10 +27,12 @@ class Supplier
             $this->addressDetail = $data['address_detail'] ?? '';
             $this->wardId = $data['ward_id'] ?? null;
             $this->wardName = $data['ward_name'] ?? '';
+            $this->districtId = $data['district_id'] ?? null;
             $this->districtName = $data['district_name'] ?? '';
+            $this->provinceId = $data['province_id'] ?? null;
             $this->provinceName = $data['province_name'] ?? '';
-            $this->totalProducts = $data['TotalProducts'] ?? 0;
-            $this->totalAmount = $data['TotalAmount'] ?? 0;
+            $this->totalProducts = $data['total_products'] ?? $data['TotalProducts'] ?? 0;
+            $this->totalAmount   = $data['total_amount']   ?? $data['TotalAmount']   ?? 0;
         } else {
             $this->supplierName = $data['supplier_name'] ?? '';
             $this->phone = $data['phone'] ?? '';
@@ -71,9 +75,17 @@ class Supplier
     {
         return $this->wardName;
     }
+    public function getDistrictId()
+    {
+        return $this->districtId;
+    }
     public function getDistrictName()
     {
         return $this->districtName;
+    }
+    public function getProvinceId()
+    {
+        return $this->provinceId;
     }
     public function getProvinceName()
     {
@@ -110,7 +122,9 @@ class Supplier
             'address_detail' => $this->addressDetail,
             'ward_id' => $this->wardId,
             'ward_name' => $this->wardName,
+            'district_id' => $this->districtId ?? null,
             'district_name' => $this->districtName,
+            'province_id' => $this->provinceId ?? null,
             'province_name' => $this->provinceName,
             'TotalProducts' => $this->totalProducts,
             'TotalAmount' => $this->totalAmount

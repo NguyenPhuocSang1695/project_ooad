@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 // Include các file cần thiết
 include '../php/connect.php';
 require_once '../php/ImportReceiptManager.php';
@@ -20,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $_POST['import_date'],
         $_POST['total_amount'],
         $_POST['note'],
-        $_POST['suppliers'],
         $_POST['products'] ?? []
     );
 
@@ -44,9 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $_POST['import_date'],
         $_POST['total_amount'],
         $_POST['note'],
-        $_POST['suppliers'],
         $_POST['products'] ?? []
     );
+
 
     if ($result['success']) {
         echo "<script>
@@ -85,7 +88,6 @@ if (isset($_GET['delete'])) {
 $receipts = $receiptManager->getAll('import_date', 'DESC');
 
 // Lấy danh sách nhà cung cấp
-$suppliers = $receiptManager->getSuppliers();
 
 // Lấy danh sách sản phẩm
 $products = $receiptManager->getProducts();
@@ -717,6 +719,42 @@ $totalReceipts = $receiptManager->count();
                     ?>
                 </tbody>
             </table>
+            <!-- Thông báo khi không tìm thấy sản phẩm khi tìm kiếm phiếu nhập -->
+
+            <p id="noResultNotice">
+                Không tìm thấy phiếu nhập nào.
+            </p>
+
+            <style>
+                #noResultNotice {
+                    display: none;
+                    padding: 12px 16px;
+                    background-color: #ffe4e6;
+                    /* đỏ nhạt */
+                    border: 1px solid #fca5a5;
+                    /* viền đỏ */
+                    color: #b91c1c;
+                    /* chữ đỏ đậm */
+                    border-radius: 6px;
+                    font-size: 15px;
+                    margin-top: 12px;
+                    animation: fadeIn 0.25s ease-in-out;
+                    text-align: center;
+                }
+
+                /* Hiệu ứng hiện mềm */
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-3px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            </style>
 
             <?php
             // Tính tổng
@@ -725,10 +763,13 @@ $totalReceipts = $receiptManager->count();
             $grand_total = $result_total->fetch_assoc()['grand_total'];
             ?>
             <div class="total-summary">
-                <h4>Tổng giá trị nhập hàng: <?php echo number_format($grand_total, 0, ',', '.'); ?> VND</h4>
+                <h4>Tổng giá trị nhập hàng: <?php echo number_format($grand_total ?? 0, 0, ',', '.'); ?> VND</h4>
             </div>
         </div>
     </div>
+
+
+
 
     <!-- Modal Thêm phiếu nhập -->
     <div id="addModal" class="modal">
@@ -749,27 +790,6 @@ $totalReceipts = $receiptManager->count();
                         <label>Ghi chú</label>
                         <input type="text" name="note" placeholder="Nhập ghi chú (không bắt buộc)">
                     </div>
-                </div>
-
-                <div class="form-row">
-                    <p>
-                    <h4>Nhà cung cấp</h4>
-                    </p>
-                    <select name="suppliers" id="suppliers" style="padding:5px; width:100%;">
-                        <option value="">-- Chọn nhà cung cấp --</option>
-                        <?php
-                        $sql = "SELECT supplier_id, supplier_name FROM suppliers";
-                        $result = $connectDb->query($sql);
-
-                        if ($result->num_rows > 0) {
-                            while ($row = $result->fetch_assoc()) {
-                                echo '<option value="' . $row['supplier_id'] . '">' . $row['supplier_name'] . '</option>';
-                            }
-                        } else {
-                            echo '<option value="">Không có nhà cung cấp</option>';
-                        }
-                        ?>
-                    </select>
                 </div>
 
                 <div class="product-items">
@@ -952,28 +972,36 @@ $totalReceipts = $receiptManager->count();
         // Tìm kiếm phiếu nhập
         function searchReceipt() {
             const input = document.getElementById('searchInput');
-            const filter = input.value.toUpperCase();
+            const filter = input.value.trim().toUpperCase();
             const table = document.getElementById('receiptTable');
             const rows = table.getElementsByTagName('tr');
 
+            let matchCount = 0; // đếm số dòng tìm được
+
             for (let i = 1; i < rows.length; i++) {
-                const cells = rows[i].getElementsByTagName('td');
+                const firstCell = rows[i].getElementsByTagName('td')[0]; // chỉ tìm theo mã phiếu nhập
                 let found = false;
 
-                for (let j = 0; j < cells.length - 1; j++) {
-                    const cell = cells[j];
-                    if (cell) {
-                        const textValue = cell.textContent || cell.innerText;
-                        if (textValue.toUpperCase().indexOf(filter) > -1) {
-                            found = true;
-                            break;
-                        }
+                if (firstCell) {
+                    const textValue = firstCell.textContent || firstCell.innerText;
+                    if (textValue.toUpperCase().includes(filter)) {
+                        found = true;
+                        matchCount++;
                     }
                 }
 
                 rows[i].style.display = found ? '' : 'none';
             }
+
+            // Hiển thị thông báo nếu không có kết quả
+            const notice = document.getElementById('noResultNotice');
+            if (matchCount === 0) {
+                notice.style.display = "block";
+            } else {
+                notice.style.display = "none";
+            }
         }
+
 
         // Lọc theo tháng
         function filterByMonth() {
@@ -1296,6 +1324,33 @@ $totalReceipts = $receiptManager->count();
             `;
             updateTotalAmount();
         }
+    </script>
+
+
+    <script>
+        // Thông báo khi chọn sản phẩm bị trùng
+        document.getElementById('importForm').addEventListener('change', function(e) {
+            if (e.target.tagName === 'SELECT' && e.target.name.includes('product_id')) {
+                const selectedValues = [];
+                const selects = document.querySelectorAll('select[name*="product_id"]');
+                let duplicateFound = false;
+                selects.forEach(select => {
+                    const value = select.value;
+                    if (value) {
+                        if (selectedValues.includes(value)) {
+                            duplicateFound = true;
+                        } else {
+                            selectedValues.push(value);
+                        }
+                    }
+                });
+                if (duplicateFound) {
+                    alert('Sản phẩm đã được chọn rồi! Vui lòng chọn sản phẩm khác.');
+                    e.target.value = '';
+                    updateSubtotal(Array.from(selects).indexOf(e.target));
+                }
+            }
+        });
     </script>
 </body>
 
