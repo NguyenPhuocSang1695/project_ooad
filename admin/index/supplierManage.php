@@ -1322,8 +1322,9 @@ $totalAmount = $supplierManager->getTotalValue();
                 document.getElementById('phone').value = data.phone;
                 document.getElementById('email').value = data.Email || '';
                 document.getElementById('address_detail').value = data.address_detail || '';
-                // Nếu muốn, có thể set province/district/ward
 
+                // Loại bỏ required
+                requiredFields.forEach(input => input.removeAttribute('required'));
 
                 // Load tỉnh/huyện/xã từ data
                 const loadLocation = async () => {
@@ -1331,37 +1332,57 @@ $totalAmount = $supplierManager->getTotalValue();
                     const districtSelect = document.getElementById('district_id');
                     const wardSelect = document.getElementById('ward_id');
 
-                    // Set tỉnh
-                    provinceSelect.value = data.province_id;
-                    if (data.province_id) {
-                        const districts = await fetch(`../php/get_districts.php?province_id=${data.province_id}`).then(r => r.json());
-                        districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-                        districts.forEach(d => {
-                            const opt = document.createElement('option');
-                            opt.value = d.district_id;
-                            opt.textContent = d.name;
-                            if (d.district_id == data.district_id) opt.selected = true;
-                            districtSelect.appendChild(opt);
-                        });
+                    // --- 1. LOAD PROVINCES AND SET VALUE ---
+                    try {
+                        // Set province value nếu có
+                        if (data.province_id) {
+                            provinceSelect.value = data.province_id;
+                        }
 
+                        // --- 2. LOAD DISTRICTS ---
+                        if (data.province_id) {
+                            const districtResponse = await fetch(`../php/get_districts.php?province_id=${data.province_id}`);
+                            const districts = await districtResponse.json();
+
+                            districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
+                            districts.forEach(d => {
+                                const opt = document.createElement('option');
+                                opt.value = d.district_id;
+                                opt.textContent = d.name;
+                                districtSelect.appendChild(opt);
+                            });
+
+                            // Set district value AFTER loading options
+                            if (data.district_id) {
+                                districtSelect.value = data.district_id;
+                            }
+                        }
+
+                        // --- 3. LOAD WARDS ---
                         if (data.district_id) {
-                            const wards = await fetch(`../php/get_wards.php?district_id=${data.district_id}`).then(r => r.json());
+                            const wardResponse = await fetch(`../php/get_wards.php?district_id=${data.district_id}`);
+                            const wards = await wardResponse.json();
+
                             wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
                             wards.forEach(w => {
                                 const opt = document.createElement('option');
                                 opt.value = w.ward_id;
                                 opt.textContent = w.name;
-                                if (w.ward_id == data.ward_id) opt.selected = true;
                                 wardSelect.appendChild(opt);
                             });
+
+                            // Set ward value AFTER loading options
+                            if (data.ward_id) {
+                                wardSelect.value = data.ward_id;
+                            }
                         }
+                    } catch (e) {
+                        console.error('Error loading locations:', e);
                     }
                 };
+
+                // Gọi hàm load
                 loadLocation();
-
-
-                // Loại bỏ required
-                requiredFields.forEach(input => input.removeAttribute('required'));
             }
 
             modal.classList.add('active');

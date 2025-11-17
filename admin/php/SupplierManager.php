@@ -296,6 +296,7 @@ class SupplierManager
             s.*,
             a.address_detail,
             w.name AS ward_name,
+            w.ward_id,
             d.name AS district_name,
             d.district_id,
             pv.name AS province_name,
@@ -320,12 +321,14 @@ class SupplierManager
         WHERE s.supplier_name LIKE ? 
            OR s.phone LIKE ? 
            OR s.email LIKE ?
+           OR s.supplier_id = ?
         ORDER BY s.supplier_id DESC
         ";
 
         $stmt = $this->conn->prepare($sql);
         $param = "%$search%";
-        $stmt->bind_param("sss", $param, $param, $param);
+        $id = is_numeric($search) ? (int)$search : 0;
+        $stmt->bind_param("sssi", $param, $param, $param, $id);
         $stmt->execute();
         $result = $stmt->get_result();
 
