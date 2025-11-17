@@ -353,4 +353,209 @@ class ProductManager
     {
         $this->db->close();
     }
+
+    // Thêm sản phẩm mới
+    function addProduct($productName, $categoryID, $price, $description, $supplierID, $quantity_in_stock, $fileImage)
+    {
+        $db = new DatabaseConnection();
+        $db->connect();
+
+        // Validate cơ bản
+        if (!$productName || !$categoryID || !$price || !$supplierID) {
+            return ["success" => false, "message" => "Vui lòng điền đầy đủ thông tin bắt buộc"];
+        }
+
+        // Kiểm tra sản phẩm đã tồn tại với cùng nhà cung cấp
+        $checkSql = "SELECT COUNT(*) as count FROM products WHERE ProductName = ? AND Supplier_id = ?";
+        $result = $db->queryPrepared($checkSql, [$productName, $supplierID], "si");
+        $row = $result->fetch_assoc();
+        if ($row['count'] > 0) {
+            return ["success" => false, "message" => "Sản phẩm cùng tên với nhà cung cấp này đã tồn tại"];
+        }
+
+        // Xử lý ảnh
+        $imageRelativeURL = '';
+        if (isset($fileImage) && $fileImage['error'] === UPLOAD_ERR_OK) {
+            $targetDir = "../../assets/images/";
+            if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
+
+            $ext = strtolower(pathinfo($fileImage['name'], PATHINFO_EXTENSION));
+            $newFileName = uniqid("product_") . "." . $ext;
+            $targetFilePath = $targetDir . $newFileName;
+
+            if (!move_uploaded_file($fileImage['tmp_name'], $targetFilePath)) {
+                return ["success" => false, "message" => "Không thể lưu ảnh."];
+            }
+
+            $imageRelativeURL = "/assets/images/" . $newFileName;
+        } else {
+            return ["success" => false, "message" => "Ảnh không hợp lệ hoặc chưa được chọn."];
+        }
+
+        // Thêm sản phẩm vào DB
+        $insertSql = "INSERT INTO products 
+        (ProductName, CategoryID, Price, Description, ImageURL, Status, Supplier_id, quantity_in_stock)
+        VALUES (?, ?, ?, ?, ?, 'appear', ?, ?)";
+        $params = [$productName, $categoryID, $price, $description, $imageRelativeURL, $supplierID, $quantity_in_stock];
+        $types  = "siissii";
+
+        if ($db->queryPrepared($insertSql, $params, $types)) {
+            $db->close();
+            return ["success" => true, "message" => "Thêm sản phẩm thành công"];
+        } else {
+            $db->close();
+            return ["success" => false, "message" => "Lỗi khi thêm sản phẩm"];
+        }
+    }
+
+
+    // Cập nhật sản phẩm
+    function updateProduct($productId, $productName, $categoryID, $price, $description, $status = 'appear', $quantity = 0, $supplierID = 0, $fileImage = null)
+    {
+        $db = new DatabaseConnection();
+        $db->connect();
+
+        try {
+            // Validate cơ bản
+            if (!$productId || !$productName || !$categoryID || !$price) {
+                return ['success' => false, 'message' => 'Thiếu dữ liệu bắt buộc'];
+            }
+
+            if ($price <= 0) return ['success' => false, 'message' => 'Giá sản phẩm phải lớn hơn 0'];
+            if (!in_array($status, ['appear', 'hidden'])) return ['success' => false, 'message' => 'Trạng thái không hợp lệ'];
+
+            // Lấy dữ liệu hiện tại
+            $result = $db->queryPrepared("SELECT * FROM products WHERE ProductID = ?", [$productId], "i");
+            $currentData = $result->fetch_assoc();
+            if (!$currentData) return ['success' => false, 'message' => 'Sản phẩm không tồn tại'];
+
+            $newImageURL = $currentData['ImageURL'];
+
+            // Xử lý ảnh mới nếu có upload
+            if ($fileImage && $fileImage['error'] === UPLOAD_ERR_OK) {
+                $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                $maxSize = 2 * 1024 * 1024;
+
+                if (!in_array($fileImage['type'], $allowedTypes)) return ['success' => false, 'message' => 'Định dạng file không hợp lệ'];
+                if ($fileImage['size'] > $maxSize) return ['success' => false, 'message' => 'Kích thước file quá lớn (max 2MB)'];
+
+                $ext = pathinfo($fileImage['name'], PATHINFO_EXTENSION);
+                $filename = 'product_' . uniqid() . '.' . $ext;
+                $uploadDir = '../../assets/images/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                $uploadPath = $uploadDir . $filename;
+
+                if (!move_uploaded_file($fileImage['tmp_name'], $uploadPath)) {
+                    return ['success' => false, 'message' => 'Không thể tải lên hình ảnh'];
+                }
+
+                $newImageURL = '/assets/images/' . $filename;
+
+                // Xóa ảnh cũ nếu khác
+                if ($currentData['ImageURL'] && $currentData['ImageURL'] !== $newImageURL) {
+                    $oldImagePath = '../../' . $currentData['ImageURL'];
+                    if (file_exists($oldImagePath)) unlink($oldImagePath);
+                }
+            }
+
+            // Kiểm tra có gì thay đổi không
+            if (
+                $currentData['ProductName'] === $productName &&
+                (int)$currentData['CategoryID'] === (int)$categoryID &&
+                (float)$currentData['Price'] === (float)$price &&
+                $currentData['Description'] === $description &&
+                $currentData['Status'] === $status &&
+                (int)$currentData['Supplier_id'] === (int)$supplierID &&
+                (int)$currentData['quantity_in_stock'] === (int)$quantity &&
+                $currentData['ImageURL'] === $newImageURL
+            ) {
+                return ['success' => true, 'message' => 'Không có gì thay đổi', 'productId' => $productId];
+            }
+
+            // Cập nhật sản phẩm
+            $sql = "UPDATE products SET 
+                ProductName = ?, 
+                CategoryID = ?, 
+                Price = ?, 
+                Description = ?, 
+                Status = ?, 
+                Supplier_id = ?, 
+                quantity_in_stock = ?, 
+                ImageURL = ?
+            WHERE ProductID = ?";
+
+            $params = [$productName, $categoryID, $price, $description, $status, $supplierID, $quantity, $newImageURL, $productId];
+            $types  = "sidssissi";
+
+            $db->queryPrepared($sql, $params, $types);
+
+            return ['success' => true, 'message' => 'Cập nhật sản phẩm thành công', 'productId' => $productId];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        } finally {
+            $db->close();
+        }
+    }
+
+    // Xóa sản phẩm
+    function deleteOrHideProduct($productId)
+    {
+        if (!$productId) {
+            return ['status' => 'error', 'message' => 'Product ID is required'];
+        }
+
+        $db = new DatabaseConnection();
+        $db->connect();
+
+        try {
+            // Kiểm tra xem sản phẩm có trong orderdetails không
+            $checkQuery = "SELECT COUNT(*) AS count FROM orderdetails WHERE ProductID = ?";
+            $result = $db->queryPrepared($checkQuery, [$productId], "i");
+            $row = $result->fetch_assoc();
+
+            if ($row['count'] > 0) {
+                // Nếu có trong đơn hàng, update status thành hidden
+                $updateQuery = "UPDATE products SET Status = 'hidden' WHERE ProductID = ?";
+                if ($db->queryPrepared($updateQuery, [$productId], "i")) {
+                    return [
+                        "status" => "hidden",
+                        "message" => "Sản phẩm đã được ẩn vì đã tồn tại trong đơn hàng"
+                    ];
+                } else {
+                    return ["status" => "error", "message" => "Lỗi khi ẩn sản phẩm"];
+                }
+            } else {
+                // Nếu không có trong đơn hàng, xóa bình thường
+                $imageQuery = "SELECT ImageURL FROM products WHERE ProductID = ?";
+                $imageResult = $db->queryPrepared($imageQuery, [$productId], "i");
+                $imageData = $imageResult->fetch_assoc();
+
+                $deleteQuery = "DELETE FROM products WHERE ProductID = ?";
+                if ($db->queryPrepared($deleteQuery, [$productId], "i")) {
+
+                    // Xóa file ảnh nếu tồn tại
+                    if ($imageData && !empty($imageData['ImageURL'])) {
+                        // __DIR__ trỏ tới folder hiện tại, kết hợp với ../../ để ra root project
+                        $imagePath = __DIR__ . '/../../' . ltrim($imageData['ImageURL'], '/');
+                        if (file_exists($imagePath)) {
+                            unlink($imagePath);
+                        } else {
+                            error_log("File ảnh không tồn tại: " . $imagePath);
+                        }
+                    }
+
+                    return [
+                        "status" => "deleted",
+                        "message" => "Đã xóa sản phẩm thành công"
+                    ];
+                } else {
+                    return ["status" => "error", "message" => "Lỗi khi xóa sản phẩm"];
+                }
+            }
+        } catch (Exception $e) {
+            return ['status' => 'error', 'message' => 'Lỗi: ' . $e->getMessage()];
+        } finally {
+            $db->close();
+        }
+    }
 }
