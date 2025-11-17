@@ -24,20 +24,9 @@ try {
         throw new Exception('Invalid JSON data');
     }
 
+    error_log("[ADD_ORDER] Incoming data: " . json_encode($data));
 
     // Validate required fields
-    $deliveryType = $data['delivery_type'] ?? 'pickup';
-    
-    // Only validate customer_name and customer_phone if delivery type is "address"
-    if ($deliveryType === 'address') {
-        if (empty($data['customer_name'])) {
-            throw new Exception('Missing customer_name');
-        }
-        if (empty($data['customer_phone'])) {
-            throw new Exception('Missing customer_phone');
-        }
-    }
-    
     if (empty($data['payment_method'])) {
         throw new Exception('Missing payment_method');
     }
@@ -51,23 +40,75 @@ try {
         $customerPhone = '0' . $customerPhone;
     }
     
-    // Set customer name and phone for pickup orders (can be empty)
+    // Set customer name and phone
     $customerName = $data['customer_name'] ?? '';
     $customerPhone = !empty($customerPhone) ? $customerPhone : '';
-
-    // Set default values for pickup orders with empty customer info
-    if ($deliveryType === 'pickup') {
-        if (empty($customerName)) {
-            $customerName = 'Không có';
-        }
-        if (empty($customerPhone)) {
-            $customerPhone = 'Không có';
-        }
-    }
 
     // Connect to database
     $db = new DatabaseConnection();
     $db->connect();
+
+    // Check stock for all products and categorize warnings
+    $myconn = $db->getConnection();
+    $outOfStockProducts = [];      // Trường hợp 1: Sản phẩm hết hàng (quantity = 0)
+    $insufficientStockProducts = []; // Trường hợp 2: Số lượng mua vượt quá tồn kho
+    
+    foreach ($data['products'] as $product) {
+        $productId = intval($product['product_id']);
+        $quantity = intval($product['quantity']);
+        
+        $stockStmt = $myconn->prepare("SELECT quantity_in_stock, ProductName FROM products WHERE ProductID = ?");
+        $stockStmt->bind_param("i", $productId);
+        $stockStmt->execute();
+        $stockResult = $stockStmt->get_result();
+        
+        if ($stockResult->num_rows === 0) {
+            throw new Exception("Sản phẩm ID #" . $productId . " không tồn tại");
+        }
+        
+        $productData = $stockResult->fetch_assoc();
+        $availableStock = intval($productData['quantity_in_stock']);
+        $productName = $productData['ProductName'];
+        
+        // Trường hợp 1: Sản phẩm hết hàng (quantity_in_stock = 0)
+        if ($availableStock == 0) {
+            $outOfStockProducts[] = '';
+        }
+        // Trường hợp 2: Số lượng mua vượt quá tồn kho nhưng còn hàng
+        else if ($quantity > $availableStock) {
+            $insufficientStockProducts[] = $productName . " - Chỉ còn " . $availableStock . " sản phẩm trong kho";
+        }
+        
+        $stockStmt->close();
+    }
+    
+    // Trường hợp 1: Nếu có sản phẩm hết hàng
+    if (!empty($outOfStockProducts)) {
+        http_response_code(200);
+        echo json_encode([
+            'success' => false,
+            'warning' => true,
+            'type' => 'out_of_stock',
+            'message' => 'Thông báo:  Sản phẩm đã hết hàng',
+            'details' => $outOfStockProducts
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    
+    // Trường hợp 2: Nếu số lượng mua vượt quá tồn kho
+    if (!empty($insufficientStockProducts)) {
+        http_response_code(200);
+        echo json_encode([
+            'success' => false,
+            'warning' => true,
+            'type' => 'insufficient_stock',
+            'message' => 'Thông báo: ',
+            'details' => $insufficientStockProducts
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    
+    // Trường hợp 3: Tất cả sản phẩm có đủ hàng - cứ tạo đơn bình thường
 
     // Get username from session (for logging/auditing purposes)
     $username = isset($_SESSION['Username']) ? $_SESSION['Username'] : null;
@@ -129,7 +170,7 @@ try {
     $orderService = new OrderManager($db);
     $voucherId = $data['voucher_id'] ?? null;
     
-    error_log("[ADD_ORDER] Creating order with voucher_id: " . ($voucherId ?? 'null') . ", user_id: " . ($userId ?? 'null') . ", delivery_type: " . $deliveryType);
+    error_log("[ADD_ORDER] Creating order with voucher_id: " . ($voucherId ?? 'null') . ", user_id: " . ($userId ?? 'null'));
     
     $orderId = $orderService->createOrder(
         $userId,
@@ -138,8 +179,7 @@ try {
         $data['payment_method'],
         $data['products'],
         $addressId,
-        $voucherId,
-        $deliveryType
+        $voucherId
     );
     
     error_log("[ADD_ORDER] SUCCESS - Order #" . $orderId . " created");
