@@ -36,16 +36,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // --- Tìm kiếm voucher ---
 const searchInput = document.getElementById("searchVoucher");
+const noResults = document.getElementById("noResults");
+
 if (searchInput) {
   searchInput.addEventListener("input", function (e) {
     const searchTerm = e.target.value.toLowerCase();
     const cards = document.querySelectorAll(".voucher-card");
+
+    let hasResult = false;
+
     cards.forEach((card) => {
+      const id = card
+        .querySelector(".voucher-id strong")
+        .textContent.toLowerCase(); // MGG123
+
       const name = card
         .querySelector(".voucher-name strong")
-        .textContent.toLowerCase();
-      card.style.display = name.includes(searchTerm) ? "block" : "none";
+        .textContent.toLowerCase(); // Tên: ABC
+
+      // so sánh theo id hoặc theo tên
+      const match = id.includes(searchTerm) || name.includes(searchTerm);
+
+      card.style.display = match ? "block" : "none";
+
+      if (match) hasResult = true;
     });
+
+    // Hiển thị hoặc ẩn dòng "Không tìm thấy"
+    noResults.style.display = hasResult ? "none" : "block";
   });
 }
 
