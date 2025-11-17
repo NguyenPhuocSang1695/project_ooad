@@ -559,11 +559,11 @@ $orders = [];
                   <div class="row">
                     <div class="col-md-6 mb-3">
                       <label for="customer-phone" class="form-label">Số điện thoại:</label>
-                      <input type="tel" class="form-control" id="customer-phone" name="customer_phone" pattern="[0-9]*" maxlength="10" required>
+                      <input type="tel" class="form-control" id="customer-phone" name="customer_phone" pattern="[0-9]*" maxlength="10">
                     </div>
                     <div class="col-md-6 mb-3">
                       <label for="customer-name" class="form-label">Tên khách hàng:</label>
-                      <input type="text" class="form-control" id="customer-name" name="customer_name" required>
+                      <input type="text" class="form-control" id="customer-name" name="customer_name">
                     </div>
                   </div>
 
@@ -622,7 +622,7 @@ $orders = [];
                     <div class="col-md-6 mb-3">
                       <label for="payment-method" class="form-label">Phương thức thanh toán:</label>
                       <select class="form-control" id="payment-method" name="payment_method" required>
-                        <option value="">Chọn phương thức</option>
+    
                         <option value="CASH">Thanh toán tại quầy</option>
                         <option value="COD">Thanh toán khi nhận hàng (COD)</option>
                         <option value="BANKING">Chuyển khoản ngân hàng</option>
@@ -796,7 +796,7 @@ $orders = [];
             <thead>
               <tr>
                 <th>Mã đơn hàng</th>
-                <th class="hide-index-tablet ">Người mua</th>
+                <th class="hide-index-tablet ">Tên khách hàng</th>
                 <th>Ngày tạo</th>
                 <th class="hide-index-mobile">Giá tiền (VND)</th>
                 <th>Số điện thoại</th>

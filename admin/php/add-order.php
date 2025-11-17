@@ -26,12 +26,18 @@ try {
 
 
     // Validate required fields
-    if (empty($data['customer_name'])) {
-        throw new Exception('Missing customer_name');
+    $deliveryType = $data['delivery_type'] ?? 'pickup';
+    
+    // Only validate customer_name and customer_phone if delivery type is "address"
+    if ($deliveryType === 'address') {
+        if (empty($data['customer_name'])) {
+            throw new Exception('Missing customer_name');
+        }
+        if (empty($data['customer_phone'])) {
+            throw new Exception('Missing customer_phone');
+        }
     }
-    if (empty($data['customer_phone'])) {
-        throw new Exception('Missing customer_phone');
-    }
+    
     if (empty($data['payment_method'])) {
         throw new Exception('Missing payment_method');
     }
@@ -40,36 +46,62 @@ try {
     }
 
     // Format customer phone - ensure it starts with 0
-    $customerPhone = $data['customer_phone'];
+    $customerPhone = $data['customer_phone'] ?? '';
     if (!empty($customerPhone) && $customerPhone[0] !== '0') {
         $customerPhone = '0' . $customerPhone;
+    }
+    
+    // Set customer name and phone for pickup orders (can be empty)
+    $customerName = $data['customer_name'] ?? '';
+    $customerPhone = !empty($customerPhone) ? $customerPhone : '';
+
+    // Set default values for pickup orders with empty customer info
+    if ($deliveryType === 'pickup') {
+        if (empty($customerName)) {
+            $customerName = 'Không có';
+        }
+        if (empty($customerPhone)) {
+            $customerPhone = 'Không có';
+        }
     }
 
     // Connect to database
     $db = new DatabaseConnection();
     $db->connect();
 
-    // Get username from session
+    // Get username from session (for logging/auditing purposes)
     $username = isset($_SESSION['Username']) ? $_SESSION['Username'] : null;
     
     if (!$username) {
         throw new Exception('User not authenticated - Username not found in session');
     }
-    
-    // Get user_id from username
+
+    // Check if customer phone exists in users table - if yes, get user_id and name if not provided
+    $userId = null;
     $myconn = $db->getConnection();
-    $userStmt = $myconn->prepare("SELECT user_id FROM users WHERE Username = ?");
-    $userStmt->bind_param("s", $username);
-    $userStmt->execute();
-    $userResult = $userStmt->get_result();
+    $phoneStmt = $myconn->prepare("SELECT user_id, FullName FROM users WHERE Phone = ?");
+    $phoneStmt->bind_param("s", $customerPhone);
+    $phoneStmt->execute();
+    $phoneResult = $phoneStmt->get_result();
     
-    if ($userResult->num_rows === 0) {
-        throw new Exception('User not found in database');
+    if ($phoneResult->num_rows > 0) {
+        // Customer already exists
+        $phoneData = $phoneResult->fetch_assoc();
+        $userId = $phoneData['user_id'];
+        
+        // If customer name is not provided, use name from users table
+        if (empty($customerName) || $customerName === 'Không có') {
+            $customerName = $phoneData['FullName'] ?? 'Không có';
+            error_log("[ADD_ORDER] Customer found: Phone=" . $customerPhone . ", user_id=" . $userId . ", auto-filled name: " . $customerName);
+        } else {
+            error_log("[ADD_ORDER] Customer found: Phone=" . $customerPhone . ", user_id=" . $userId . ", provided name: " . $customerName);
+        }
+    } else {
+        // New customer - set user_id to null
+        $userId = null;
+        error_log("[ADD_ORDER] New customer: Phone=" . $customerPhone . ", user_id=null");
     }
-    
-    $userData = $userResult->fetch_assoc();
-    $userId = $userData['user_id'];
-    $userStmt->close();
+    $phoneStmt->close();
 
     // Handle address if provided
     $addressId = null;
@@ -94,21 +126,20 @@ try {
     }
 
     // Use OrderService to create order
-    $orderService = new OrderService($db);
-    $status = 'execute';
+    $orderService = new OrderManager($db);
     $voucherId = $data['voucher_id'] ?? null;
     
-    error_log("[ADD_ORDER] Creating order with status: " . $status . ", voucher_id: " . ($voucherId ?? 'null'));
+    error_log("[ADD_ORDER] Creating order with voucher_id: " . ($voucherId ?? 'null') . ", user_id: " . ($userId ?? 'null') . ", delivery_type: " . $deliveryType);
     
     $orderId = $orderService->createOrder(
         $userId,
-        $data['customer_name'],
+        $customerName,
         $customerPhone,
         $data['payment_method'],
         $data['products'],
         $addressId,
-        $status,
-        $voucherId
+        $voucherId,
+        $deliveryType
     );
     
     error_log("[ADD_ORDER] SUCCESS - Order #" . $orderId . " created");

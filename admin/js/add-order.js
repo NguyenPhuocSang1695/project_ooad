@@ -856,27 +856,38 @@ async function submitOrder() {
         const customerPhone = document.getElementById('customer-phone')?.value?.trim() || '';
         const paymentMethod = document.getElementById('payment-method')?.value || '';
         const status = document.getElementById('add-order-status')?.value || 'execute';
+        const deliveryType = document.querySelector('input[name="delivery_type"]:checked')?.value || 'pickup';
         
         console.log('[FORM] Name:', customerName);
         console.log('[FORM] Phone:', customerPhone);
         console.log('[FORM] Payment:', paymentMethod);
         console.log('[FORM] Status:', status);
+        console.log('[FORM] DeliveryType:', deliveryType);
         
-        // Validate basic fields
-        if (!customerName) {
-            showNotification('warning', 'Vui lòng nhập tên khách hàng');
-            return;
+        // Validate customer info only if delivery type is "address"
+        if (deliveryType === 'address') {
+            if (!customerName) {
+                showNotification('warning', 'Vui lòng nhập tên khách hàng');
+                return;
+            }
+            if (!customerPhone) {
+                showNotification('warning', 'Vui lòng nhập số điện thoại');
+                return;
+            }
+            // Validate phone number (Vietnamese format: 10 digits starting with 0)
+            const phoneRegex = /^0[0-9]{9}$/;
+            if (!phoneRegex.test(customerPhone) || customerPhone.length !== 10) {
+                showNotification('warning', 'Số điện thoại không hợp lệ (phải là 10 chữ số, bắt đầu từ 0)');
+                return;
+            }
+        } else {
+            // For pickup, only phone is optional but if provided, validate it
+            if (customerPhone && !/^0[0-9]{9}$/.test(customerPhone)) {
+                showNotification('warning', 'Số điện thoại không hợp lệ (phải là 10 chữ số, bắt đầu từ 0)');
+                return;
+            }
         }
-        if (!customerPhone) {
-            showNotification('warning', 'Vui lòng nhập số điện thoại');
-            return;
-        }
-        // Validate phone number (Vietnamese format: 10 digits starting with 0)
-        const phoneRegex = /^0[0-9]{9}$/;
-        if (!phoneRegex.test(customerPhone) || customerPhone.length !== 10) {
-            showNotification('warning', 'Số điện thoại không hợp lệ (phải là 10 chữ số, bắt đầu từ 0)');
-            return;
-        }
+        
         if (!paymentMethod) {
             showNotification('warning', 'Vui lòng chọn phương thức thanh toán');
             return;
@@ -916,20 +927,30 @@ async function submitOrder() {
         
         // Prepare payload
         const voucherSelectElement = document.getElementById('voucher-select');
-        const voucherId = voucherSelectElement?.value ? parseInt(voucherSelectElement.value) : null;
+        let voucherId = null;
+        
+        if (voucherSelectElement?.value) {
+            const parsedId = parseInt(voucherSelectElement.value);
+            voucherId = !isNaN(parsedId) ? parsedId : null;
+        }
         
         const payload = {
             customer_name: customerName,
             customer_phone: customerPhone,
             payment_method: paymentMethod,
             status: status,
-            voucher_id: voucherId,
+            delivery_type: deliveryType,
             products: products,
             address: {
                 ward_id: document.getElementById('add-ward')?.value || '',
                 address_detail: document.getElementById('address-detail')?.value?.trim() || ''
             }
         };
+        
+        // Add voucher_id only if it's a valid number
+        if (voucherId !== null && !isNaN(voucherId) && voucherId > 0) {
+            payload.voucher_id = voucherId;
+        }
         
         console.log('[PAYLOAD] Ready to send');
         console.log('[PAYLOAD] Voucher ID:', voucherId);

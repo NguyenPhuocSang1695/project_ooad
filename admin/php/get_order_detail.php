@@ -17,7 +17,7 @@ try {
         throw new Exception('Order ID is required');
     }
 
-    $orderService = new OrderService($db);
+    $orderService = new OrderManager($db);
     $orderData = $orderService->getOrderWithDetails($orderId);
     
     /** @var Order $order */
@@ -77,8 +77,9 @@ try {
             'username' => $order->getUsername(),
             'orderDate' => $order->getDateGeneration(),
             'customerName' => $order->getCustomerName(),
-                                                              'customerPhone' => $order->getPhone(),
+            'customerPhone' => $order->getPhone(),
             'address' => $order->getFullAddress(),
+            'deliveryType' => $order->getDeliveryType(),
             'paymentMethod' => $order->getPaymentMethod(),
             'totalAmount' => floatval($order->getTotalAmount()),
             'productCount' => count($products),

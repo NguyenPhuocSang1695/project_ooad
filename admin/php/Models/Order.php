@@ -10,11 +10,12 @@ class Order {
     private $customerName;
     private $phone;
     private $paymentMethod;
-    private $status;
+   // private $status;
     private $addressId;
     private $dateGeneration;
     private $totalAmount;
     private $voucherId;
+    private $deliveryType;
     
     // Address details (from JOIN)
     private $addressDetail;
@@ -29,11 +30,12 @@ class Order {
         $this->customerName = $data['CustomerName'] ?? $data['customer_name'] ?? null;
         $this->phone = $data['Phone'] ?? $data['phone'] ?? null;
         $this->paymentMethod = $data['PaymentMethod'] ?? $data['payment_method'] ?? null;
-        $this->status = $data['Status'] ?? $data['status'] ?? 'execute';
+      //  $this->status = $data['Status'] ?? $data['status'] ?? 'execute';
         $this->addressId = $data['address_id'] ?? null;
         $this->dateGeneration = $data['DateGeneration'] ?? $data['date_generation'] ?? null;
         $this->totalAmount = $data['TotalAmount'] ?? $data['total_amount'] ?? 0;
         $this->voucherId = $data['voucher_id'] ?? null;
+        $this->deliveryType = $data['delivery_type'] ?? 'pickup';
         
         // Address details
         $this->addressDetail = $data['address_detail'] ?? null;
@@ -49,11 +51,12 @@ class Order {
     public function getCustomerName() { return $this->customerName; }
     public function getPhone() { return $this->phone; }
     public function getPaymentMethod() { return $this->paymentMethod; }
-    public function getStatus() { return $this->status; }
+   // public function getStatus() { return $this->status; }
     public function getAddressId() { return $this->addressId; }
     public function getDateGeneration() { return $this->dateGeneration; }
     public function getTotalAmount() { return $this->totalAmount; }
     public function getVoucherId() { return $this->voucherId; }
+    public function getDeliveryType() { return $this->deliveryType; }
     
     // Address detail getters
     public function getAddressDetail() { return $this->addressDetail; }
@@ -68,22 +71,19 @@ class Order {
     public function setCustomerName($customerName) { $this->customerName = $customerName; }
     public function setPhone($phone) { $this->phone = $phone; }
     public function setPaymentMethod($paymentMethod) { $this->paymentMethod = $paymentMethod; }
-    public function setStatus($status) { $this->status = $status; }
+   // public function setStatus($status) { $this->status = $status; }
     public function setAddressId($addressId) { $this->addressId = $addressId; }
     public function setDateGeneration($dateGeneration) { $this->dateGeneration = $dateGeneration; }
     public function setTotalAmount($totalAmount) { $this->totalAmount = $totalAmount; }
     public function setVoucherId($voucherId) { $this->voucherId = $voucherId; }
+    public function setDeliveryType($deliveryType) { $this->deliveryType = $deliveryType; }
 
     /**
      * Validate order data
      */
     public function validate() {
-        if (empty($this->customerName)) {
-            throw new Exception('Tên khách hàng không được để trống');
-        }
-        if (empty($this->phone) || !preg_match('/^[0-9]{10}$/', $this->phone)) {
-            throw new Exception('Số điện thoại phải là 10 chữ số');
-        }
+        // Note: customerName and phone validation is done in add-order.php
+        // based on delivery_type, so we don't validate them here
         if (empty($this->paymentMethod)) {
             throw new Exception('Phương thức thanh toán không được để trống');
         }
@@ -116,11 +116,12 @@ class Order {
             'CustomerName' => $this->customerName,
             'Phone' => $this->phone,
             'PaymentMethod' => $this->paymentMethod,
-            'Status' => $this->status,
+          //  'Status' => $this->status,
             'address_id' => $this->addressId,
             'DateGeneration' => $this->dateGeneration,
             'TotalAmount' => $this->totalAmount,
             'voucher_id' => $this->voucherId,
+            'delivery_type' => $this->deliveryType,
             'address_detail' => $this->addressDetail,
             'ward_name' => $this->wardName,
             'district_name' => $this->districtName,
@@ -131,23 +132,23 @@ class Order {
     /**
      * Get status label in Vietnamese
      */
-    public function getStatusLabel() {
-        $statusMap = [
-            'execute' => 'Chờ xác nhận',
-            'confirmed' => 'Đã xác nhận',
-            'ship' => 'Đang giao',
-            'success' => 'Hoàn thành',
-            'fail' => 'Đã hủy'
-        ];
-        return $statusMap[$this->status] ?? $this->status;
-    }
+    // public function getStatusLabel() {
+    //     $statusMap = [
+    //         'execute' => 'Chờ xác nhận',
+    //         'confirmed' => 'Đã xác nhận',
+    //         'ship' => 'Đang giao',
+    //         'success' => 'Hoàn thành',
+    //         'fail' => 'Đã hủy'
+    //     ];
+    //     return $statusMap[$this->status] ?? $this->status;
+    // }
 
     /**
      * Check if status is valid for transition
      */
-    public function canTransitionTo($newStatus) {
-        $validStatuses = ['execute', 'confirmed', 'ship', 'success', 'fail'];
-        return in_array($newStatus, $validStatuses);
-    }
+    // public function canTransitionTo($newStatus) {
+    //     $validStatuses = ['execute', 'confirmed', 'ship', 'success', 'fail'];
+    //     return in_array($newStatus, $validStatuses);
+    // }
 }
 ?>
