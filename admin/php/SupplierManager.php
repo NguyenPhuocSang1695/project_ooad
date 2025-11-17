@@ -1,6 +1,4 @@
 <?php
-// php/SupplierManager.php
-
 require_once 'Supplier.php';
 
 class SupplierManager
@@ -13,7 +11,7 @@ class SupplierManager
     }
 
     /**
-     * Thêm nhà cung cấp mới
+     * Thêm supplier mới
      */
     public function create($data)
     {
@@ -61,8 +59,9 @@ class SupplierManager
         }
     }
 
+
     /**
-     * Cập nhật thông tin nhà cung cấp
+     * Update supplier
      */
     public function update($supplier_id, $data)
     {
@@ -240,39 +239,40 @@ class SupplierManager
     }
 
     /**
-     * Lấy thông tin nhà cung cấp theo ID
+     * Lấy supplier theo ID
      */
     public function getById($supplierId)
     {
         $sql = "
-        SELECT 
-            s.*,
-            a.address_id,
-            a.address_detail,
-            a.ward_id,
-            w.name AS ward_name,
-            d.name AS district_name,
-            d.district_id,
-            pv.name AS province_name,
-            pv.province_id,
-            COALESCE(prod.total_products, 0) AS TotalProducts,
-            COALESCE(prod.total_amount, 0) AS TotalAmount
-        FROM suppliers s
-        LEFT JOIN address a ON s.address_id = a.address_id
-        LEFT JOIN ward w ON a.ward_id = w.ward_id
-        LEFT JOIN district d ON w.district_id = d.district_id
-        LEFT JOIN province pv ON d.province_id = pv.province_id
-        LEFT JOIN (
-            SELECT 
-                ir.supplier_id,
-                COUNT(DISTINCT ird.product_id) AS total_products,
-                SUM(ird.quantity * ird.import_price) AS total_amount
-            FROM import_receipt ir
-            JOIN import_receipt_detail ird ON ir.receipt_id = ird.receipt_id
-            GROUP BY ir.supplier_id
-        ) prod ON s.supplier_id = prod.supplier_id
-        WHERE s.supplier_id = ?
-    ";
+                SELECT 
+                    s.*,
+                    a.address_id,
+                    a.address_detail,
+                    a.ward_id,
+                    w.name AS ward_name,
+                    d.name AS district_name,
+                    d.district_id,
+                    pv.name AS province_name,
+                    pv.province_id,
+                    COALESCE(prod.total_products, 0) AS TotalProducts,
+                    COALESCE(prod.total_amount, 0) AS TotalAmount
+                FROM suppliers s
+                    LEFT JOIN address a ON s.address_id = a.address_id
+                    LEFT JOIN ward w ON a.ward_id = w.ward_id
+                    LEFT JOIN district d ON w.district_id = d.district_id
+                    LEFT JOIN province pv ON d.province_id = pv.province_id
+                    LEFT JOIN (
+                        SELECT 
+                            irps.supplier_id,
+                            COUNT(DISTINCT ird.product_id) AS total_products,
+                            SUM(ird.quantity * ird.import_price) AS total_amount
+                FROM import_receipt_product_supplier irps
+                JOIN import_receipt ir ON irps.import_receipt_id = ir.receipt_id
+                JOIN import_receipt_detail ird ON ir.receipt_id = ird.receipt_id 
+                GROUP BY irps.supplier_id
+                    ) prod ON s.supplier_id = prod.supplier_id
+                    WHERE s.supplier_id = ?
+        ";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $supplierId);
@@ -282,16 +282,21 @@ class SupplierManager
         if ($row = $result->fetch_assoc()) {
             return new Supplier($row);
         }
+
         return null;
     }
 
-    public function getAll($searchTerm = '')
+    /**
+     * Lấy danh sách supplier
+     */
+    public function getAll($search = '')
     {
         $sql = "
-        SELECT 
+         SELECT 
             s.*,
             a.address_detail,
             w.name AS ward_name,
+            w.ward_id,
             d.name AS district_name,
             d.district_id,
             pv.name AS province_name,
@@ -305,22 +310,25 @@ class SupplierManager
         LEFT JOIN province pv ON d.province_id = pv.province_id
         LEFT JOIN (
             SELECT 
-                ir.supplier_id,
+                irps.supplier_id,
                 COUNT(DISTINCT ird.product_id) AS total_products,
                 SUM(ird.quantity * ird.import_price) AS total_amount
-            FROM import_receipt ir
-            JOIN import_receipt_detail ird ON ir.receipt_id = ird.receipt_id
-            GROUP BY ir.supplier_id
+            FROM import_receipt_product_supplier irps
+            JOIN import_receipt ir ON irps.import_receipt_id = ir.receipt_id
+            JOIN import_receipt_detail ird ON ir.receipt_id = ird.receipt_id 
+            GROUP BY irps.supplier_id
         ) prod ON s.supplier_id = prod.supplier_id
         WHERE s.supplier_name LIKE ? 
            OR s.phone LIKE ? 
            OR s.email LIKE ?
+           OR s.supplier_id = ?
         ORDER BY s.supplier_id DESC
-    ";
+        ";
 
         $stmt = $this->conn->prepare($sql);
-        $searchParam = "%$searchTerm%";
-        $stmt->bind_param("sss", $searchParam, $searchParam, $searchParam);
+        $param = "%$search%";
+        $id = is_numeric($search) ? (int)$search : 0;
+        $stmt->bind_param("sssi", $param, $param, $param, $id);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -333,37 +341,100 @@ class SupplierManager
     }
 
     /**
-     * Đếm tổng số nhà cung cấp
+     * Đếm số supplier
      */
     public function count()
     {
-        $sql = "SELECT COUNT(*) as total FROM suppliers";
+        $sql = "SELECT COUNT(*) AS total FROM suppliers";
         $result = $this->conn->query($sql);
-        $row = $result->fetch_assoc();
-        return $row['total'];
+        return $result->fetch_assoc()['total'];
     }
 
     /**
-     * Tính tổng giá trị hàng hóa
+     * Tổng giá trị hàng hóa của supplier
      */
     public function getTotalValue()
     {
-        $sql = "SELECT SUM(p.quantity_in_stock * p.Price) as total_amount FROM products p";
+        $sql = "SELECT SUM(quantity_in_stock * Price) AS total FROM products";
         $result = $this->conn->query($sql);
-        $row = $result->fetch_assoc();
-        return $row['total_amount'] ?? 0;
+        return $result->fetch_assoc()['total'] ?? 0;
     }
 
     /**
-     * Lấy danh sách sản phẩm của nhà cung cấp
+     * Lấy sản phẩm của 1 supplier
      */
     public function getProducts($supplierId)
     {
-        $sql = "SELECT ProductID, ProductName, quantity_in_stock as Quantity, Price as UnitPrice,
-                (quantity_in_stock * Price) as TotalValue
-                FROM products 
-                WHERE Supplier_id = ? AND Status = 'appear'
+        $sql = "SELECT ProductID, ProductName, quantity_in_stock AS Quantity, Price,
+                       (quantity_in_stock * Price) AS TotalValue
+                FROM products
+                WHERE Supplier_id = ?
                 ORDER BY ProductName";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $supplierId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $products = [];
+        $total = 0;
+
+        while ($row = $result->fetch_assoc()) {
+            $products[] = $row;
+            $total += $row['TotalValue'];
+        }
+
+        return ['products' => $products, 'totalAmount' => $total];
+    }
+
+    /**
+     * Xóa supplier
+     */
+    public function delete($supplierId)
+    {
+        $sql = "SELECT COUNT(*) AS total FROM products WHERE Supplier_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $supplierId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+
+        if ($row['total'] > 0) {
+            return ['success' => false, 'message' => "Không thể xóa nhà cung cấp còn sản phẩm!"];
+        }
+
+        $sql = "DELETE FROM suppliers WHERE supplier_id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $supplierId);
+
+        if ($stmt->execute()) {
+            return ['success' => true];
+        }
+
+        return ['success' => false, 'message' => $stmt->error];
+    }
+
+
+
+    // Lấy sản phẩm đã nhập từ nhà cung cấp
+    public function getSupplierProducts($supplierId)
+    {
+
+        $sql = "
+            SELECT 
+                p.*,
+                SUM(ird.quantity) AS Quantity,
+                AVG(ird.import_price) AS UnitPrice,
+                SUM(ird.subtotal) AS TotalValue
+            FROM import_receipt_detail ird
+            JOIN import_receipt ir ON ird.receipt_id = ir.receipt_id
+            JOIN import_receipt_product_supplier irps 
+                ON irps.import_receipt_id = ir.receipt_id 
+               AND irps.ProductID = ird.product_id
+            JOIN products p ON ird.product_id = p.ProductID
+            WHERE irps.supplier_id = ?
+            GROUP BY p.ProductID, p.ProductName
+            ORDER BY p.ProductName ASC
+        ";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $supplierId);
@@ -379,118 +450,8 @@ class SupplierManager
         }
 
         return [
-            'products' => $products,
-            'totalAmount' => $totalAmount
+            "products" => $products,
+            "totalAmount" => $totalAmount
         ];
-    }
-
-    /**
-     * Xóa nhà cung cấp
-     */
-    public function delete($supplierId)
-    {
-        try {
-            $this->conn->begin_transaction();
-
-            // Kiểm tra xem nhà cung cấp có sản phẩm không
-            $sql = "SELECT COUNT(*) as total FROM products WHERE Supplier_id = ?";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bind_param("i", $supplierId);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $row = $result->fetch_assoc();
-
-            if ($row['total'] > 0) {
-                throw new Exception("Không thể xóa nhà cung cấp đang có sản phẩm!");
-            }
-
-            // Lấy address_id
-            $supplier = $this->getById($supplierId);
-            $addressId = $supplier ? $supplier->getAddressId() : null;
-
-            // Xóa nhà cung cấp
-            $sql = "DELETE FROM suppliers WHERE supplier_id = ?";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bind_param("i", $supplierId);
-
-            if (!$stmt->execute()) {
-                throw new Exception("Lỗi khi xóa nhà cung cấp: " . $stmt->error);
-            }
-
-            // Xóa địa chỉ nếu có
-            if ($addressId) {
-                $sql = "DELETE FROM address WHERE address_id = ?";
-                $stmt = $this->conn->prepare($sql);
-                $stmt->bind_param("i", $addressId);
-                $stmt->execute();
-            }
-
-            $this->conn->commit();
-
-            return [
-                'success' => true,
-                'message' => 'Xóa nhà cung cấp thành công!'
-            ];
-        } catch (Exception $e) {
-            $this->conn->rollback();
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Lấy danh sách tỉnh/thành phố
-     */
-    public function getProvinces()
-    {
-        $sql = "SELECT province_id, name FROM province ORDER BY name";
-        $result = $this->conn->query($sql);
-
-        $provinces = [];
-        while ($row = $result->fetch_assoc()) {
-            $provinces[] = $row;
-        }
-
-        return $provinces;
-    }
-
-    /**
-     * Lấy danh sách quận/huyện theo tỉnh
-     */
-    public function getDistricts($provinceId)
-    {
-        $sql = "SELECT district_id, name FROM district WHERE province_id = ? ORDER BY name";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $provinceId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        $districts = [];
-        while ($row = $result->fetch_assoc()) {
-            $districts[] = $row;
-        }
-
-        return $districts;
-    }
-
-    /**
-     * Lấy danh sách phường/xã theo quận
-     */
-    public function getWards($districtId)
-    {
-        $sql = "SELECT ward_id, name FROM ward WHERE district_id = ? ORDER BY name";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $districtId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        $wards = [];
-        while ($row = $result->fetch_assoc()) {
-            $wards[] = $row;
-        }
-
-        return $wards;
     }
 }

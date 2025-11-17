@@ -997,7 +997,6 @@ function showOrderDetailModal(orderId) {
       
       const order = data.order;
       console.log('[ORDER_DETAIL] Voucher:', order.voucher);
-      console.log('[ORDER_DETAIL] DeliveryType:', order.deliveryType);
       console.log('[ORDER_DETAIL] Full order:', order);
       
       // Build products table HTML
@@ -1015,10 +1014,8 @@ function showOrderDetailModal(orderId) {
       });
       
       // Determine address display text
-      const isPickupOrder = order.deliveryType && order.deliveryType.trim() === 'pickup';
       const hasNoAddress = !order.address || order.address.trim() === '';
-      const addressDisplay = (isPickupOrder || hasNoAddress) ? 'Mua tại cửa hàng' : order.address;
-      const addressTypeLabel = isPickupOrder ? 'nhận hàng' : 'giao hàng';
+      const addressDisplay = hasNoAddress ? 'Mua tại cửa hàng' : order.address;
       
       // Update modal content
       const modalBody = document.querySelector('#orderDetailModal .modal-body');
@@ -1066,7 +1063,7 @@ function showOrderDetailModal(orderId) {
             
             <!-- Address Section -->
             <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
-              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📍 Địa chỉ ${addressTypeLabel}: </h5>
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📍 Địa chỉ giao hàng: </h5>
               <p style="margin: 0; color: #333; line-height: 1.6;">${addressDisplay}</p>
             </div>
             

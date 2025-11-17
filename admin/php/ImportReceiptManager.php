@@ -1,9 +1,7 @@
 <?php
-
-/**
- * File: classes/ImportReceiptManager.php
- * Class ImportReceiptManager - Quản lý các thao tác với phiếu nhập
- */
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 require_once 'ImportReceipt.php';
 
@@ -11,28 +9,21 @@ class ImportReceiptManager extends ImportReceipt
 {
     private $connection;
 
-    /**
-     * Constructor
-     */
     public function __construct($connection)
     {
         parent::__construct();
         $this->connection = $connection;
     }
 
-    // ==================== CRUD OPERATIONS ====================
+    // ==================== CREATE ====================
 
-    /**
-     * Thêm phiếu nhập mới
-     */
-    public function create($importDate, $totalAmount, $note, $supplierId, $products)
+    public function create($importDate, $totalAmount, $note, $products)
     {
         try {
-            // Validate dữ liệu
+            // Validate
             $this->setImportDate($importDate)
                 ->setTotalAmount($totalAmount)
                 ->setNote($note)
-                ->setSupplierId($supplierId)
                 ->setProducts($products);
 
             $validation = $this->isValid();
@@ -40,34 +31,55 @@ class ImportReceiptManager extends ImportReceipt
                 throw new Exception($validation['message']);
             }
 
-            // Bắt đầu transaction
             $this->connection->begin_transaction();
 
-            // Thêm phiếu nhập
-            $sql = "INSERT INTO import_receipt (import_date, total_amount, note, supplier_id) 
-                    VALUES (?, ?, ?, ?)";
+            // Insert receipt (KHÔNG có supplier_id)
+            $sql = "INSERT INTO import_receipt (import_date, total_amount, note)
+                    VALUES (?, ?, ?)";
+
             $stmt = $this->connection->prepare($sql);
+            if (!$stmt) throw new Exception($this->connection->error);
 
-            if (!$stmt) {
-                throw new Exception('Lỗi chuẩn bị câu lệnh SQL: ' . $this->connection->error);
-            }
-
-            $stmt->bind_param("sdsi", $importDate, $totalAmount, $note, $supplierId);
-
-            if (!$stmt->execute()) {
-                throw new Exception('Lỗi khi thêm phiếu nhập: ' . $stmt->error);
-            }
+            $note = $note ?? "";
+            $stmt->bind_param("sds", $importDate, $totalAmount, $note);
+            if (!$stmt->execute()) throw new Exception($stmt->error);
 
             $receiptId = $stmt->insert_id;
             $this->setReceiptId($receiptId);
 
-            // Thêm chi tiết phiếu nhập và cập nhật tồn kho
+            // Insert details + stock + mapping table
             foreach ($products as $product) {
+
+                // Lấy supplier_id từ bảng products
+                $sqlSupp = "SELECT supplier_id FROM products WHERE ProductID = ?";
+                $stmtSupp = $this->connection->prepare($sqlSupp);
+                $stmtSupp->bind_param("i", $product['product_id']);
+                $stmtSupp->execute();
+                $resSupp = $stmtSupp->get_result();
+                $rowSupp = $resSupp->fetch_assoc();
+
+                $supplierId = $rowSupp['supplier_id'] ?? null;
+
+                if (!$supplierId) {
+                    throw new Exception("Không tìm thấy supplier của sản phẩm ID: " . $product['product_id']);
+                }
+
+                // Insert mapping receipt - supplier - product
+                $sqlLink = "INSERT INTO import_receipt_product_supplier
+                    (import_receipt_id, supplier_id, ProductID)
+                    VALUES (?, ?, ?)";
+
+                $stmtLink = $this->connection->prepare($sqlLink);
+                $stmtLink->bind_param("iii", $receiptId, $supplierId, $product['product_id']);
+                $stmtLink->execute();
+
+                // Insert receipt detail
                 $this->createDetail($receiptId, $product);
+
+                // Update stock
                 $this->updateStock($product['product_id'], $product['quantity'], 'add');
             }
 
-            // Commit transaction
             $this->connection->commit();
 
             return [
@@ -76,10 +88,11 @@ class ImportReceiptManager extends ImportReceipt
                 'message' => 'Thêm phiếu nhập thành công!'
             ];
         } catch (Exception $e) {
-            // Rollback nếu có lỗi
+
             if ($this->connection->connect_errno === 0) {
                 $this->connection->rollback();
             }
+
             return [
                 'success' => false,
                 'message' => $e->getMessage()
@@ -87,10 +100,9 @@ class ImportReceiptManager extends ImportReceipt
         }
     }
 
-    /**
-     * Cập nhật phiếu nhập
-     */
-    public function update($receiptId, $importDate, $totalAmount, $note, $supplierId, $products)
+    // ==================== UPDATE ====================
+
+    public function update($receiptId, $importDate, $totalAmount, $note, $products)
     {
         try {
             // Validate
@@ -98,7 +110,6 @@ class ImportReceiptManager extends ImportReceipt
                 ->setImportDate($importDate)
                 ->setTotalAmount($totalAmount)
                 ->setNote($note)
-                ->setSupplierId($supplierId)
                 ->setProducts($products);
 
             $validation = $this->isValid();
@@ -108,34 +119,56 @@ class ImportReceiptManager extends ImportReceipt
 
             $this->connection->begin_transaction();
 
-            // Lấy thông tin cũ để trừ tồn kho
+            // Lấy chi tiết cũ để trừ kho
             $oldDetails = $this->getDetails($receiptId);
             foreach ($oldDetails as $detail) {
                 $this->updateStock($detail['product_id'], $detail['quantity'], 'subtract');
             }
 
-            // Xóa chi tiết cũ
+            // Xóa chi tiết cũ + bảng trung gian
             $this->deleteDetails($receiptId);
+            $this->deleteLinks($receiptId);
 
-            // Cập nhật thông tin phiếu nhập
+            // UPDATE receipt
             $sql = "UPDATE import_receipt 
-                    SET import_date = ?, total_amount = ?, note = ?, supplier_id = ? 
+                    SET import_date = ?, total_amount = ?, note = ?
                     WHERE receipt_id = ?";
+
             $stmt = $this->connection->prepare($sql);
+            $stmt->bind_param("sdsi", $importDate, $totalAmount, $note, $receiptId);
 
-            if (!$stmt) {
-                throw new Exception('Lỗi chuẩn bị câu lệnh SQL: ' . $this->connection->error);
-            }
+            if (!$stmt->execute()) throw new Exception($stmt->error);
 
-            $stmt->bind_param("sdsii", $importDate, $totalAmount, $note, $supplierId, $receiptId);
-
-            if (!$stmt->execute()) {
-                throw new Exception('Lỗi khi cập nhật phiếu nhập: ' . $stmt->error);
-            }
-
-            // Thêm chi tiết mới và cập nhật tồn kho
+            // Thêm chi tiết mới + mapping
             foreach ($products as $product) {
+
+                // Lấy supplier_id từ bảng products
+                $sqlSupp = "SELECT supplier_id FROM products WHERE ProductID = ?";
+                $stmtSupp = $this->connection->prepare($sqlSupp);
+                $stmtSupp->bind_param("i", $product['product_id']);
+                $stmtSupp->execute();
+                $resSupp = $stmtSupp->get_result();
+                $rowSupp = $resSupp->fetch_assoc();
+
+                $supplierId = $rowSupp['supplier_id'] ?? null;
+
+                if (!$supplierId) {
+                    throw new Exception("Không tìm thấy supplier của sản phẩm ID: " . $product['product_id']);
+                }
+
+                // Insert mapping receipt - supplier - product
+                $sqlLink = "INSERT INTO import_receipt_product_supplier
+                    (import_receipt_id, supplier_id, ProductID)
+                    VALUES (?, ?, ?)";
+
+                $stmtLink = $this->connection->prepare($sqlLink);
+                $stmtLink->bind_param("iii", $receiptId, $supplierId, $product['product_id']);
+                $stmtLink->execute();
+
+                // detail
                 $this->createDetail($receiptId, $product);
+
+                // update stock
                 $this->updateStock($product['product_id'], $product['quantity'], 'add');
             }
 
@@ -157,15 +190,14 @@ class ImportReceiptManager extends ImportReceipt
         }
     }
 
-    /**
-     * Xóa phiếu nhập
-     */
+    // ==================== DELETE ====================
+
     public function delete($receiptId)
     {
         try {
             $this->connection->begin_transaction();
 
-            // Lấy thông tin chi tiết để trừ lại số lượng
+            // Lấy chi tiết để trừ kho
             $details = $this->getDetails($receiptId);
             foreach ($details as $detail) {
                 $this->updateStock($detail['product_id'], $detail['quantity'], 'subtract');
@@ -174,19 +206,14 @@ class ImportReceiptManager extends ImportReceipt
             // Xóa chi tiết
             $this->deleteDetails($receiptId);
 
+            // Xóa mapping
+            $this->deleteLinks($receiptId);
+
             // Xóa phiếu nhập
             $sql = "DELETE FROM import_receipt WHERE receipt_id = ?";
             $stmt = $this->connection->prepare($sql);
-
-            if (!$stmt) {
-                throw new Exception('Lỗi chuẩn bị câu lệnh SQL: ' . $this->connection->error);
-            }
-
             $stmt->bind_param("i", $receiptId);
-
-            if (!$stmt->execute()) {
-                throw new Exception('Lỗi khi xóa phiếu nhập: ' . $stmt->error);
-            }
+            $stmt->execute();
 
             $this->connection->commit();
 
@@ -195,21 +222,21 @@ class ImportReceiptManager extends ImportReceipt
                 'message' => 'Xóa phiếu nhập thành công!'
             ];
         } catch (Exception $e) {
-            if ($this->connection->connect_errno === 0) {
-                $this->connection->rollback();
-            }
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+            $this->connection->rollback();
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
-    // ==================== DETAIL OPERATIONS ====================
+    // ==================== INTERNAL ====================
 
-    /**
-     * Thêm chi tiết phiếu nhập
-     */
+    private function deleteLinks($receiptId)
+    {
+        $sql = "DELETE FROM import_receipt_product_supplier WHERE import_receipt_id = ?";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("i", $receiptId);
+        $stmt->execute();
+    }
+
     private function createDetail($receiptId, $product)
     {
         $productId = $product['product_id'];
@@ -217,38 +244,70 @@ class ImportReceiptManager extends ImportReceipt
         $importPrice = $product['import_price'];
         $subtotal = $quantity * $importPrice;
 
-        $sql = "INSERT INTO import_receipt_detail (receipt_id, product_id, quantity, import_price, subtotal) 
+        $sql = "INSERT INTO import_receipt_detail (receipt_id, product_id, quantity, import_price, subtotal)
                 VALUES (?, ?, ?, ?, ?)";
+
         $stmt = $this->connection->prepare($sql);
-
-        if (!$stmt) {
-            throw new Exception('Lỗi chuẩn bị câu lệnh SQL: ' . $this->connection->error);
-        }
-
         $stmt->bind_param("iiidd", $receiptId, $productId, $quantity, $importPrice, $subtotal);
-
-        if (!$stmt->execute()) {
-            throw new Exception('Lỗi khi thêm chi tiết phiếu nhập: ' . $stmt->error);
-        }
+        $stmt->execute();
     }
 
-    /**
-     * Lấy chi tiết phiếu nhập
-     */
+    private function deleteDetails($receiptId)
+    {
+        $sql = "DELETE FROM import_receipt_detail WHERE receipt_id = ?";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("i", $receiptId);
+        $stmt->execute();
+    }
+
+    private function updateStock($productId, $quantity, $action)
+    {
+        $operator = ($action === 'add') ? '+' : '-';
+
+        $sql = "UPDATE products 
+                SET quantity_in_stock = quantity_in_stock $operator ? 
+                WHERE ProductID = ?";
+
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("ii", $quantity, $productId);
+        $stmt->execute();
+    }
+
+    // ==================== READ ====================
+
+    public function getAll($orderBy = 'import_date', $order = 'DESC')
+    {
+        $sql = "SELECT * FROM import_receipt ORDER BY $orderBy $order";
+
+        $result = $this->connection->query($sql);
+
+        $list = [];
+        while ($row = $result->fetch_assoc()) {
+            $list[] = $row;
+        }
+        return $list;
+    }
+
+    public function getById($receiptId)
+    {
+        $sql = "SELECT * FROM import_receipt WHERE receipt_id = ?";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bind_param("i", $receiptId);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+
     public function getDetails($receiptId)
     {
-        $sql = "SELECT ird.*, p.ProductName as product_name 
+        $sql = "SELECT ird.*, p.ProductName AS product_name
                 FROM import_receipt_detail ird
                 LEFT JOIN products p ON ird.product_id = p.ProductID
                 WHERE ird.receipt_id = ?";
+
         $stmt = $this->connection->prepare($sql);
-
-        if (!$stmt) {
-            throw new Exception('Lỗi chuẩn bị câu lệnh SQL: ' . $this->connection->error);
-        }
-
         $stmt->bind_param("i", $receiptId);
         $stmt->execute();
+
         $result = $stmt->get_result();
 
         $details = [];
@@ -258,260 +317,27 @@ class ImportReceiptManager extends ImportReceipt
         return $details;
     }
 
-    /**
-     * Xóa chi tiết phiếu nhập
-     */
-    private function deleteDetails($receiptId)
-    {
-        $sql = "DELETE FROM import_receipt_detail WHERE receipt_id = ?";
-        $stmt = $this->connection->prepare($sql);
-
-        if (!$stmt) {
-            throw new Exception('Lỗi chuẩn bị câu lệnh SQL: ' . $this->connection->error);
-        }
-
-        $stmt->bind_param("i", $receiptId);
-
-        if (!$stmt->execute()) {
-            throw new Exception('Lỗi khi xóa chi tiết phiếu nhập: ' . $stmt->error);
-        }
-    }
-
-    // ==================== STOCK OPERATIONS ====================
-
-    /**
-     * Cập nhật tồn kho
-     */
-    private function updateStock($productId, $quantity, $action = 'add')
-    {
-        $operator = ($action === 'add') ? '+' : '-';
-        $sql = "UPDATE products 
-                SET quantity_in_stock = quantity_in_stock $operator ? 
-                WHERE ProductID = ?";
-        $stmt = $this->connection->prepare($sql);
-
-        if (!$stmt) {
-            throw new Exception('Lỗi chuẩn bị câu lệnh SQL: ' . $this->connection->error);
-        }
-
-        $stmt->bind_param("ii", $quantity, $productId);
-
-        if (!$stmt->execute()) {
-            throw new Exception('Lỗi khi cập nhật tồn kho: ' . $stmt->error);
-        }
-    }
-
-    // ==================== READ OPERATIONS ====================
-
-    /**
-     * Lấy danh sách tất cả phiếu nhập
-     */
-    public function getAll($orderBy = 'import_date', $order = 'DESC')
-    {
-        $sql = "SELECT ir.*, s.supplier_name 
-                FROM import_receipt ir 
-                LEFT JOIN suppliers s ON ir.supplier_id = s.supplier_id 
-                ORDER BY ir.$orderBy $order";
-
-        $result = $this->connection->query($sql);
-
-        $receipts = [];
-        if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $receipts[] = $row;
-            }
-        }
-        return $receipts;
-    }
-
-    /**
-     * Lấy thông tin một phiếu nhập theo ID
-     */
-    public function getById($receiptId)
-    {
-        $sql = "SELECT ir.*, s.supplier_name 
-                FROM import_receipt ir 
-                LEFT JOIN suppliers s ON ir.supplier_id = s.supplier_id 
-                WHERE ir.receipt_id = ?";
-        $stmt = $this->connection->prepare($sql);
-
-        if (!$stmt) {
-            return null;
-        }
-
-        $stmt->bind_param("i", $receiptId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        return $result->fetch_assoc();
-    }
-
-    /**
-     * Lấy phiếu nhập với chi tiết đầy đủ
-     */
     public function getFullDetails($receiptId)
     {
         $receipt = $this->getById($receiptId);
-
-        if (!$receipt) {
-            return null;
-        }
+        if (!$receipt) return null;
 
         $receipt['details'] = $this->getDetails($receiptId);
+
         return $receipt;
     }
 
-    /**
-     * Tìm kiếm phiếu nhập
-     */
-    public function search($keyword)
+    public function getTotalValue()
     {
-        $keyword = "%$keyword%";
-        $sql = "SELECT ir.*, s.supplier_name 
-                FROM import_receipt ir 
-                LEFT JOIN suppliers s ON ir.supplier_id = s.supplier_id 
-                WHERE ir.receipt_id LIKE ? 
-                   OR ir.note LIKE ? 
-                   OR s.supplier_name LIKE ?
-                ORDER BY ir.import_date DESC";
-
-        $stmt = $this->connection->prepare($sql);
-        $stmt->bind_param("sss", $keyword, $keyword, $keyword);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        $receipts = [];
-        while ($row = $result->fetch_assoc()) {
-            $receipts[] = $row;
-        }
-        return $receipts;
-    }
-
-    /**
-     * Lọc phiếu nhập theo tháng
-     */
-    public function filterByMonth($month, $year = null)
-    {
-        if ($year === null) {
-            $year = date('Y');
-        }
-
-        $sql = "SELECT ir.*, s.supplier_name 
-                FROM import_receipt ir 
-                LEFT JOIN suppliers s ON ir.supplier_id = s.supplier_id 
-                WHERE MONTH(ir.import_date) = ? AND YEAR(ir.import_date) = ?
-                ORDER BY ir.import_date DESC";
-
-        $stmt = $this->connection->prepare($sql);
-        $stmt->bind_param("ii", $month, $year);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        $receipts = [];
-        while ($row = $result->fetch_assoc()) {
-            $receipts[] = $row;
-        }
-        return $receipts;
-    }
-
-    // ==================== STATISTICS ====================
-
-    /**
-     * Tính tổng giá trị nhập hàng
-     */
-    public function getTotalValue($startDate = null, $endDate = null)
-    {
-        if ($startDate && $endDate) {
-            $sql = "SELECT SUM(total_amount) as grand_total 
-                    FROM import_receipt 
-                    WHERE import_date BETWEEN ? AND ?";
-            $stmt = $this->connection->prepare($sql);
-            $stmt->bind_param("ss", $startDate, $endDate);
-            $stmt->execute();
-            $result = $stmt->get_result();
-        } else {
-            $sql = "SELECT SUM(total_amount) as grand_total FROM import_receipt";
-            $result = $this->connection->query($sql);
-        }
-
-        $row = $result->fetch_assoc();
-        return $row['grand_total'] ?? 0;
-    }
-
-    /**
-     * Đếm số lượng phiếu nhập
-     */
-    public function count($startDate = null, $endDate = null)
-    {
-        if ($startDate && $endDate) {
-            $sql = "SELECT COUNT(*) as total 
-                    FROM import_receipt 
-                    WHERE import_date BETWEEN ? AND ?";
-            $stmt = $this->connection->prepare($sql);
-            $stmt->bind_param("ss", $startDate, $endDate);
-            $stmt->execute();
-            $result = $stmt->get_result();
-        } else {
-            $sql = "SELECT COUNT(*) as total FROM import_receipt";
-            $result = $this->connection->query($sql);
-        }
-
-        $row = $result->fetch_assoc();
-        return $row['total'] ?? 0;
-    }
-
-    // ==================== HELPER METHODS ====================
-
-    /**
-     * Lấy danh sách nhà cung cấp
-     */
-    public function getSuppliers()
-    {
-        $sql = "SELECT supplier_id, supplier_name, phone, email 
-                FROM suppliers 
-                ORDER BY supplier_name";
+        $sql = "SELECT SUM(total_amount) AS total FROM import_receipt";
         $result = $this->connection->query($sql);
-
-        $suppliers = [];
-        if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $suppliers[] = $row;
-            }
-        }
-        return $suppliers;
+        return $result->fetch_assoc()['total'] ?? 0;
     }
 
-    /**
-     * Lấy danh sách sản phẩm
-     */
-    public function getProducts()
+    public function count()
     {
-        $sql = "SELECT ProductID, ProductName, Price, quantity_in_stock 
-                FROM products 
-                WHERE Status = 'appear' 
-                ORDER BY ProductName";
+        $sql = "SELECT COUNT(*) AS count FROM import_receipt";
         $result = $this->connection->query($sql);
-
-        $products = [];
-        if ($result && $result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $products[] = $row;
-            }
-        }
-        return $products;
-    }
-
-    /**
-     * Kiểm tra phiếu nhập có tồn tại không
-     */
-    public function exists($receiptId)
-    {
-        $sql = "SELECT COUNT(*) as count FROM import_receipt WHERE receipt_id = ?";
-        $stmt = $this->connection->prepare($sql);
-        $stmt->bind_param("i", $receiptId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        return $row['count'] > 0;
+        return $result->fetch_assoc()['count'] ?? 0;
     }
 }

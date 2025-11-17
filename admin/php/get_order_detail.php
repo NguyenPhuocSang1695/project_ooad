@@ -79,7 +79,6 @@ try {
             'customerName' => $order->getCustomerName(),
             'customerPhone' => $order->getPhone(),
             'address' => $order->getFullAddress(),
-            'deliveryType' => $order->getDeliveryType(),
             'paymentMethod' => $order->getPaymentMethod(),
             'totalAmount' => floatval($order->getTotalAmount()),
             'productCount' => count($products),
