@@ -339,6 +339,20 @@ $voucherResult = $myconn->query($sqlVouchers);
             <i class="fa-solid fa-search"></i>
             <input type="text" id="searchVoucher" placeholder="Tìm kiếm voucher...">
           </div>
+          <p id="noResults">
+            Không tìm thấy phiếu nhập nào.
+          </p>
+          <style>
+            #noResults {
+              padding: 10px;
+              background: #ffe1e1;
+              border: 1px solid #ff7b7b;
+              border-radius: 5px;
+              color: #c40000;
+              display: none;
+            }
+          </style>
+
         </div>
 
         <div class="voucher-list">
@@ -346,13 +360,18 @@ $voucherResult = $myconn->query($sqlVouchers);
             <?php while ($voucher = $voucherResult->fetch_assoc()): ?>
               <div class="voucher-card" data-id="<?php echo $voucher['id']; ?>">
                 <div class="voucher-header">
-                  <div class="voucher-name">
+                  <div class="voucher-id">
                     <i class="fa-solid fa-ticket"></i>
-                    <strong><?php echo htmlspecialchars($voucher['name']); ?></strong>
+                    <strong>MGG<?php echo htmlspecialchars($voucher['id']); ?></strong>
                   </div>
                   <span class="voucher-status <?php echo $voucher['status'] === 'active' ? 'status-active' : 'status-inactive'; ?>">
                     <?php echo $voucher['status'] === 'active' ? '✓ Hoạt động' : '✕ Tạm dừng'; ?>
                   </span>
+                </div>
+
+                <div class="voucher-name" style="margin-bottom: 10px;">
+                  <!-- <i class="fa-solid fa-tag"></i> -->
+                  <strong><span>Tên: </span> <?php echo htmlspecialchars($voucher['name']); ?></strong>
                 </div>
 
                 <div class="voucher-details">
@@ -383,6 +402,7 @@ $voucherResult = $myconn->query($sqlVouchers);
             </div>
           <?php endif; ?>
         </div>
+
       </div>
     </div>
 
@@ -572,7 +592,7 @@ $voucherResult = $myconn->query($sqlVouchers);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
+      margin-bottom: 0px;
     }
 
     .voucher-name {

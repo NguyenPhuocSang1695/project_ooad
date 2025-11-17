@@ -46,7 +46,7 @@ if (isset($_GET['edit'])) {
 }
 
 // Lấy danh sách nhà cung cấp
-$searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
+$searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 $suppliers = $supplierManager->getAll($searchTerm);
 
 // Lấy thống kê
@@ -1063,9 +1063,12 @@ $totalAmount = $supplierManager->getTotalValue();
             $totalResult = $connectDb->query($totalSql);
             $totalSuppliers = $totalResult->fetch_assoc()['Total'];
 
-            $amountSql = "SELECT SUM(ps.quantity_in_stock * ps.Price) as TotalAmount FROM products ps";
+            $amountSql = "SELECT SUM(ird.quantity * ird.import_price) AS TotalAmount
+              FROM import_receipt_detail ird";
+
             $amountResult = $connectDb->query($amountSql);
             $totalAmount = $amountResult->fetch_assoc()['TotalAmount'] ?? 0;
+
             ?>
             <div class="stat-card">
                 <h3><?php echo $totalSuppliers; ?></h3>
@@ -1356,6 +1359,7 @@ $totalAmount = $supplierManager->getTotalValue();
                 };
                 loadLocation();
 
+
                 // Loại bỏ required
                 requiredFields.forEach(input => input.removeAttribute('required'));
             }
@@ -1555,6 +1559,7 @@ $totalAmount = $supplierManager->getTotalValue();
     <!-- THÊM JAVASCRIPT (đặt trước thẻ đóng </body>) -->
     <script>
         function viewSupplierInfo(data) {
+            console.log(data);
             document.getElementById('info_supplier_id').textContent = data.supplier_id;
             document.getElementById('info_supplier_name').textContent = data.supplier_name;
             document.getElementById('info_phone').textContent = data.phone || 'Chưa cập nhật';
