@@ -27,8 +27,8 @@ class Supplier
             $this->wardName = $data['ward_name'] ?? '';
             $this->districtName = $data['district_name'] ?? '';
             $this->provinceName = $data['province_name'] ?? '';
-            $this->totalProducts = $data['TotalProducts'] ?? 0;
-            $this->totalAmount = $data['TotalAmount'] ?? 0;
+            $this->totalProducts = $data['total_products'] ?? $data['TotalProducts'] ?? 0;
+            $this->totalAmount   = $data['total_amount']   ?? $data['TotalAmount']   ?? 0;
         } else {
             $this->supplierName = $data['supplier_name'] ?? '';
             $this->phone = $data['phone'] ?? '';

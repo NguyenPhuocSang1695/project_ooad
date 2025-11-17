@@ -1,28 +1,21 @@
 <?php
 
-/**
- * File: classes/ImportReceipt.php
- * Class ImportReceipt - Chứa thông tin cơ bản của phiếu nhập
- */
-
 class ImportReceipt
 {
     protected $receiptId;
     protected $importDate;
     protected $totalAmount;
     protected $note;
-    protected $supplierId;
-    protected $products;
+    protected $products; // Mỗi product sẽ chứa: product_id, supplier_id, quantity, import_price, subtotal
 
     /**
      * Constructor
      */
-    public function __construct($importDate = null, $totalAmount = 0, $note = '', $supplierId = null)
+    public function __construct($importDate = null, $totalAmount = 0, $note = '')
     {
         $this->importDate = $importDate;
         $this->totalAmount = $totalAmount;
         $this->note = $note;
-        $this->supplierId = $supplierId;
         $this->products = [];
     }
 
@@ -46,11 +39,6 @@ class ImportReceipt
     public function getNote()
     {
         return $this->note;
-    }
-
-    public function getSupplierId()
-    {
-        return $this->supplierId;
     }
 
     public function getProducts()
@@ -84,14 +72,6 @@ class ImportReceipt
         return $this;
     }
 
-    public function setSupplierId($supplierId)
-    {
-        $this->supplierId = $supplierId;
-        return $this;
-    }
-
-
-
     public function setProducts($products)
     {
         $this->products = $products;
@@ -103,16 +83,19 @@ class ImportReceipt
     /**
      * Thêm sản phẩm vào phiếu nhập
      */
-    public function addProduct($productId, $quantity, $importPrice, $productName = null)
+    public function addProduct($productId, $supplierId, $quantity, $importPrice, $productName = null)
     {
         $subtotal = $quantity * $importPrice;
+
         $this->products[] = [
             'product_id' => $productId,
+            'supplier_id' => $supplierId,
             'product_name' => $productName,
             'quantity' => $quantity,
             'import_price' => $importPrice,
             'subtotal' => $subtotal
         ];
+
         return $this;
     }
 
@@ -123,7 +106,7 @@ class ImportReceipt
     {
         if (isset($this->products[$index])) {
             unset($this->products[$index]);
-            $this->products = array_values($this->products); // Reset array keys
+            $this->products = array_values($this->products);
         }
         return $this;
     }
@@ -146,10 +129,6 @@ class ImportReceipt
      */
     public function isValid()
     {
-        if (empty($this->supplierId)) {
-            return ['valid' => false, 'message' => 'Vui lòng chọn nhà cung cấp!'];
-        }
-
         if (empty($this->products)) {
             return ['valid' => false, 'message' => 'Vui lòng chọn ít nhất một sản phẩm!'];
         }
@@ -162,7 +141,7 @@ class ImportReceipt
     }
 
     /**
-     * Chuyển đổi object thành array
+     * Chuyển object thành array
      */
     public function toArray()
     {
@@ -171,8 +150,6 @@ class ImportReceipt
             'import_date' => $this->importDate,
             'total_amount' => $this->totalAmount,
             'note' => $this->note,
-            'supplier_id' => $this->supplierId,
-
             'products' => $this->products
         ];
     }
@@ -186,24 +163,19 @@ class ImportReceipt
         if (isset($data['import_date'])) $this->importDate = $data['import_date'];
         if (isset($data['total_amount'])) $this->totalAmount = $data['total_amount'];
         if (isset($data['note'])) $this->note = $data['note'];
-        if (isset($data['supplier_id'])) $this->supplierId = $data['supplier_id'];
 
         if (isset($data['products'])) $this->products = $data['products'];
+
         return $this;
     }
 
-    /**
-     * Format số tiền
-     */
+    // Format số và ngày
     public function formatAmount($amount = null)
     {
         $value = $amount !== null ? $amount : $this->totalAmount;
         return number_format($value, 0, ',', '.') . ' VNĐ';
     }
 
-    /**
-     * Format ngày tháng
-     */
     public function formatDate($format = 'd/m/Y H:i')
     {
         if (empty($this->importDate)) {
@@ -212,9 +184,6 @@ class ImportReceipt
         return date($format, strtotime($this->importDate));
     }
 
-    /**
-     * Lấy số lượng sản phẩm trong phiếu nhập
-     */
     public function getProductCount()
     {
         return count($this->products);
