@@ -1474,10 +1474,10 @@ global $mysqli;
                 <td style="text-align: center;">${p.CategoryName}</td>
                 <td style="text-align: center;">${Number(p.Price).toLocaleString('vi-VN')}</td>
                 <td class="actions d-flex" style="text-align: center;">
-                  <button class="btn btn-primary btn-sm me-2" onclick="viewProduct(${p.ProductID})" title="Xem chi tiết">
+                  <button class="btn btn-success btn-sm me-2" onclick="viewProduct(${p.ProductID})" title="Xem chi tiết">
                     <i class="fa-solid fa-eye"></i>
                   </button>
-                  <button class="btn btn-secondary btn-sm me-2" onclick="editProduct(${p.ProductID})" style="margin-right: 8px;">
+                  <button class="btn btn-primary btn-sm me-2" onclick="editProduct(${p.ProductID})" style="margin-right: 8px;">
                     <i class="fa-solid fa-pen-to-square"></i>
                   </button>
                   <button type="button" class="btn btn-danger btn-sm me-2" onclick="confirmDelete(${p.ProductID})">
