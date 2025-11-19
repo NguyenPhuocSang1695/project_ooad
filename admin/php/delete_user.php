@@ -1,5 +1,5 @@
 <?php
-// JSON endpoint: delete user
+// JSON endpoint: toggle user status (Block/Active)
 header('Content-Type: application/json; charset=utf-8');
 
 try {
@@ -17,7 +17,7 @@ try {
     $currentRole = isset($_SESSION['Role']) ? strtolower(trim((string)$_SESSION['Role'])) : '';
     $currentUser = isset($_SESSION['Username']) ? trim((string)$_SESSION['Username']) : '';
 
-    // Prepare data for manager permission logic; actual checks in UserManager::deleteUser
+    // Prepare data for manager permission logic; actual checks in UserManager::toggleUserStatus
 
     $userId = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
     if ($userId <= 0) {
@@ -30,7 +30,7 @@ try {
     require_once __DIR__ . '/UserManager.php';
 
     $manager = new UserManager($myconn ?? null);
-    $result = $manager->deleteUser([
+    $result = $manager->toggleUserStatus([
         'user_id' => $userId,
         '_currentUser' => $currentUser,
         '_currentRole' => $currentRole,
