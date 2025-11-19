@@ -1393,6 +1393,10 @@ $totalAmount = $supplierManager->getTotalValue();
             document.getElementById('supplierModal').classList.remove('active');
         }
 
+
+
+
+
         function viewProducts(supplier_id) {
             const modal = document.getElementById('productsModal');
             const list = document.getElementById('productsList');
@@ -1404,23 +1408,43 @@ $totalAmount = $supplierManager->getTotalValue();
                 .then(response => response.json())
                 .then(data => {
                     if (data.products && data.products.length > 0) {
-                        let html = '<div style="margin-bottom: 15px;"><strong>Tổng giá trị: ' +
-                            new Intl.NumberFormat('vi-VN').format(data.totalAmount) + ' VND</strong></div>';
+
+                        let html = `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Tổng giá trị: 
+                            ${new Intl.NumberFormat('vi-VN').format(data.totalAmount)} VND
+                        </strong>
+                    </div>
+                `;
 
                         data.products.forEach(product => {
+
                             html += `
-                                <div class="product-item">
-                                <div>
-                                    <strong>${product.ProductName}</strong><br>
-                                    <small>Số lượng: ${product.Quantity} | Đơn giá: ${new Intl.NumberFormat('vi-VN').format(product.UnitPrice)} VND</small>
-                                </div>
-                                <div>
-                                    <strong>${new Intl.NumberFormat('vi-VN').format(product.TotalValue)} VND</strong>
-                                </div>
-                                </div>
-                            `;
+                        <div style="margin-bottom: 10px;">
+                            <strong>${product.ProductName}</strong>
+                    `;
+
+                            product.details.forEach(d => {
+                                html += `
+                            <div style="padding-left: 15px; margin-top: 5px;">
+                                - Số lượng: ${d.Quantity} | 
+                                  Đơn giá: ${new Intl.NumberFormat('vi-VN').format(d.UnitPrice)} | 
+                                  Thành tiền: ${new Intl.NumberFormat('vi-VN').format(d.TotalValue)}
+                            </div>
+                        `;
+                            });
+
+                            html += `
+                        <div style="padding-left: 15px; margin-top: 5px; font-weight: bold;">
+                            → Tổng: ${new Intl.NumberFormat('vi-VN').format(product.totalProductValue)} VND
+                        </div>
+                        <hr>
+                    </div>
+                    `;
                         });
+
                         list.innerHTML = html;
+
                     } else {
                         list.innerHTML = '<p style="text-align: center; padding: 20px;">Chưa có sản phẩm nào</p>';
                     }
@@ -1431,6 +1455,10 @@ $totalAmount = $supplierManager->getTotalValue();
 
             modal.classList.add('active');
         }
+
+
+
+
 
         function closeProductsModal() {
             document.getElementById('productsModal').classList.remove('active');

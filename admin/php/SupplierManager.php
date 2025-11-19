@@ -418,23 +418,22 @@ class SupplierManager
     // Lấy sản phẩm đã nhập từ nhà cung cấp
     public function getSupplierProducts($supplierId)
     {
-
         $sql = "
-            SELECT 
-                p.*,
-                SUM(ird.quantity) AS Quantity,
-                AVG(ird.import_price) AS UnitPrice,
-                SUM(ird.subtotal) AS TotalValue
-            FROM import_receipt_detail ird
-            JOIN import_receipt ir ON ird.receipt_id = ir.receipt_id
-            JOIN import_receipt_product_supplier irps 
-                ON irps.import_receipt_id = ir.receipt_id 
-               AND irps.ProductID = ird.product_id
-            JOIN products p ON ird.product_id = p.ProductID
-            WHERE irps.supplier_id = ?
-            GROUP BY p.ProductID, p.ProductName
-            ORDER BY p.ProductName ASC
-        ";
+        SELECT 
+            p.ProductID,
+            p.ProductName,
+            ird.quantity AS Quantity,
+            ird.import_price AS UnitPrice,
+            ird.subtotal AS TotalValue
+        FROM import_receipt_detail ird
+        JOIN import_receipt ir ON ird.receipt_id = ir.receipt_id
+        JOIN import_receipt_product_supplier irps 
+            ON irps.import_receipt_id = ir.receipt_id
+           AND irps.ProductID = ird.product_id
+        JOIN products p ON ird.product_id = p.ProductID
+        WHERE irps.supplier_id = ?
+        ORDER BY p.ProductName ASC
+    ";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $supplierId);
@@ -445,12 +444,34 @@ class SupplierManager
         $totalAmount = 0;
 
         while ($row = $result->fetch_assoc()) {
-            $products[] = $row;
+
+            $pid = $row['ProductID'];
+
+            if (!isset($products[$pid])) {
+                $products[$pid] = [
+                    "ProductID"   => $pid,
+                    "ProductName" => $row["ProductName"],
+                    "details"     => [],
+                    "totalProductValue" => 0
+                ];
+            }
+
+            // Thêm từng lần nhập vào details
+            $products[$pid]["details"][] = [
+                "Quantity"   => $row['Quantity'],
+                "UnitPrice"  => $row['UnitPrice'],
+                "TotalValue" => $row['TotalValue']
+            ];
+
+            // Tính tổng theo từng sản phẩm
+            $products[$pid]["totalProductValue"] += $row['TotalValue'];
+
+            // Tổng tất cả sản phẩm
             $totalAmount += $row['TotalValue'];
         }
 
         return [
-            "products" => $products,
+            "products" => array_values($products),
             "totalAmount" => $totalAmount
         ];
     }
