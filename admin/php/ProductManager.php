@@ -231,7 +231,14 @@ class ProductManager
                         <td style="text-align: center;"><?php echo htmlspecialchars($row['CategoryName']); ?></td>
                         <td style="text-align: center;"><?php echo number_format($row['Price'], 0, ',', '.'); ?></td>
                         <td class="actions" style="text-align: center; display:flex;">
-                            <button class="btn btn-primary btn-sm me-2" onclick="editProduct(<?php echo $row['ProductID']; ?>)">
+
+
+                            <button class="btn btn-primary btn-sm me-2" onclick="viewProduct(<?php echo $row['ProductID']; ?>)">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+
+
+                            <button class="btn btn-secondary btn-sm me-2" onclick="editProduct(<?php echo $row['ProductID']; ?>)">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
 
@@ -556,6 +563,79 @@ class ProductManager
             return ['status' => 'error', 'message' => 'Lỗi: ' . $e->getMessage()];
         } finally {
             $db->close();
+        }
+    }
+
+
+    // Lấy thông tin chi tiết của sản phẩm
+    // Trong ProductManager.php
+    public function getProductDetails($productId)
+    {
+        if (!is_numeric($productId)) {
+            return [
+                'success' => false,
+                'message' => 'ID sản phẩm không hợp lệ'
+            ];
+        }
+
+        $productId = (int)$productId;
+
+        try {
+            $conn = $this->db->getConnection();
+
+            $sql = "
+            SELECT 
+                p.ProductID,
+                p.ProductName,
+                p.ImageURL,
+                p.Price,
+                p.Status,
+                p.Description,
+                p.quantity_in_stock,
+                c.CategoryName,
+                s.supplier_name AS SupplierName,
+                COALESCE(SUM(CASE WHEN ird.receipt_id IS NOT NULL THEN ird.quantity ELSE 0 END), 0) as total_imported,
+                COALESCE(SUM(CASE WHEN od.OrderID IS NOT NULL THEN od.Quantity ELSE 0 END), 0) as total_sold
+            FROM products p
+            LEFT JOIN categories c ON p.CategoryID = c.CategoryID
+            LEFT JOIN suppliers s ON p.Supplier_id = s.supplier_id
+            LEFT JOIN import_receipt_detail ird ON p.ProductID = ird.product_id
+            LEFT JOIN orderdetails od ON p.ProductID = od.ProductID
+            WHERE p.ProductID = ?
+            GROUP BY p.ProductID
+        ";
+
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                return [
+                    'success' => false,
+                    'message' => 'Lỗi SQL: ' . $conn->error
+                ];
+            }
+
+            $stmt->bind_param("i", $productId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows === 0) {
+                return [
+                    'success' => false,
+                    'message' => 'Không tìm thấy sản phẩm'
+                ];
+            }
+
+            $product = $result->fetch_assoc();
+            $stmt->close();
+
+            return [
+                'success' => true,
+                'product' => $product
+            ];
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Lỗi server: ' . $e->getMessage()
+            ];
         }
     }
 }
