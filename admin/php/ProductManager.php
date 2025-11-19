@@ -16,9 +16,10 @@ class ProductManager
     public function getProductById($id)
     {
         $stmt = $this->db->getConnection()->prepare("
-            SELECT p.*, c.Description AS CategoryName
+            SELECT p.*, c.Description AS CategoryName, sup.supplier_name AS SupplierName
             FROM products p
             LEFT JOIN categories c ON p.CategoryID = c.CategoryID
+            LEFT JOIN suppliers sup ON p.Supplier_id = sup.supplier_id
             WHERE p.ProductID = ?
         ");
         $stmt->bind_param("i", $id);
@@ -233,12 +234,12 @@ class ProductManager
                         <td class="actions" style="text-align: center; display:flex;">
 
 
-                            <button class="btn btn-primary btn-sm me-2" onclick="viewProduct(<?php echo $row['ProductID']; ?>)">
+                            <button class="btn btn-success btn-sm me-2" onclick="viewProduct(<?php echo $row['ProductID']; ?>)">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
 
 
-                            <button class="btn btn-secondary btn-sm me-2" onclick="editProduct(<?php echo $row['ProductID']; ?>)">
+                            <button class="btn btn-primary btn-sm me-2" onclick="editProduct(<?php echo $row['ProductID']; ?>)">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
 

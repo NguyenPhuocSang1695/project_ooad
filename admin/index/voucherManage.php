@@ -18,7 +18,7 @@ $voucherResult = $myconn->query($sqlVouchers);
 <html lang="en">
 
 <head>
-  <title>Tài khoản</title>
+  <title>Mã giảm giá</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -104,9 +104,9 @@ $voucherResult = $myconn->query($sqlVouchers);
             </div>
           </a>
 
-          <a href="supplier.php" style="text-decoration: none; color: black;">
+          <a href="supplierManage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
-              <button class="button-function-selection" style="background-color: #6aa173;">
+              <button class="button-function-selection">
                 <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
               </button>
               <p>Nhà cung cấp</p>
@@ -114,15 +114,15 @@ $voucherResult = $myconn->query($sqlVouchers);
           </a>
           <a href="voucherManage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
-              <button class="button-function-selection">
-                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+              <button class="button-function-selection" style="background-color: #6aa173;">
+                <i class=" fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
               </button>
               <p>Mã giảm giá</p>
             </div>
           </a>
           <a href="accountPage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
-              <button class="button-function-selection" style="background-color: #6aa173;">
+              <button class="button-function-selection">
                 <i class="fa-solid fa-circle-user" style="
                            font-size: 20px;
                            color: #FAD4AE;
@@ -135,7 +135,7 @@ $voucherResult = $myconn->query($sqlVouchers);
       </div>
     </div>
     <div class="header-left-section">
-      <p class="header-left-title">Tài khoản</p>
+      <p class="header-left-title">Mã giảm giá</p>
     </div>
     <div class="header-middle-section">
       <img class="logo-store" src="../../assets/images/LOGO-2.jpg">
@@ -371,7 +371,8 @@ $voucherResult = $myconn->query($sqlVouchers);
 
                 <div class="voucher-name" style="margin-bottom: 10px;">
                   <!-- <i class="fa-solid fa-tag"></i> -->
-                  <strong><span>Tên: </span> <?php echo htmlspecialchars($voucher['name']); ?></strong>
+                  <p>Tên: </p>
+                  <strong><?php echo htmlspecialchars($voucher['name']); ?></strong>
                 </div>
 
                 <div class="voucher-details">

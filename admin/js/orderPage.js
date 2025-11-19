@@ -1015,7 +1015,7 @@ function showOrderDetailModal(orderId) {
       
       // Determine address display text
       const hasNoAddress = !order.address || order.address.trim() === '';
-      const addressDisplay = hasNoAddress ? 'Mua tại cửa hàng' : order.address;
+      const addressDisplay = hasNoAddress ? 'Không có' : order.address;
       
       // Update modal content
       const modalBody = document.querySelector('#orderDetailModal .modal-body');

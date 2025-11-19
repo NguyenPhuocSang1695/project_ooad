@@ -24,7 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $_POST['import_date'],
         $_POST['total_amount'],
         $_POST['note'],
-        $_POST['products'] ?? []
+        $_POST['products'] ?? [],
+        $_POST['supplier_id'] ?? null  // THÊM DÒNG NÀY
     );
 
     if ($result['success']) {
@@ -787,9 +788,23 @@ $totalReceipts = $receiptManager->count();
                         <input type="datetime-local" name="import_date" required value="<?php echo date('Y-m-d\TH:i'); ?>">
                     </div>
                     <div class="form-group">
-                        <label>Ghi chú</label>
-                        <input type="text" name="note" placeholder="Nhập ghi chú (không bắt buộc)">
+                        <label>Nhà cung cấp <span style="color: red;">*</span></label>
+                        <select name="supplier_id" required onchange="loadProductsBySupplier(this.value)">
+                            <option value="">Chọn nhà cung cấp</option>
+                            <?php
+                            $sql_suppliers = "SELECT supplier_id as SupplierID, supplier_name as SupplierName FROM suppliers ORDER BY SupplierName ASC";
+                            $result_suppliers = $connectDb->query($sql_suppliers);
+                            while ($supplier = $result_suppliers->fetch_assoc()) {
+                                echo "<option value='{$supplier['SupplierID']}'>{$supplier['SupplierName']}</option>";
+                            }
+                            ?>
+                        </select>
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Ghi chú</label>
+                    <textarea name="note" rows="2" placeholder="Nhập ghi chú (không bắt buộc)"></textarea>
                 </div>
 
                 <div class="product-items">
@@ -798,15 +813,8 @@ $totalReceipts = $receiptManager->count();
                         <div class="product-item">
                             <div class="form-group">
                                 <label>Sản phẩm <span style="color: red;">*</span></label>
-                                <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
-                                    <option value="">Chọn sản phẩm</option>
-                                    <?php
-                                    $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName";
-                                    $result_products = $connectDb->query($sql_products);
-                                    while ($product = $result_products->fetch_assoc()) {
-                                        echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
-                                    }
-                                    ?>
+                                <select name="products[0][product_id]" required onchange="updateSubtotal(0);">
+
                                 </select>
                             </div>
                             <div class="form-group">
@@ -846,6 +854,65 @@ $totalReceipts = $receiptManager->count();
         </div>
     </div>
 
+    <script>
+        function loadProductsBySupplier(supplierId) {
+            console.log('Loading products for supplier:', supplierId);
+
+            if (!supplierId) {
+                // Nếu chưa chọn nhà cung cấp, xóa tất cả sản phẩm
+                const selects = document.querySelectorAll('select[name*="[product_id]"]');
+                selects.forEach(select => {
+                    select.innerHTML = '<option value="">Chọn sản phẩm</option>';
+                });
+                return;
+            }
+
+            fetch('../php/get_products_by_supplier.php?supplier_id=' + supplierId)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Products received:', data);
+
+                    if (data.success && data.data) {
+                        updateAllProductSelects(data.data);
+                    } else {
+                        console.error('Error in response:', data.message);
+                        alert('Không thể lấy danh sách sản phẩm: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert('Lỗi khi lấy danh sách sản phẩm: ' + error.message);
+                });
+        }
+
+        function updateAllProductSelects(products) {
+            const selects = document.querySelectorAll('select[name*="[product_id]"]');
+
+            console.log('Updating', selects.length, 'selects with', products.length, 'products');
+
+            selects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Chọn sản phẩm</option>';
+
+                products.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.ProductID;
+                    option.textContent = p.ProductName + ' (' + Number(p.Price).toLocaleString('vi-VN') + ' VND)';
+                    option.setAttribute('data-price', p.Price);
+                    select.appendChild(option);
+                });
+
+                // Khôi phục giá trị cũ nếu có
+                if (currentValue) {
+                    select.value = currentValue;
+                }
+            });
+        }
+    </script>
+
     <!-- Modal Xem chi tiết phiếu nhập -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
@@ -879,6 +946,11 @@ $totalReceipts = $receiptManager->count();
         // Mở modal thêm phiếu nhập
         function openModal() {
             document.getElementById('addModal').style.display = 'block';
+            // Nếu đã chọn nhà cung cấp, tải sản phẩm
+            const supplierSelect = document.querySelector('select[name="supplier_id"]');
+            if (supplierSelect && supplierSelect.value) {
+                loadProductsBySupplier(supplierSelect.value);
+            }
         }
 
         // Đóng modal
@@ -1116,8 +1188,16 @@ $totalReceipts = $receiptManager->count();
 
         // Validate form trước khi submit
         document.getElementById('importForm').addEventListener('submit', function(e) {
+            const supplierSelect = document.querySelector('select[name="supplier_id"]');
             const productItems = document.querySelectorAll('.product-item');
             let hasProduct = false;
+
+            // Kiểm tra nhà cung cấp (nếu required)
+            if (supplierSelect && supplierSelect.hasAttribute('required') && !supplierSelect.value) {
+                e.preventDefault();
+                alert('Vui lòng chọn nhà cung cấp!');
+                return false;
+            }
 
             productItems.forEach(item => {
                 const select = item.querySelector('select[name*="product_id"]');
@@ -1168,35 +1248,58 @@ $totalReceipts = $receiptManager->count();
                         }
                         receiptIdInput.value = receiptId;
 
-                        // BỎ REQUIRED cho các trường khi edit
-                        document.querySelectorAll('#importForm [required]').forEach(field => {
-                            field.removeAttribute('required');
-                        });
-
                         // Điền thông tin phiếu nhập
                         const importDate = new Date(data.receipt.import_date_raw);
                         const formattedDate = importDate.toISOString().slice(0, 16);
                         document.querySelector('input[name="import_date"]').value = formattedDate;
-                        document.querySelector('input[name="note"]').value = data.receipt.note || '';
 
                         // Điền nhà cung cấp
-                        const supplierSelect = document.querySelector('select[name="suppliers"]');
-                        if (data.receipt.supplier_id) {
+                        const supplierSelect = document.querySelector('select[name="supplier_id"]');
+                        if (data.receipt.supplier_id && supplierSelect) {
                             supplierSelect.value = data.receipt.supplier_id;
+                            supplierSelect.disabled = true; // Disable khi đang edit
+                            supplierSelect.removeAttribute('required'); // Xóa required validation
                         }
+
+                        document.querySelector('textarea[name="note"]').value = data.receipt.note || '';
 
                         // Xóa các sản phẩm cũ
                         const productList = document.getElementById('productList');
                         productList.innerHTML = '';
                         productCount = 0;
 
-                        // Thêm các sản phẩm từ phiếu nhập
-                        data.details.forEach((item, index) => {
-                            addProductForEdit(item, index === 0);
-                        });
+                        // Thêm các sản phẩm từ phiếu nhập - PHẢI LÀM SAU KHI LOAD PRODUCTS
+                        // Đợi products được load theo supplier
+                        if (data.receipt.supplier_id) {
+                            // Load products của supplier này
+                            fetch('../php/get_products_by_supplier.php?supplier_id=' + data.receipt.supplier_id)
+                                .then(response => response.json())
+                                .then(productsData => {
+                                    if (productsData.success && productsData.data) {
+                                        // Thêm sản phẩm của phiếu nhập TRƯỚC
+                                        data.details.forEach((item, index) => {
+                                            addProductForEdit(item, index === 0, productsData.data);
+                                        });
 
-                        // Cập nhật tổng tiền
-                        updateTotalAmount();
+                                        // Cập nhật tổng tiền
+                                        updateTotalAmount();
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error loading products:', error);
+                                    // Nếu lỗi, vẫn thêm sản phẩm nhưng không có options
+                                    data.details.forEach((item, index) => {
+                                        addProductForEdit(item, index === 0);
+                                    });
+                                    updateTotalAmount();
+                                });
+                        } else {
+                            // Nếu không có supplier, thêm sản phẩm trực tiếp
+                            data.details.forEach((item, index) => {
+                                addProductForEdit(item, index === 0);
+                            });
+                            updateTotalAmount();
+                        }
 
                         // Đổi nút submit
                         document.querySelector('.btn-submit').innerHTML =
@@ -1214,55 +1317,100 @@ $totalReceipts = $receiptManager->count();
                 });
         }
 
-        // Hàm thêm sản phẩm khi edit (không có required)
-        function addProductForEdit(item, isFirst) {
+        // Hàm thêm sản phẩm khi edit
+        function addProductForEdit(item, isFirst, productsArray = []) {
             const productList = document.getElementById('productList');
-            const newProduct = document.createElement('div');
-            newProduct.className = 'product-item';
+            let targetElement;
 
-            newProduct.innerHTML = `
+            // Nếu là item đầu tiên và productList rỗng, thêm item mới
+            if (isFirst && productList.children.length === 0) {
+                const firstItem = document.createElement('div');
+                firstItem.className = 'product-item';
+                firstItem.innerHTML = `
                     <div class="form-group">
-                        <label>Sản phẩm</label>
-                        <select name="products[${productCount}][product_id]" required onchange="updateSubtotal(${productCount})">
+                        <label>Sản phẩm <span style="color: red;">*</span></label>
+                        <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
                             <option value="">Chọn sản phẩm</option>
-                            <?php
-                            $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName asc";
-                            $result_products = $connectDb->query($sql_products);
-                            while ($product = $result_products->fetch_assoc()) {
-                                echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
-                            }
-                            ?>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Số lượng</label>
-                        <input type="number" name="products[${productCount}][quantity]" min="1" value="1" onchange="updateSubtotal(${productCount})">
+                        <label>Số lượng <span style="color: red;">*</span></label>
+                        <input type="number" name="products[0][quantity]" required min="1" value="1" onchange="updateSubtotal(0)">
                     </div>
                     <div class="form-group">
-                        <label>Giá nhập</label>
-                        <input type="number" name="products[${productCount}][import_price]" min="0" onchange="updateSubtotal(${productCount})">
+                        <label>Giá nhập <span style="color: red;">*</span></label>
+                        <input type="number" name="products[0][import_price]" required min="0" onchange="updateSubtotal(0)">
                     </div>
                     <div class="form-group">
                         <label>Thành tiền</label>
                         <input type="text" class="subtotal" readonly value="0">
                     </div>
-                    <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: ${isFirst ? 'none' : 'block'};">
+                    <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: none;">
                         <i class="fa-solid fa-times"></i>
                     </button>
                 `;
+                productList.appendChild(firstItem);
+                targetElement = firstItem;
+                productCount = 1;
+            } else {
+                // Nếu không phải item đầu tiên, clone từ item đầu tiên
+                const baseItem = productList.children[0];
+                targetElement = baseItem.cloneNode(true);
 
-            productList.appendChild(newProduct);
+                // Cập nhật name attributes
+                const inputs = targetElement.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (input.name) {
+                        input.name = input.name.replace(/\[\d+\]/, `[${productCount}]`);
+                    }
+                });
+
+                // Hiển thị nút xóa
+                const removeBtn = targetElement.querySelector('.btn-remove-product');
+                removeBtn.style.display = 'block';
+
+                productList.appendChild(targetElement);
+            }
 
             // Set giá trị cho select sản phẩm
-            const select = newProduct.querySelector('select[name*="product_id"]');
+            const select = targetElement.querySelector('select[name*="product_id"]');
+
+            // Nếu có products array, populate dropdown ngay
+            if (productsArray && productsArray.length > 0) {
+                select.innerHTML = '<option value="">Chọn sản phẩm</option>';
+                productsArray.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.ProductID;
+                    option.textContent = p.ProductName + ' (' + Number(p.Price).toLocaleString('vi-VN') + ' VND)';
+                    option.setAttribute('data-price', p.Price);
+                    select.appendChild(option);
+                });
+            }
+
+            // Set giá trị
             select.value = item.product_id;
 
             // Set giá trị cho các trường khác
-            newProduct.querySelector('input[name*="quantity"]').value = item.quantity;
-            newProduct.querySelector('input[name*="import_price"]').value = item.import_price;
-            newProduct.querySelector('.subtotal').value = parseFloat(item.subtotal).toLocaleString('vi-VN');
+            targetElement.querySelector('input[name*="quantity"]').value = item.quantity;
+            targetElement.querySelector('input[name*="import_price"]').value = item.import_price;
 
-            productCount++;
+            // Tính thành tiền
+            const quantity = parseFloat(item.quantity) || 0;
+            const price = parseFloat(item.import_price) || 0;
+            const subtotal = quantity * price;
+            targetElement.querySelector('.subtotal').value = subtotal.toLocaleString('vi-VN');
+
+            // Update onchange events
+            const quantityInput = targetElement.querySelector('input[name*="quantity"]');
+            const priceInput = targetElement.querySelector('input[name*="import_price"]');
+            const currentCount = isFirst ? 0 : productCount;
+            select.onchange = () => updateSubtotal(currentCount);
+            quantityInput.onchange = () => updateSubtotal(currentCount);
+            priceInput.onchange = () => updateSubtotal(currentCount);
+
+            if (!isFirst) {
+                productCount++;
+            }
         }
 
         // Sửa lại hàm closeModal để khôi phục required khi đóng
@@ -1283,45 +1431,49 @@ $totalReceipts = $receiptManager->count();
                 receiptIdInput.remove();
             }
 
-            // KHÔI PHỤC REQUIRED cho chế độ thêm mới
-            const form = document.getElementById('importForm');
-            form.querySelector('input[name="import_date"]').setAttribute('required', '');
+            // Reset nhà cung cấp
+            const supplierSelect = document.querySelector('select[name="supplier_id"]');
+            if (supplierSelect) {
+                supplierSelect.value = '';
+                supplierSelect.disabled = false; // Enable lại
+                supplierSelect.setAttribute('required', 'required'); // Thêm lại required
+            }
 
-            // Reset product list với required
+            // Reset product list
             productCount = 1;
             const productList = document.getElementById('productList');
             productList.innerHTML = `
-                <div class="product-item">
-                    <div class="form-group">
-                        <label>Sản phẩm <span style="color: red;">*</span></label>
-                        <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
-                            <option value="">Chọn sản phẩm</option>
-                            <?php
-                            $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName asc";
-                            $result_products = $connectDb->query($sql_products);
-                            while ($product = $result_products->fetch_assoc()) {
-                                echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
-                            }
-                            ?>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Số lượng <span style="color: red;">*</span></label>
-                        <input type="number" name="products[0][quantity]" required min="1" value="1" onchange="updateSubtotal(0)">
-                    </div>
-                    <div class="form-group">
-                        <label>Giá nhập <span style="color: red;">*</span></label>
-                        <input type="number" name="products[0][import_price]" required min="0" onchange="updateSubtotal(0)">
-                    </div>
-                    <div class="form-group">
-                        <label>Thành tiền</label>
-                        <input type="text" class="subtotal" readonly value="0">
-                    </div>
-                    <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: none;">
-                        <i class="fa-solid fa-times"></i>
-                    </button>
-                </div>
-            `;
+        <div class="product-item">
+            <div class="form-group">
+                <label>Sản phẩm <span style="color: red;">*</span></label>
+                <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
+                    <option value="">Chọn sản phẩm</option>
+                    <?php
+                    $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName ASC";
+                    $result_products = $connectDb->query($sql_products);
+                    while ($product = $result_products->fetch_assoc()) {
+                        echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
+                    }
+                    ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Số lượng <span style="color: red;">*</span></label>
+                <input type="number" name="products[0][quantity]" required min="1" value="1" onchange="updateSubtotal(0)">
+            </div>
+            <div class="form-group">
+                <label>Giá nhập <span style="color: red;">*</span></label>
+                <input type="number" name="products[0][import_price]" required min="0" onchange="updateSubtotal(0)">
+            </div>
+            <div class="form-group">
+                <label>Thành tiền</label>
+                <input type="text" class="subtotal" readonly value="0">
+            </div>
+            <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: none;">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+    `;
             updateTotalAmount();
         }
     </script>
