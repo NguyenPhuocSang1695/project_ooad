@@ -371,7 +371,8 @@ $voucherResult = $myconn->query($sqlVouchers);
 
                 <div class="voucher-name" style="margin-bottom: 10px;">
                   <!-- <i class="fa-solid fa-tag"></i> -->
-                  <strong><span>Tên: </span> <?php echo htmlspecialchars($voucher['name']); ?></strong>
+                  <p>Tên: </p>
+                  <strong><?php echo htmlspecialchars($voucher['name']); ?></strong>
                 </div>
 
                 <div class="voucher-details">
