@@ -18,7 +18,7 @@ $voucherResult = $myconn->query($sqlVouchers);
 <html lang="en">
 
 <head>
-  <title>Tài khoản</title>
+  <title>Mã giảm giá</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -135,7 +135,7 @@ $voucherResult = $myconn->query($sqlVouchers);
       </div>
     </div>
     <div class="header-left-section">
-      <p class="header-left-title">Tài khoản</p>
+      <p class="header-left-title">Mã giảm giá</p>
     </div>
     <div class="header-middle-section">
       <img class="logo-store" src="../../assets/images/LOGO-2.jpg">
