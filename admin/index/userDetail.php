@@ -128,13 +128,14 @@ include 'header_sidebar.php';
         <a class="back-link" href="customer.php">
           <i class="fas fa-arrow-left"></i> Quay lại danh sách
         </a>
-        <!-- Nút sửa và xoá người dùng -->
+        <!-- Nút sửa và khóa/mở khóa người dùng -->
         <?php if ($user): ?>
         <button class="btn btn-primary" style="margin-left:12px" onclick="showEditUserPopup('<?= htmlspecialchars($user->getUsername()) ?>', <?= (int)$user->getId() ?>)">
           <i class="fas fa-edit"></i> Sửa thông tin
         </button>
-        <button id="deleteUserBtn" class="btn btn-danger" style="margin-left:12px" data-user-id="<?= (int)$user->getId() ?>">
-          <i class="fas fa-trash"></i> Xóa người dùng
+        <button id="toggleUserStatusBtn" class="btn <?= $user->isActive() ? 'btn-warning' : 'btn-success' ?>" style="margin-left:12px" data-user-id="<?= (int)$user->getId() ?>" data-user-status="<?= htmlspecialchars($user->getStatus()) ?>">
+          <i class="fas <?= $user->isActive() ? 'fa-lock' : 'fa-unlock' ?>"></i>
+          <?= $user->isActive() ? 'Khóa tài khoản' : 'Mở khóa tài khoản' ?>
         </button>
         <?php endif; ?>
       </div>
@@ -185,7 +186,7 @@ include 'header_sidebar.php';
             <span class="value"><?= isset($userData['DateGeneration']) ? date('d/m/Y H:i', strtotime($userData['DateGeneration'])) : 'Chưa có thông tin' ?></span>
           </div> -->
 
-          <!-- <div class="info-row">
+          <div class="info-row">
             <span class="label">
               <i class="fas fa-user-tag"></i>
               Vai trò
@@ -207,7 +208,7 @@ include 'header_sidebar.php';
                 <?= $user->getStatusText() ?>
               </span>
             </span>
-          </div> -->
+          </div>
 
           <!-- <div class="info-row">
             <span class="label">

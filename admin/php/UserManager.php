@@ -555,11 +555,11 @@ class UserManager
     }
 
     /**
-     * Delete a user by user_id with permission checks.
+     * Toggle user status (Block/Active) - soft delete
      * Expects keys: user_id, _currentUser, _currentRole
      * Returns [success=>bool, message=>string]
      */
-    public function deleteUser(array $data): array
+    public function toggleUserStatus(array $data): array
     {
         // Ensure we have a mysqli connection
         $conn = $this->dbConnection->getConnection();
@@ -596,13 +596,13 @@ class UserManager
             }
         }
 
-        // Only admin can delete - check both 'admin' role from DB and 'nhân viên' from session
+        // Only admin can toggle user status - check both 'admin' role from DB and 'nhân viên' from session
         if ($currentRole !== 'admin' && $currentRole !== 'nhân viên') {
-            return ['success' => false, 'message' => 'Không có quyền xóa người dùng'];
+            return ['success' => false, 'message' => 'Không có quyền khóa/mở khóa người dùng'];
         }
 
-        // Check target user exists and fetch username/role
-        $stmt = $conn->prepare('SELECT user_id, Username, Role FROM users WHERE user_id = ?');
+        // Check target user exists and fetch username/role/status
+        $stmt = $conn->prepare('SELECT user_id, Username, Role, Status FROM users WHERE user_id = ?');
         if (!$stmt) return ['success' => false, 'message' => 'Lỗi truy vấn người dùng: ' . $conn->error];
         $stmt->bind_param('i', $userId);
         $stmt->execute();
@@ -613,16 +613,20 @@ class UserManager
         if (!$row) return ['success' => false, 'message' => 'Người dùng không tồn tại'];
 
         $targetUsername = strtolower(trim((string)($row['Username'] ?? '')));
+        $currentStatus = $row['Status'] ?? 'Active';
 
-        // Prevent deleting self
+        // Prevent blocking self
         if ($currentUser !== '' && $targetUsername !== '' && strcmp($currentUser, $targetUsername) === 0) {
-            return ['success' => false, 'message' => 'Không thể xóa tài khoản đang đăng nhập'];
+            return ['success' => false, 'message' => 'Không thể khóa tài khoản đang đăng nhập'];
         }
 
-        // Perform hard delete; consider soft delete if FK constraints block
-        $ok = $this->dbConnection->queryPrepared('DELETE FROM users WHERE user_id = ?', [$userId], 'i');
-        if ($ok) return ['success' => true, 'message' => 'Xóa người dùng thành công'];
-        return ['success' => false, 'message' => 'Không thể xóa người dùng (có thể do ràng buộc dữ liệu)'];
+        // Toggle status: Active <-> Block
+        $newStatus = ($currentStatus === 'Active') ? 'Block' : 'Active';
+        $action = ($newStatus === 'Block') ? 'khóa' : 'mở khóa';
+        
+        $ok = $this->dbConnection->queryPrepared('UPDATE users SET Status = ? WHERE user_id = ?', [$newStatus, $userId], 'si');
+        if ($ok) return ['success' => true, 'message' => 'Đã ' . $action . ' người dùng thành công'];
+        return ['success' => false, 'message' => 'Không thể ' . $action . ' người dùng'];
     }
 
     

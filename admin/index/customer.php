@@ -112,29 +112,36 @@ require_once '../php/User.php';
           <th>Họ và tên</th>
           <th>Số điện thoại</th>
           <th>Vai trò</th>
+          <th>Trạng thái</th>
           <th>Thao tác</th>
         </tr>
       </thead>
       <tbody>
         <?php if (!empty($users)): ?>
           <?php foreach ($users as $user): ?>
-            <tr class="user-row" data-user-id="<?php echo (int)$user->getId(); ?>" data-username="<?php echo htmlspecialchars($user->getUsername()); ?>" style="cursor:pointer;">
+            <tr class="user-row" data-user-id="<?php echo (int)$user->getId(); ?>" data-username="<?php echo htmlspecialchars($user->getUsername()); ?>" data-user-status="<?php echo htmlspecialchars($user->getStatus()); ?>" style="cursor:pointer;">
               <td><?php echo htmlspecialchars($user->getFullname()); ?></td>
               <td><?php echo htmlspecialchars($user->getPhone()); ?></td>
               <td><span class="role-badge"><?php echo $user->getRoleText(); ?></span></td>
+              <td>
+                <span class="status-badge <?php echo $user->isActive() ? 'status-active' : 'status-blocked'; ?>">
+                  <?php echo $user->getStatusText(); ?>
+                </span>
+              </td>
               <td class="action-buttons">
                 <button class="btn-edit" onclick="(function(btn){ var tr=btn.closest('tr'); var un=tr?tr.getAttribute('data-username'):''; var uid=tr?parseInt(tr.getAttribute('data-user-id')||'0',10):0; showEditUserPopup(un, uid); })(this)">
                   <i class="fas fa-edit"></i> Sửa
                 </button>
-                <button class="btn-delete-user">
-                  <i class="fas fa-trash"></i> Xóa
+                <button class="btn-toggle-status">
+                  <i class="fas <?php echo $user->isActive() ? 'fa-lock' : 'fa-unlock'; ?>"></i>
+                  <?php echo $user->isActive() ? 'Khóa' : 'Mở khóa'; ?>
                 </button>
               </td>
             </tr>
           <?php endforeach; ?>
         <?php else: ?>
           <tr>
-            <td colspan="4" class="text-center">Không có dữ liệu người dùng</td>
+            <td colspan="5" class="text-center">Không có dữ liệu người dùng</td>
           </tr>
         <?php endif; ?>
       </tbody>
@@ -186,7 +193,7 @@ require_once '../php/User.php';
     document.addEventListener('DOMContentLoaded', function(){
       document.querySelectorAll('tr.user-row').forEach(function(tr){
         tr.addEventListener('click', function(e){
-          if (e.target.closest('.btn-edit') || e.target.closest('.btn-delete-user')) return; // don't navigate when clicking edit/delete
+          if (e.target.closest('.btn-edit') || e.target.closest('.btn-toggle-status')) return; // don't navigate when clicking edit/toggle
           const userId = this.getAttribute('data-user-id');
           const username = this.getAttribute('data-username');
           
