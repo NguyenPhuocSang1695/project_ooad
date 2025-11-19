@@ -808,12 +808,12 @@ $orders = [];
                   </div>
 
                   <div class="mb-3">
-                    <label class="form-label">Địa chỉ giao hàng:</label>
+                    <label class="form-label">Hình thức nhận hàng:</label>
                     <div class="row">
                       <div class="col-md-6 form-check">
                         <input class="form-check-input" type="radio" name="delivery_type" id="delivery_pickup" value="pickup" checked>
                         <label class="form-check-label" for="delivery_pickup">
-                          Mua tại cửa hàng
+                          Tại cửa hàng
                         </label>
                       </div>
                       <div class="col-md-6 form-check">
