@@ -17,11 +17,12 @@ if (!isset($_GET['id'])) {
 $receipt_id = intval($_GET['id']);
 
 //--------------------------------------------------
-// 2. LẤY THÔNG TIN PHIẾU NHẬP (Không JOIN supplier)
+// 2. LẤY THÔNG TIN PHIẾU NHẬP (JOIN với supplier)
 //--------------------------------------------------
-$sql = "SELECT *
-        FROM import_receipt
-        WHERE receipt_id = ?";
+$sql = "SELECT ir.*, s.supplier_name
+        FROM import_receipt ir
+        LEFT JOIN suppliers s ON ir.supplier_id = s.supplier_id
+        WHERE ir.receipt_id = ?";
 
 $stmt = $myconn->prepare($sql);
 $stmt->bind_param("i", $receipt_id);
@@ -38,27 +39,8 @@ $receipt = $result->fetch_assoc();
 // Format ngày
 $receipt['import_date_raw'] = $receipt['import_date'];
 $receipt['import_date'] = date('d/m/Y H:i', strtotime($receipt['import_date']));
-
 //--------------------------------------------------
-// 3. LẤY DANH SÁCH NHÀ CUNG CẤP LIÊN QUAN
-//--------------------------------------------------
-$sql_sup = "SELECT DISTINCT s.supplier_id, s.supplier_name
-            FROM import_receipt_product_supplier rps
-            JOIN suppliers s ON rps.supplier_id = s.supplier_id
-            WHERE rps.import_receipt_id = ?";
-
-$stmt_sup = $myconn->prepare($sql_sup);
-$stmt_sup->bind_param("i", $receipt_id);
-$stmt_sup->execute();
-$result_sup = $stmt_sup->get_result();
-
-$suppliers = [];
-while ($row = $result_sup->fetch_assoc()) {
-    $suppliers[] = $row;
-}
-
-//--------------------------------------------------
-// 4. LẤY CHI TIẾT SẢN PHẨM
+// 3. LẤY CHI TIẾT SẢN PHẨM
 //--------------------------------------------------
 $sql_detail = "SELECT ird.*, p.ProductName AS product_name
                FROM import_receipt_detail ird
@@ -82,8 +64,7 @@ while ($row = $result_detail->fetch_assoc()) {
 echo json_encode([
     'success' => true,
     'receipt' => $receipt,
-    'suppliers' => $suppliers,
     'details' => $details
-]);
+], JSON_UNESCAPED_UNICODE);
 
 $connectDb->close();

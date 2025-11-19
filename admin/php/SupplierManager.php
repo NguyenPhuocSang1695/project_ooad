@@ -244,34 +244,34 @@ class SupplierManager
     public function getById($supplierId)
     {
         $sql = "
-                SELECT 
-                    s.*,
-                    a.address_id,
-                    a.address_detail,
-                    a.ward_id,
-                    w.name AS ward_name,
-                    d.name AS district_name,
-                    d.district_id,
-                    pv.name AS province_name,
-                    pv.province_id,
-                    COALESCE(prod.total_products, 0) AS TotalProducts,
-                    COALESCE(prod.total_amount, 0) AS TotalAmount
-                FROM suppliers s
-                    LEFT JOIN address a ON s.address_id = a.address_id
-                    LEFT JOIN ward w ON a.ward_id = w.ward_id
-                    LEFT JOIN district d ON w.district_id = d.district_id
-                    LEFT JOIN province pv ON d.province_id = pv.province_id
-                    LEFT JOIN (
-                        SELECT 
-                            irps.supplier_id,
-                            COUNT(DISTINCT ird.product_id) AS total_products,
-                            SUM(ird.quantity * ird.import_price) AS total_amount
-                FROM import_receipt_product_supplier irps
-                JOIN import_receipt ir ON irps.import_receipt_id = ir.receipt_id
-                JOIN import_receipt_detail ird ON ir.receipt_id = ird.receipt_id 
-                GROUP BY irps.supplier_id
-                    ) prod ON s.supplier_id = prod.supplier_id
-                    WHERE s.supplier_id = ?
+               SELECT 
+    s.*,
+    a.address_id,
+    a.address_detail,
+    a.ward_id,
+    w.name AS ward_name,
+    d.name AS district_name,
+    d.district_id,
+    pv.name AS province_name,
+    pv.province_id,
+    COALESCE(prod.total_products, 0) AS TotalProducts,
+    COALESCE(prod.total_amount, 0) AS TotalAmount
+FROM suppliers s
+LEFT JOIN address a ON s.address_id = a.address_id
+LEFT JOIN ward w ON a.ward_id = w.ward_id
+LEFT JOIN district d ON w.district_id = d.district_id
+LEFT JOIN province pv ON d.province_id = pv.province_id
+LEFT JOIN (
+    SELECT 
+        p.supplier_id,
+        COUNT(DISTINCT ird.product_id) AS total_products,
+        SUM(ird.quantity * ird.import_price) AS total_amount
+    FROM products p
+    JOIN import_receipt_detail ird ON p.ProductID = ird.product_id
+    GROUP BY p.supplier_id
+) prod ON s.supplier_id = prod.supplier_id
+WHERE s.supplier_id = ?;
+
         ";
 
         $stmt = $this->conn->prepare($sql);
@@ -292,37 +292,38 @@ class SupplierManager
     public function getAll($search = '')
     {
         $sql = "
-         SELECT 
-            s.*,
-            a.address_detail,
-            w.name AS ward_name,
-            w.ward_id,
-            d.name AS district_name,
-            d.district_id,
-            pv.name AS province_name,
-            pv.province_id,
-            COALESCE(prod.total_products, 0) AS TotalProducts,
-            COALESCE(prod.total_amount, 0) AS TotalAmount
-        FROM suppliers s
-        LEFT JOIN address a ON s.address_id = a.address_id
-        LEFT JOIN ward w ON a.ward_id = w.ward_id
-        LEFT JOIN district d ON w.district_id = d.district_id
-        LEFT JOIN province pv ON d.province_id = pv.province_id
-        LEFT JOIN (
             SELECT 
-                irps.supplier_id,
-                COUNT(DISTINCT ird.product_id) AS total_products,
-                SUM(ird.quantity * ird.import_price) AS total_amount
-            FROM import_receipt_product_supplier irps
-            JOIN import_receipt ir ON irps.import_receipt_id = ir.receipt_id
-            JOIN import_receipt_detail ird ON ir.receipt_id = ird.receipt_id 
-            GROUP BY irps.supplier_id
-        ) prod ON s.supplier_id = prod.supplier_id
-        WHERE s.supplier_name LIKE ? 
-           OR s.phone LIKE ? 
-           OR s.email LIKE ?
-           OR s.supplier_id = ?
-        ORDER BY s.supplier_id DESC
+    s.*,
+    a.address_detail,
+    w.name AS ward_name,
+    w.ward_id,
+    d.name AS district_name,
+    d.district_id,
+    pv.name AS province_name,
+    pv.province_id,
+    COALESCE(prod.total_products, 0) AS TotalProducts,
+    COALESCE(prod.total_amount, 0) AS TotalAmount
+FROM suppliers s
+LEFT JOIN address a ON s.address_id = a.address_id
+LEFT JOIN ward w ON a.ward_id = w.ward_id
+LEFT JOIN district d ON w.district_id = d.district_id
+LEFT JOIN province pv ON d.province_id = pv.province_id
+LEFT JOIN (
+    SELECT 
+        p.supplier_id,
+        COUNT(DISTINCT ird.product_id) AS total_products,
+        SUM(ird.quantity * ird.import_price) AS total_amount
+    FROM products p
+    JOIN import_receipt_detail ird ON p.ProductID = ird.product_id
+    GROUP BY p.supplier_id
+) prod ON s.supplier_id = prod.supplier_id
+WHERE 
+       s.supplier_name LIKE ? 
+    OR s.phone LIKE ? 
+    OR s.email LIKE ?
+    OR s.supplier_id = ?
+ORDER BY s.supplier_id DESC;
+
         ";
 
         $stmt = $this->conn->prepare($sql);
@@ -419,20 +420,18 @@ class SupplierManager
     public function getSupplierProducts($supplierId)
     {
         $sql = "
-        SELECT 
+            SELECT 
             p.ProductID,
             p.ProductName,
             ird.quantity AS Quantity,
             ird.import_price AS UnitPrice,
-            ird.subtotal AS TotalValue
+            (ird.quantity * ird.import_price) AS TotalValue
         FROM import_receipt_detail ird
         JOIN import_receipt ir ON ird.receipt_id = ir.receipt_id
-        JOIN import_receipt_product_supplier irps 
-            ON irps.import_receipt_id = ir.receipt_id
-           AND irps.ProductID = ird.product_id
         JOIN products p ON ird.product_id = p.ProductID
-        WHERE irps.supplier_id = ?
-        ORDER BY p.ProductName ASC
+        WHERE p.supplier_id = ?
+        ORDER BY p.ProductName ASC;
+
     ";
 
         $stmt = $this->conn->prepare($sql);
