@@ -16,9 +16,10 @@ class ProductManager
     public function getProductById($id)
     {
         $stmt = $this->db->getConnection()->prepare("
-            SELECT p.*, c.Description AS CategoryName
+            SELECT p.*, c.Description AS CategoryName, sup.supplier_name AS SupplierName
             FROM products p
             LEFT JOIN categories c ON p.CategoryID = c.CategoryID
+            LEFT JOIN suppliers sup ON p.Supplier_id = sup.supplier_id
             WHERE p.ProductID = ?
         ");
         $stmt->bind_param("i", $id);

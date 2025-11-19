@@ -1100,24 +1100,12 @@ global $mysqli;
                   <!-- Nhà cung cấp -->
                   <div class="col-md-6 mb-3">
                     <label for="editSupplier" class="form-label">Nhà cung cấp</label>
-                    <select class="form-control" id="editSupplier" name="supplierID" required>
-                      <option value="" disabled>-- Chọn nhà cung cấp --</option>
-                      <?php
-                      $sql = "select supplier_id, supplier_name from suppliers";
-                      $result = $mysqli->query($sql);
-                      $suppliers = [];
-                      while ($row = $result->fetch_assoc()) {
-                        $suppliers[] = $row;
-                      }
-                      ?>
-                      <?php foreach ($suppliers as $supplier): ?>
-                        <option value="<?= $supplier['supplier_id'] ?>">
-                          <?= htmlspecialchars($supplier['supplier_name']) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
+                    <input type="text" class="form-control" id="editSupplier" name="supplierName" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                    <input type="hidden" id="editSupplierId" name="supplierID">
                   </div>
+                </div>
 
+                <div class="row">
                   <!-- Số lượng sản phẩm -->
                   <div class="col-md-6 mb-3">
                     <label for="editQuantity" class="form-label">Số lượng</label>
@@ -1161,7 +1149,10 @@ global $mysqli;
           document.getElementById('editDescription').value = product.Description;
           document.getElementById('editStatus').value = product.Status;
           document.getElementById('editQuantity').value = product.quantity_in_stock;
-          document.getElementById('editSupplier').value = product.Supplier_id;
+
+          // Hiển thị tên nhà cung cấp (readonly)
+          document.getElementById('editSupplier').value = product.SupplierName || 'Không có thông tin';
+          document.getElementById('editSupplierId').value = product.Supplier_id;
 
           const currentImage = document.getElementById('currentImage');
           currentImage.src = '../../' + product.ImageURL;
