@@ -104,9 +104,9 @@ $voucherResult = $myconn->query($sqlVouchers);
             </div>
           </a>
 
-          <a href="supplier.php" style="text-decoration: none; color: black;">
+          <a href="supplierManage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
-              <button class="button-function-selection" style="background-color: #6aa173;">
+              <button class="button-function-selection">
                 <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
               </button>
               <p>Nhà cung cấp</p>
@@ -114,15 +114,15 @@ $voucherResult = $myconn->query($sqlVouchers);
           </a>
           <a href="voucherManage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
-              <button class="button-function-selection">
-                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+              <button class="button-function-selection" style="background-color: #6aa173;">
+                <i class=" fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
               </button>
               <p>Mã giảm giá</p>
             </div>
           </a>
           <a href="accountPage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
-              <button class="button-function-selection" style="background-color: #6aa173;">
+              <button class="button-function-selection">
                 <i class="fa-solid fa-circle-user" style="
                            font-size: 20px;
                            color: #FAD4AE;

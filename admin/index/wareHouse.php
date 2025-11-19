@@ -588,7 +588,7 @@ global $mysqli;
               <p>Thống kê</p>
             </div>
           </a>
-          <a href="supplier.php" style="text-decoration: none; color: black;">
+          <a href="supplierManage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
               <button class="button-function-selection">
                 <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>

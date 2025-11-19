@@ -553,10 +553,10 @@ $totalAmount = $supplierManager->getTotalValue();
         }
 
         @media (max-width: 480px) {
-            .header {
+            /* .header {
                 flex-wrap: wrap;
                 padding: 10px;
-            }
+            } */
 
             .header-middle-section img {
                 height: 40px;
