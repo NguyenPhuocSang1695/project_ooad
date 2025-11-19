@@ -7,6 +7,9 @@ class ImportReceipt
     protected $totalAmount;
     protected $note;
     protected $products; // Mỗi product sẽ chứa: product_id, supplier_id, quantity, import_price, subtotal
+    protected $supplierId;
+
+
 
     /**
      * Constructor
@@ -78,6 +81,13 @@ class ImportReceipt
         return $this;
     }
 
+    public function setSupplierId($supplierId)
+    {
+        $this->supplierId = $supplierId;
+        return $this;
+    }
+
+
     // ==================== METHODS ====================
 
     /**
@@ -89,7 +99,7 @@ class ImportReceipt
 
         $this->products[] = [
             'product_id' => $productId,
-            'supplier_id' => $supplierId,
+            'supplier_id' => $supplierId,        // vẫn giữ supplier theo sản phẩm
             'product_name' => $productName,
             'quantity' => $quantity,
             'import_price' => $importPrice,
@@ -98,7 +108,6 @@ class ImportReceipt
 
         return $this;
     }
-
     /**
      * Xóa sản phẩm khỏi phiếu nhập theo index
      */
@@ -127,7 +136,7 @@ class ImportReceipt
     /**
      * Kiểm tra phiếu nhập có hợp lệ không
      */
-    public function isValid()
+    public function isValid($checkSupplier = true)
     {
         if (empty($this->products)) {
             return ['valid' => false, 'message' => 'Vui lòng chọn ít nhất một sản phẩm!'];
@@ -136,6 +145,13 @@ class ImportReceipt
         if (empty($this->importDate)) {
             return ['valid' => false, 'message' => 'Vui lòng chọn ngày nhập!'];
         }
+
+
+        // Chỉ check supplier nếu $checkSupplier = true
+        if ($checkSupplier && empty($this->supplierId)) {
+            return ['valid' => false, 'message' => 'Vui lòng chọn nhà cung cấp!'];
+        }
+
 
         return ['valid' => true];
     }
@@ -150,6 +166,7 @@ class ImportReceipt
             'import_date' => $this->importDate,
             'total_amount' => $this->totalAmount,
             'note' => $this->note,
+            'supplier_id'  => $this->supplierId,
             'products' => $this->products
         ];
     }
@@ -163,7 +180,7 @@ class ImportReceipt
         if (isset($data['import_date'])) $this->importDate = $data['import_date'];
         if (isset($data['total_amount'])) $this->totalAmount = $data['total_amount'];
         if (isset($data['note'])) $this->note = $data['note'];
-
+        if (isset($data['supplier_id']))  $this->supplierId = $data['supplier_id'];
         if (isset($data['products'])) $this->products = $data['products'];
 
         return $this;
