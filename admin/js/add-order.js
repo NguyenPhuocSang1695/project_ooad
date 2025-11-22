@@ -79,7 +79,7 @@ function showEnhancedSuccessNotification(orderId, totalAmount, productCount) {
             </div>
             <div class="order-detail-item">
                 <span class="detail-label">Tổng tiền:</span>
-                <span class="detail-value highlight">${parseInt(totalAmount).toLocaleString('vi-VN')} VNĐ</span>
+                <span class="detail-value highlight">${parseInt(totalAmount).toLocaleString('vi-VN')} VND</span>
             </div>
         </div>
         <div class="notification-footer">
@@ -580,7 +580,7 @@ function updateTotalAmount() {
             const rowTotal = price * qty;
             
             if (priceInput) {
-                priceInput.value = parseInt(price).toLocaleString('vi-VN');
+                priceInput.value = parseInt(rowTotal).toLocaleString('vi-VN');
             }
             
             total += rowTotal;
@@ -597,7 +597,7 @@ function updateTotalAmount() {
     // Update original-total (Tổng tiền gốc) when products change
     const originalTotalElement = document.getElementById('original-total');
     if (originalTotalElement) {
-        originalTotalElement.value = parseInt(total).toLocaleString('vi-VN') + ' VNĐ';
+        originalTotalElement.value = parseInt(total).toLocaleString('vi-VN') + ' VND';
     }
 
     // Update QR code if Banking payment is selected
@@ -749,7 +749,7 @@ async function submitOrder() {
         console.log('[RESPONSE] Raw text:', text);
         
         let result;
-        try {
+        try { 
             result = JSON.parse(text);
             console.log('[RESULT] Parsed JSON:', result);
         } catch (e) {
@@ -827,10 +827,10 @@ async function submitOrder() {
         if (totalElement) totalElement.textContent = '0';
         
         const originalTotalElement = document.getElementById('original-total');
-        if (originalTotalElement) originalTotalElement.value = '0 VNĐ';
+        if (originalTotalElement) originalTotalElement.value = '0 VND';
         
         const discountElement = document.getElementById('discount-amount');
-        if (discountElement) discountElement.value = '0 VNĐ';
+        if (discountElement) discountElement.value = '0 VND';
         
         console.log('[RELOAD] Reloading page in 2 seconds...');
         setTimeout(() => {
@@ -902,11 +902,11 @@ async function fetchCustomerHistory(phone) {
             historyDiv.style.display = 'block';
             const customerNameDisplay = historyResult.customer_name ? `: ${historyResult.customer_name}` : '';
             if (messageElement) {
-                messageElement.textContent = `✓ Khách hàng thân thiết${customerNameDisplay} - Tổng tiền lịch sử: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VNĐ`;
+                messageElement.textContent = `✓ Khách hàng thân thiết${customerNameDisplay} - Tổng tiền lịch sử: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VND`;
                 messageElement.style.color = '#28a745';
             }
             if (detailsElement) {
-                detailsElement.innerHTML = `${historyResult.order_count} đơn hàng thành công | Giá trị trung bình: ${Math.round(historyResult.total_spent / historyResult.order_count).toLocaleString('vi-VN')} VNĐ/đơn`;
+                detailsElement.innerHTML = `${historyResult.order_count} đơn hàng thành công | Giá trị trung bình: ${Math.round(historyResult.total_spent / historyResult.order_count).toLocaleString('vi-VN')} VND/đơn`;
             }
         } else {
             historyDiv.style.display = 'block';
@@ -981,12 +981,12 @@ async function checkVoucherEligibility() {
     const originalTotalElement = document.getElementById('original-total');
     
     // Reset display
-    if (discountAmountElement) discountAmountElement.value = '0 VNĐ';
+    if (discountAmountElement) discountAmountElement.value = '0 VND';
     if (messageElement) messageElement.textContent = '';
     
     // Update original total field
     if (originalTotalElement) {
-        originalTotalElement.value = originalTotal.toLocaleString('vi-VN') + ' VNĐ';
+        originalTotalElement.value = originalTotal.toLocaleString('vi-VN') + ' VND';
     }
     
     // If no voucher selected, final total = original total
@@ -1021,7 +1021,7 @@ async function checkVoucherEligibility() {
         }
         
         if (discountAmountElement) {
-            discountAmountElement.value = discountAmount.toLocaleString('vi-VN') + ' VNĐ';
+            discountAmountElement.value = discountAmount.toLocaleString('vi-VN') + ' VND';
             discountAmountElement.style.backgroundColor = '#d4edda';
             discountAmountElement.style.color = '#155724';
         }
@@ -1038,7 +1038,7 @@ async function checkVoucherEligibility() {
             messageElement.textContent = '✗ Lỗi kiểm tra voucher';
             messageElement.style.color = '#f44336';
         }
-        if (discountAmountElement) discountAmountElement.value = '0 VNĐ';
+        if (discountAmountElement) discountAmountElement.value = '0 VND';
     }
 }
 

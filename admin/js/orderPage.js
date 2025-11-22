@@ -1007,8 +1007,8 @@ function showOrderDetailModal(orderId) {
             <td style="text-align: center;">${index + 1}</td>
             <td>${product.productName}</td>
             <td style="text-align: center;">${product.quantity}</td>
-            <td style="text-align: right;">${parseInt(product.unitPrice).toLocaleString('vi-VN')} VNĐ</td>
-            <td style="text-align: right;">${parseInt(product.totalPrice).toLocaleString('vi-VN')} VNĐ</td>
+            <td style="text-align: right;">${parseInt(product.unitPrice).toLocaleString('vi-VN')} VND</td>
+            <td style="text-align: right;">${parseInt(product.totalPrice).toLocaleString('vi-VN')} VND</td>
           </tr>
         `;
       });
@@ -1105,7 +1105,7 @@ function showOrderDetailModal(orderId) {
                   </div>
                   <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
                     <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Số tiền giảm</label>
-                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #27ae60; font-size: 15px;">-${parseInt(order.voucher.discountAmount).toLocaleString('vi-VN')} VNĐ</p>
+                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #27ae60; font-size: 15px;">-${parseInt(order.voucher.discountAmount).toLocaleString('vi-VN')} VND</p>
                   </div>
                 </div>
                 ${order.voucher.conditions ? `
@@ -1121,7 +1121,7 @@ function showOrderDetailModal(orderId) {
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 16px; font-weight: 600; color: #333;">Thành tiền: </span>
-                <span style="font-size: 24px; font-weight: 700; color: #667eea;">${parseInt(order.totalAmount).toLocaleString('vi-VN')} VNĐ</span>
+                <span style="font-size: 24px; font-weight: 700; color: #667eea;">${parseInt(order.totalAmount).toLocaleString('vi-VN')} VND</span>
               </div>
             </div>
           </div>
