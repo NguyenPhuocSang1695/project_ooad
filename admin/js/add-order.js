@@ -4,24 +4,39 @@ let allProducts = [];
 
 // Beautiful Notification System
 function showNotification(type, message) {
+    // Remove existing notification if any
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+
     const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
+    notification.className = `notification ${type}`;
     
     let icon = '✓';
-    if (type === 'error') icon = '✗';
-    if (type === 'info') icon = 'ℹ';
-    if (type === 'warning') icon = '⚠';
+    let title = 'Thành công!';
+    if (type === 'error') {
+        icon = '✕';
+        title = 'Có lỗi xảy ra!';
+    }
+    if (type === 'info') {
+        icon = 'ℹ';
+        title = 'Thông tin';
+    }
+    if (type === 'warning') {
+        icon = '⚠';
+        title = 'Cảnh báo!';
+    }
     
-    const iconSpan = document.createElement('span');
-    iconSpan.className = `notification-icon ${type === 'success' ? 'animate-tick' : ''}`;
-    iconSpan.textContent = icon;
-    
-    const messageSpan = document.createElement('span');
-    messageSpan.className = 'notification-message';
-    messageSpan.textContent = message;
-    
-    notification.appendChild(iconSpan);
-    notification.appendChild(messageSpan);
+    notification.innerHTML = `
+        <div class="notification-icon">${icon}</div>
+        <div class="notification-content">
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.classList.remove('show'); setTimeout(() => this.parentElement.remove(), 300)">×</button>
+        <div class="notification-progress"></div>
+    `;
     
     document.body.appendChild(notification);
     
@@ -30,11 +45,13 @@ function showNotification(type, message) {
         notification.classList.add('show');
     }, 10);
     
-    // Auto remove
+    // Auto remove after 5 seconds
     setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-    }, 3500);
+        if (notification.parentElement) {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
 }
 
 // Enhanced Success Notification
@@ -79,272 +96,12 @@ function showEnhancedSuccessNotification(orderId, totalAmount, productCount) {
     
     // Auto remove
     setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 500);
+        if (notification.parentElement) {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 500);
+        }
     }, 5000);
 }
-
-// Add notification styles
-const style = document.createElement('style');
-style.textContent = `
-    .notification {
-        position: fixed;
-        bottom: 30px;
-        right: 20px;
-        padding: 12px 18px;
-        border-radius: 6px;
-        color: white;
-        font-size: 13px;
-        font-weight: 500;
-        z-index: 9999;
-        opacity: 0;
-        transform: translateX(400px) scale(0.9);
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        max-width: 350px;
-        word-wrap: break-word;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .notification.show {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-    
-    .notification-success {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .notification-error {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-    
-    .notification-info {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-    
-    .notification-warning {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        color: #333;
-    }
-    
-    .notification-icon {
-        font-size: 16px;
-        font-weight: bold;
-        min-width: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .notification-icon.animate-tick {
-        animation: checkmark 0.6s ease-out;
-    }
-    
-    @keyframes checkmark {
-        0% {
-            transform: scale(0) rotate(-45deg);
-            opacity: 0;
-        }
-        50% {
-            transform: scale(1.2) rotate(0deg);
-        }
-        100% {
-            transform: scale(1) rotate(0deg);
-            opacity: 1;
-        }
-    }
-    
-    .notification-message {
-        flex: 1;
-    }
-    
-    .enhanced-notification {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0.7);
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        z-index: 10000;
-        width: 400px;
-        max-width: 90vw;
-        opacity: 0;
-        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        overflow: hidden;
-    }
-    
-    .enhanced-notification.show {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-    
-    .enhanced-notification::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .notification-header {
-        padding: 30px 30px 20px;
-        text-align: center;
-    }
-    
-    .success-icon-wrapper {
-        display: inline-block;
-        margin-bottom: 15px;
-    }
-    
-    .success-checkmark {
-        width: 80px;
-        height: 80px;
-        display: block;
-        stroke-width: 3;
-        stroke-miterlimit: 10;
-    }
-    
-    .checkmark-circle {
-        display: none;
-    }
-    
-    .checkmark-check {
-        transform-origin: 50% 50%;
-        stroke-dasharray: 48;
-        stroke-dashoffset: 48;
-        stroke: #4CAF50;
-        stroke-width: 4;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        animation: strokeCheck 0.6s ease-out forwards;
-    }
-    
-    @keyframes strokeCheck {
-        0% {
-            stroke-dashoffset: 48;
-            opacity: 0;
-            transform: scale(0.5);
-        }
-        50% {
-            opacity: 1;
-        }
-        100% {
-            stroke-dashoffset: 0;
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-    
-    
-    @keyframes scale {
-        0%, 100% {
-            transform: none;
-        }
-        50% {
-            transform: scale3d(1.1, 1.1, 1);
-        }
-    }
-    
-    .notification-title {
-        font-size: 24px;
-        font-weight: 700;
-        color: #2c3e50;
-        margin-bottom: 10px;
-    }
-    
-    .notification-body {
-        padding: 0 30px 20px;
-        background: #f8f9fa;
-    }
-    
-    .order-detail-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 0;
-        border-bottom: 1px solid #e9ecef;
-    }
-    
-    .order-detail-item:last-child {
-        border-bottom: none;
-    }
-    
-    .detail-label {
-        font-size: 14px;
-        color: #6c757d;
-        font-weight: 500;
-    }
-    
-    .detail-value {
-        font-size: 15px;
-        color: #2c3e50;
-        font-weight: 600;
-    }
-    
-    .detail-value.highlight {
-        color: #667eea;
-        font-size: 18px;
-    }
-    
-    .notification-footer {
-        padding: 20px 30px;
-        text-align: center;
-        background: white;
-    }
-    
-    .success-message {
-        font-size: 14px;
-        color: #4CAF50;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-    
-    @media (max-width: 768px) {
-        .enhanced-notification {
-            width: 350px;
-        }
-        
-        .notification-title {
-            font-size: 20px;
-        }
-        
-        .success-checkmark {
-            width: 60px;
-            height: 60px;
-        }
-        
-        .notification-body {
-            padding: 0 20px 15px;
-        }
-        
-        .notification-header {
-            padding: 20px 20px 15px;
-        }
-        
-        .notification-footer {
-            padding: 15px 20px;
-        }
-        
-        .notification {
-            bottom: 15px;
-            right: 10px;
-            left: 10px;
-            max-width: none;
-            padding: 10px 15px;
-            font-size: 12px;
-        }
-    }
-`;
-document.head.appendChild(style);
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('[INIT] Add Order JS loaded');
@@ -354,6 +111,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!form) {
         console.error('[ERROR] Form #add-order-form not found');
         return;
+    }
+
+    // Hide voucher note initially
+    const voucherNote = document.getElementById('voucher-note');
+    if (voucherNote) {
+        voucherNote.style.display = 'none';
     }
 
     // Load provinces, products when page loads
@@ -424,7 +187,82 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchCustomerHistory(this.value);
         }
     });
+
+    // Delivery type radio buttons
+    document.querySelectorAll('input[name="delivery_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            console.log('[DELIVERY_TYPE] Selected:', this.value);
+            const addressSection = document.getElementById('address-section');
+            
+            if (this.value === 'address') {
+                // Hiển thị phần địa chỉ khi chọn "Giao tận nơi"
+                addressSection.style.display = 'block';
+                console.log('[DELIVERY_TYPE] Showing address section');
+            } else {
+                // Ẩn phần địa chỉ khi chọn "Tận nơi"
+                addressSection.style.display = 'none';
+                console.log('[DELIVERY_TYPE] Hiding address section');
+                
+                // Clear address values
+                document.getElementById('add-province').value = '';
+                document.getElementById('add-district').value = '';
+                document.getElementById('add-district').innerHTML = '<option value="">Chọn quận/huyện</option>';
+                document.getElementById('add-ward').value = '';
+                document.getElementById('add-ward').innerHTML = '<option value="">Chọn phường/xã</option>';
+                document.getElementById('address-detail').value = '';
+            }
+        });
+    });
+
+    // Payment method change - Show/Hide QR Code
+    document.getElementById('payment-method')?.addEventListener('change', function() {
+        const bankingSection = document.getElementById('banking-info-section');
+        const totalAmount = document.getElementById('total-amount')?.textContent || '0';
+        
+        if (this.value === 'BANKING') {
+            bankingSection.style.display = 'block';
+            // Update QR code with current total
+            const cleanAmount = totalAmount.replace(/[^0-9]/g, '');
+            const qrImage = document.getElementById('admin-qr-code');
+            const bankAccountNumber = '1028974123';
+            const bankName = 'Vietcombank';
+            const qrText = bankAccountNumber + '|' + bankName + '|' + cleanAmount + '|Mua%20hang';
+            const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(qrText);
+            qrImage.src = qrUrl;
+            
+            // Update amount display
+            document.getElementById('admin-total-amount').textContent = totalAmount;
+            console.log('[PAYMENT] Banking selected, QR updated');
+        } else {
+            bankingSection.style.display = 'none';
+            console.log('[PAYMENT] Other method selected, QR hidden');
+        }
+    });
+
+    // Update QR when total amount changes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.target.id === 'total-amount' && document.getElementById('payment-method').value === 'BANKING') {
+                const totalAmount = mutation.target.textContent;
+                const cleanAmount = totalAmount.replace(/[^0-9]/g, '');
+                const qrImage = document.getElementById('admin-qr-code');
+                const bankAccountNumber = '1028974123';
+                const bankName = 'Vietcombank';
+                const qrText = bankAccountNumber + '|' + bankName + '|' + cleanAmount + '|Mua%20hang';
+                const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(qrText);
+                qrImage.src = qrUrl;
+                document.getElementById('admin-total-amount').textContent = totalAmount;
+            }
+        });
+    });
+
+    // Observe total amount for changes
+    const totalAmountElement = document.getElementById('total-amount');
+    if (totalAmountElement) {
+        observer.observe(totalAmountElement, { characterData: true, subtree: true, childList: true });
+    }
 });
+
 
 // Load provinces/cities
 function loadProvinces() {
@@ -577,15 +415,22 @@ function loadProductsForAllSelects() {
 function refreshProductSelects() {
     console.log('[REFRESH_SELECTS] Updating all product selects');
     
-    document.querySelectorAll('.product-select').forEach(select => {
+    document.querySelectorAll('.product-item').forEach(item => {
+        const select = item.querySelector('.product-select');
+        const searchInput = item.querySelector('.product-search');
+        const optionsDiv = item.querySelector('.product-options');
+        
+        if (!select || !searchInput || !optionsDiv) return;
+        
         const currentValue = select.value;
         
-        // Keep only the first empty option
+        // Update select options (for fallback)
         while (select.options.length > 1) {
             select.remove(1);
         }
         
-        // Add products
+        // Build product options list
+        optionsDiv.innerHTML = '';
         allProducts.forEach(product => {
             if (product.status === 'appear') {
                 const option = document.createElement('option');
@@ -593,12 +438,66 @@ function refreshProductSelects() {
                 option.textContent = `${product.name} (${parseInt(product.price).toLocaleString()} VND)`;
                 option.dataset.price = product.price;
                 select.appendChild(option);
+                
+                // Also create searchable option div
+                const optionDiv = document.createElement('div');
+                optionDiv.style.cssText = 'padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; hover-effect: true;';
+                optionDiv.textContent = `${product.name} (${parseInt(product.price).toLocaleString()} VND)`;
+                optionDiv.dataset.productId = product.id;
+                optionDiv.dataset.productName = product.name.toLowerCase();
+                optionDiv.dataset.price = product.price;
+                
+                optionDiv.addEventListener('mouseover', function() {
+                    this.style.backgroundColor = '#f0f0f0';
+                });
+                optionDiv.addEventListener('mouseout', function() {
+                    this.style.backgroundColor = 'transparent';
+                });
+                
+                optionDiv.addEventListener('click', function() {
+                    select.value = this.dataset.productId;
+                    searchInput.value = this.textContent;
+                    optionsDiv.style.display = 'none';
+                    
+                    // Trigger change event to update price
+                    select.dispatchEvent(new Event('change'));
+                });
+                
+                optionsDiv.appendChild(optionDiv);
             }
         });
+        
+        // Setup search functionality
+        searchInput.removeEventListener('input', handleProductSearch);
+        searchInput.addEventListener('input', handleProductSearch);
         
         // Restore previous selection
         if (currentValue) select.value = currentValue;
     });
+}
+
+// Handle product search
+function handleProductSearch(e) {
+    const searchValue = e.target.value.toLowerCase();
+    const item = e.target.closest('.product-item');
+    const optionsDiv = item.querySelector('.product-options');
+    
+    if (!optionsDiv) return;
+    
+    const options = optionsDiv.querySelectorAll('[data-product-id]');
+    let hasVisible = false;
+    
+    options.forEach(option => {
+        const productName = option.dataset.productName;
+        if (searchValue === '' || productName.includes(searchValue)) {
+            option.style.display = 'block';
+            hasVisible = true;
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    optionsDiv.style.display = (searchValue === '' && hasVisible) ? 'block' : (hasVisible ? 'block' : 'none');
 }
 
 // Add a new product row
@@ -613,9 +512,14 @@ function addProductRow() {
     row.className = 'product-item row mb-2';
     row.innerHTML = `
         <div class="col-md-5">
-            <select class="form-control product-select" name="products[]" required>
-                <option value="">Chọn sản phẩm</option>
-            </select>
+            <div style="position: relative;">
+                <input type="text" class="form-control product-search" placeholder="🔍 Tìm kiếm sản phẩm..." style="margin-bottom: 5px;">
+                <select class="form-control product-select" name="products[]" required style="display: none;">
+                    <option value="">Chọn sản phẩm</option>
+                </select>
+                <div class="product-options" style="border: 1px solid #ced4da; border-radius: 4px; max-height: 200px; overflow-y: auto; display: none; position: absolute; width: 100%; background: white; z-index: 1000; top: 38px;">
+                </div>
+            </div>
         </div>
         <div class="col-md-3">
             <input type="number" class="form-control product-quantity" name="quantities[]" 
@@ -633,17 +537,8 @@ function addProductRow() {
 
     productList.appendChild(row);
     
-    // Add products to this select
-    const select = row.querySelector('.product-select');
-    allProducts.forEach(product => {
-        if (product.status === 'appear') {
-            const option = document.createElement('option');
-            option.value = product.id;
-            option.textContent = `${product.name} (${parseInt(product.price).toLocaleString()} VND)`;
-            option.dataset.price = product.price;
-            select.appendChild(option);
-        }
-    });
+    // Refresh product select for this row (including search functionality)
+    refreshProductSelects();
     
     console.log('[ADD_ROW] New product row added');
 }
@@ -684,6 +579,26 @@ function updateTotalAmount() {
     if (originalTotalElement) {
         originalTotalElement.value = parseInt(total).toLocaleString('vi-VN') + ' VNĐ';
     }
+
+    // Update QR code if Banking payment is selected
+    const paymentMethod = document.getElementById('payment-method')?.value;
+    if (paymentMethod === 'BANKING') {
+        const cleanAmount = parseInt(total).toString();
+        const qrImage = document.getElementById('admin-qr-code');
+        const bankAccountNumber = '1028974123';
+        const bankName = 'Vietcombank';
+        const qrText = bankAccountNumber + '|' + bankName + '|' + cleanAmount + '|Mua%20hang';
+        const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(qrText);
+        if (qrImage) {
+            qrImage.src = qrUrl;
+        }
+        
+        // Update displayed amount in banking section
+        const adminTotalAmount = document.getElementById('admin-total-amount');
+        if (adminTotalAmount) {
+            adminTotalAmount.textContent = parseInt(total).toLocaleString('vi-VN');
+        }
+    }
     
     console.log('[TOTAL] Updated to:', total);
 }
@@ -698,27 +613,38 @@ async function submitOrder() {
         const customerPhone = document.getElementById('customer-phone')?.value?.trim() || '';
         const paymentMethod = document.getElementById('payment-method')?.value || '';
         const status = document.getElementById('add-order-status')?.value || 'execute';
+        const deliveryType = document.querySelector('input[name="delivery_type"]:checked')?.value || 'pickup';
         
         console.log('[FORM] Name:', customerName);
         console.log('[FORM] Phone:', customerPhone);
         console.log('[FORM] Payment:', paymentMethod);
         console.log('[FORM] Status:', status);
+        console.log('[FORM] DeliveryType:', deliveryType);
         
-        // Validate basic fields
-        if (!customerName) {
-            showNotification('warning', 'Vui lòng nhập tên khách hàng');
-            return;
+        // Validate customer info only if delivery type is "address"
+        if (deliveryType === 'address') {
+            if (!customerName) {
+                showNotification('warning', 'Vui lòng nhập tên khách hàng');
+                return;
+            }
+            if (!customerPhone) {
+                showNotification('warning', 'Vui lòng nhập số điện thoại');
+                return;
+            }
+            // Validate phone number (Vietnamese format: 10 digits starting with 0)
+            const phoneRegex = /^0[0-9]{9}$/;
+            if (!phoneRegex.test(customerPhone) || customerPhone.length !== 10) {
+                showNotification('warning', 'Số điện thoại không hợp lệ (phải là 10 chữ số, bắt đầu từ 0)');
+                return;
+            }
+        } else {
+            // For pickup, only phone is optional but if provided, validate it
+            if (customerPhone && !/^0[0-9]{9}$/.test(customerPhone)) {
+                showNotification('warning', 'Số điện thoại không hợp lệ (phải là 10 chữ số, bắt đầu từ 0)');
+                return;
+            }
         }
-        if (!customerPhone) {
-            showNotification('warning', 'Vui lòng nhập số điện thoại');
-            return;
-        }
-        // Validate phone number (Vietnamese format: 10 digits starting with 0)
-        const phoneRegex = /^0[0-9]{9}$/;
-        if (!phoneRegex.test(customerPhone) || customerPhone.length !== 10) {
-            showNotification('warning', 'Số điện thoại không hợp lệ (phải là 10 chữ số, bắt đầu từ 0)');
-            return;
-        }
+        
         if (!paymentMethod) {
             showNotification('warning', 'Vui lòng chọn phương thức thanh toán');
             return;
@@ -758,20 +684,29 @@ async function submitOrder() {
         
         // Prepare payload
         const voucherSelectElement = document.getElementById('voucher-select');
-        const voucherId = voucherSelectElement?.value ? parseInt(voucherSelectElement.value) : null;
+        let voucherId = null;
+        
+        if (voucherSelectElement?.value) {
+            const parsedId = parseInt(voucherSelectElement.value);
+            voucherId = !isNaN(parsedId) ? parsedId : null;
+        }
         
         const payload = {
             customer_name: customerName,
             customer_phone: customerPhone,
             payment_method: paymentMethod,
             status: status,
-            voucher_id: voucherId,
             products: products,
             address: {
                 ward_id: document.getElementById('add-ward')?.value || '',
                 address_detail: document.getElementById('address-detail')?.value?.trim() || ''
             }
         };
+        
+        // Add voucher_id only if it's a valid number
+        if (voucherId !== null && !isNaN(voucherId) && voucherId > 0) {
+            payload.voucher_id = voucherId;
+        }
         
         console.log('[PAYLOAD] Ready to send');
         console.log('[PAYLOAD] Voucher ID:', voucherId);
@@ -804,12 +739,31 @@ async function submitOrder() {
         
         // Check response
         if (!result.success) {
-            console.error('[FAILED] Server returned success=false');
-            console.error('[ERROR_MESSAGE]', result.message);
-            throw new Error(result.message || 'Unknown error');
+            if (result.warning) {
+                // This is a warning - handle 2 cases
+                console.warn('[WARNING]', result.message);
+                console.warn('[TYPE]', result.type);
+                console.warn('[DETAILS]', result.details);
+                const detailsText = result.details.join('\n');
+                
+                // Trường hợp 1: Sản phẩm hết hàng
+                if (result.type === 'out_of_stock') {
+                    showNotification('warning', result.message + '\n' + detailsText);
+                }
+                // Trường hợp 2: Số lượng mua vượt quá tồn kho
+                else if (result.type === 'insufficient_stock') {
+                    showNotification('warning', result.message + '\n' + detailsText);
+                }
+            } else {
+                // This is an error
+                console.error('[FAILED] Server returned success=false');
+                console.error('[ERROR_MESSAGE]', result.message);
+                showNotification('error', 'Lỗi: ' + (result.message || 'Unknown error'));
+            }
+            return;
         }
         
-        // Success!
+        // Trường hợp 3: Success - Tất cả sản phẩm có đủ hàng
         console.log('[SUCCESS] Order created! ID:', result.order_id);
         
         const totalAmount = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
@@ -926,8 +880,9 @@ async function fetchCustomerHistory(phone) {
         // Update history display
         if (historyResult.success && historyResult.has_purchased) {
             historyDiv.style.display = 'block';
+            const customerNameDisplay = historyResult.customer_name ? `: ${historyResult.customer_name}` : '';
             if (messageElement) {
-                messageElement.textContent = `✓ Khách hàng cũ - Tổng tiền lịch sử: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VNĐ`;
+                messageElement.textContent = `✓ Khách hàng thân thiết${customerNameDisplay} - Tổng tiền lịch sử: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VNĐ`;
                 messageElement.style.color = '#28a745';
             }
             if (detailsElement) {
@@ -935,12 +890,26 @@ async function fetchCustomerHistory(phone) {
             }
         } else {
             historyDiv.style.display = 'block';
+            const customerNameDisplay = historyResult.customer_name ? `: ${historyResult.customer_name}` : '';
             if (messageElement) {
-                messageElement.textContent = '⚠ Khách hàng mới - Chưa có lịch sử mua hàng';
+                messageElement.textContent = `⚠ Khách hàng mới${customerNameDisplay} - Chưa có lịch sử mua hàng`;
                 messageElement.style.color = '#ff9800';
             }
             if (detailsElement) {
                 detailsElement.innerHTML = '';
+            }
+            // Show note for new customer
+            const voucherNote = document.getElementById('voucher-note');
+            if (voucherNote) {
+                voucherNote.style.display = 'block';
+            }
+        }
+        
+        // Hide note if customer is old
+        if (historyResult.success && historyResult.has_purchased) {
+            const voucherNote = document.getElementById('voucher-note');
+            if (voucherNote) {
+                voucherNote.style.display = 'none';
             }
         }
         
@@ -951,10 +920,24 @@ async function fetchCustomerHistory(phone) {
             voucherResult.eligible_vouchers.forEach(voucher => {
                 const option = document.createElement('option');
                 option.value = voucher.id;
-                option.textContent = `${voucher.name} - Giảm ${voucher.percen_decrease}% (Tối thiểu: ${voucher.conditions.toLocaleString('vi-VN')}đ)`;
+                option.textContent = `MGG${voucher.id} - ${voucher.name} - Giảm ${voucher.percen_decrease}% (Tối thiểu: ${voucher.conditions.toLocaleString('vi-VN')}đ)`;
                 option.dataset.discount = voucher.percen_decrease;
                 voucherSelect.appendChild(option);
             });
+        } else if (voucherResult.success && !historyResult.success) {
+            // Khách hàng mới
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '⚠ Khách hàng mới - Không được áp dụng voucher';
+            option.disabled = true;
+            voucherSelect.appendChild(option);
+        } else if (voucherResult.success && historyResult.has_purchased && voucherResult.eligible_vouchers.length === 0) {
+            // Khách hàng cũ nhưng chưa đủ điều kiện
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = `ℹ Khách chỉ nhận voucher nếu tổng giá trị các đơn hàng trước đó đáp ứng điều kiện chương trình.`;
+            option.disabled = true;
+            voucherSelect.appendChild(option);
         }
         
     } catch (error) {

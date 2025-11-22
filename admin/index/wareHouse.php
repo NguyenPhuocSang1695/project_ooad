@@ -28,7 +28,504 @@ global $mysqli;
   <link rel="stylesheet" href="../style/warehouse-pagination.css">
   <link rel="stylesheet" href="../style/wareHouse.css">
   <link rel="stylesheet" href="../style/wareHouseFilter.css">
+  <link rel="stylesheet" href="../style/product-details-modal.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <style>
+    /* Base Modal Styles */
+    .product-details-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .product-details-content {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .product-detail-header {
+      padding: 20px 25px;
+      border-bottom: 2px solid #f0f0f0;
+      background: #13793e;
+    }
+
+    .product-detail-header h3 {
+      margin: 0;
+      color: white;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
+    }
+
+    .product-details-body {
+      padding: 30px;
+    }
+
+    /* Product Detail Layout */
+    .product-detail-layout {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 35px;
+    }
+
+    .product-image-section img {
+      width: 100%;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s;
+    }
+
+    .product-image-section img:hover {
+      transform: scale(1.02);
+    }
+
+    .product-info-section h4 {
+      margin: 0 0 20px 0;
+      color: #333;
+      font-size: 26px;
+      font-weight: 700;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    .info-item {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #65a381;
+    }
+
+    .info-label {
+      font-weight: 700;
+      color: #666;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .info-value {
+      margin: 0;
+      color: #333;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .info-value.price {
+      color: #e74c3c;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .info-value.status-appear {
+      color: #27ae60;
+      font-weight: 600;
+    }
+
+    .info-value.status-hidden {
+      color: #e67e22;
+      font-weight: 600;
+    }
+
+    .description-section {
+      border-top: 2px solid #f0f0f0;
+      padding-top: 20px;
+      margin: 25px 0;
+    }
+
+    .description-section .info-label {
+      margin-bottom: 10px;
+    }
+
+    .description-text {
+      margin: 0;
+      color: #555;
+      line-height: 1.8;
+      font-size: 15px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      padding-top: 20px;
+      border-top: 2px solid #f0f0f0;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 20px;
+      background: #13793e;
+      border-radius: 10px;
+      color: white;
+    }
+
+    .stat-label {
+      font-weight: 700;
+      font-size: 11px;
+      display: block;
+      margin-bottom: 10px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    /* Tablet Styles (768px - 1024px) */
+    @media screen and (max-width: 1024px) {
+      .product-details-content {
+        max-width: 750px;
+      }
+
+      .product-detail-layout {
+        grid-template-columns: 300px 1fr;
+        gap: 25px;
+      }
+
+      .product-info-section h4 {
+        font-size: 22px;
+      }
+
+      .info-grid {
+        gap: 15px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
+    }
+
+    /* Mobile Landscape (481px - 767px) */
+    @media screen and (max-width: 767px) {
+      .product-details-overlay {
+        padding: 10px;
+        align-items: flex-start;
+      }
+
+      .product-details-content {
+        max-width: 100%;
+        margin-top: 10px;
+        border-radius: 8px;
+      }
+
+      .product-detail-header {
+        padding: 15px 20px;
+      }
+
+      .product-detail-header h3 {
+        font-size: 20px;
+        padding-right: 40px;
+      }
+
+      .close-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+      }
+
+      .product-details-body {
+        padding: 20px;
+      }
+
+      .product-detail-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .product-image-section {
+        max-width: 100%;
+      }
+
+      .product-image-section img {
+        max-height: 300px;
+        object-fit: contain;
+      }
+
+      .product-info-section h4 {
+        font-size: 20px;
+        margin-bottom: 15px;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .info-item {
+        padding: 12px;
+      }
+
+      .info-value {
+        font-size: 15px;
+      }
+
+      .info-value.price {
+        font-size: 20px;
+      }
+
+      .description-section {
+        margin: 20px 0;
+      }
+
+      .description-text {
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .stat-item {
+        padding: 15px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
+    }
+
+    /* Mobile Portrait (320px - 480px) */
+    @media screen and (max-width: 480px) {
+      .product-details-overlay {
+        padding: 5px;
+      }
+
+      .product-details-content {
+        margin-top: 5px;
+        max-height: 95vh;
+      }
+
+      .product-detail-header {
+        padding: 12px 15px;
+      }
+
+      .product-detail-header h3 {
+        font-size: 18px;
+      }
+
+      .close-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+        top: 10px;
+        right: 10px;
+      }
+
+      .product-details-body {
+        padding: 15px;
+      }
+
+      .product-image-section img {
+        max-height: 250px;
+      }
+
+      .product-info-section h4 {
+        font-size: 18px;
+      }
+
+      .info-item {
+        padding: 10px;
+        border-left-width: 3px;
+      }
+
+      .info-label {
+        font-size: 10px;
+        margin-bottom: 6px;
+      }
+
+      .info-value {
+        font-size: 14px;
+      }
+
+      .info-value.price {
+        font-size: 18px;
+      }
+
+      .description-text {
+        font-size: 13px;
+      }
+
+      .stat-item {
+        padding: 12px;
+      }
+
+      .stat-label {
+        font-size: 10px;
+        margin-bottom: 8px;
+      }
+
+      .stat-value {
+        font-size: 20px;
+      }
+    }
+
+    /* Extra Small Mobile (< 360px) */
+    @media screen and (max-width: 359px) {
+      .product-detail-header h3 {
+        font-size: 16px;
+      }
+
+      .product-info-section h4 {
+        font-size: 16px;
+      }
+
+      .info-value {
+        font-size: 13px;
+      }
+
+      .info-value.price {
+        font-size: 16px;
+      }
+
+      .description-text {
+        font-size: 12px;
+      }
+
+      .stat-value {
+        font-size: 18px;
+      }
+    }
+
+    /* Scrollbar Styling */
+    .product-details-content::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .product-details-content::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    .product-details-content::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+
+    .product-details-content::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    /* Loading State */
+    .loading-spinner {
+      text-align: center;
+      padding: 40px;
+      color: #667eea;
+    }
+
+    .loading-spinner i {
+      font-size: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Error State */
+    .error-message {
+      text-align: center;
+      padding: 40px 20px;
+      color: #e74c3c;
+    }
+
+    .error-message i {
+      font-size: 48px;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .error-message p {
+      font-size: 16px;
+      margin: 0;
+    }
+
+    @media screen and (max-width: 480px) {
+      .error-message {
+        padding: 30px 15px;
+      }
+
+      .error-message i {
+        font-size: 36px;
+      }
+
+      .error-message p {
+        font-size: 14px;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -75,12 +572,36 @@ global $mysqli;
               <p style="color:black">Đơn hàng</p>
             </div>
           </a>
+          <a href="importReceipt.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Nhập hàng</p>
+            </div>
+          </a>
           <a href="analyzePage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
               <button class="button-function-selection">
                 <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
               </button>
               <p>Thống kê</p>
+            </div>
+          </a>
+          <a href="supplierManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Nhà cung cấp</p>
+            </div>
+          </a>
+          <a href="voucherManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Mã giảm giá</p>
             </div>
           </a>
           <a href="voucherManage.php" style="text-decoration: none; color: black;">
@@ -193,12 +714,28 @@ global $mysqli;
         <p>Đơn hàng</p>
       </div>
     </a>
+    <a href="importReceipt.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Nhập hàng</p>
+      </div>
+    </a>
     <a href="analyzePage.php" style="text-decoration: none; color: black;">
       <div class="container-function-selection">
         <button class="button-function-selection">
           <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
         </button>
         <p>Thống kê</p>
+      </div>
+    </a>
+    <a href="supplierManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Nhà cung cấp</p>
       </div>
     </a>
     <a href="voucherManage.php" style="text-decoration: none; color: black;">
@@ -257,6 +794,8 @@ global $mysqli;
               <option value="all">Tất cả</option>
               <option value="appear">Đang hiện</option>
               <option value="hidden">Đã ẩn</option>
+              <option value="out_of_stock">Hết hàng</option>
+              <option value="near_out_of_stock">Sắp hết hàng (số lượng ít hơn 5)</option>
             </select>
           </div>
 
@@ -338,10 +877,20 @@ global $mysqli;
     </div>
 
 
-    <!-- Popup overlay cho thông tin sản phẩm
+    <!-- Popup overlay cho thông tin sản phẩm -->
     <div class="product-details-overlay" id="productDetailsOverlay">
-      <div class="product-details-content" id="productDetailsContent"></div>
-    </div> -->
+      <div class="product-details-content">
+        <button type="button" class="close-btn btn-secondary" onclick="closeProductDetail()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="product-detail-header">
+          <h3>Chi Tiết Sản Phẩm</h3>
+        </div>
+        <div id="productDetailsContent" class="product-details-body">
+          <div>Đang tải...</div>
+        </div>
+      </div>
+    </div>
 
     <!-- Popup overlay cho add product-->
     <div class="add-product-overlay" id="addProductOverlay">
@@ -482,7 +1031,7 @@ global $mysqli;
   <!-- Edit Product Overlay -->
   <div class="product-details-overlay" id="editProductOverlay">
     <div class="product-details-content">
-      <button type="button" class="close-btn" onclick="closeEditOverlay()">
+      <button type="button" class="close-btn btn-secondary" onclick="closeEditOverlay()">
         <i class="fa-solid fa-xmark"></i>
       </button>
       <div class="card">
@@ -551,24 +1100,12 @@ global $mysqli;
                   <!-- Nhà cung cấp -->
                   <div class="col-md-6 mb-3">
                     <label for="editSupplier" class="form-label">Nhà cung cấp</label>
-                    <select class="form-control" id="editSupplier" name="supplierID" required>
-                      <option value="" disabled>-- Chọn nhà cung cấp --</option>
-                      <?php
-                      $sql = "select supplier_id, supplier_name from suppliers";
-                      $result = $mysqli->query($sql);
-                      $suppliers = [];
-                      while ($row = $result->fetch_assoc()) {
-                        $suppliers[] = $row;
-                      }
-                      ?>
-                      <?php foreach ($suppliers as $supplier): ?>
-                        <option value="<?= $supplier['supplier_id'] ?>">
-                          <?= htmlspecialchars($supplier['supplier_name']) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
+                    <input type="text" class="form-control" id="editSupplier" name="supplierName" readonly style="background-color: #e9ecef; cursor: not-allowed;">
+                    <input type="hidden" id="editSupplierId" name="supplierID">
                   </div>
+                </div>
 
+                <div class="row">
                   <!-- Số lượng sản phẩm -->
                   <div class="col-md-6 mb-3">
                     <label for="editQuantity" class="form-label">Số lượng</label>
@@ -612,7 +1149,10 @@ global $mysqli;
           document.getElementById('editDescription').value = product.Description;
           document.getElementById('editStatus').value = product.Status;
           document.getElementById('editQuantity').value = product.quantity_in_stock;
-          document.getElementById('editSupplier').value = product.Supplier_id;
+
+          // Hiển thị tên nhà cung cấp (readonly)
+          document.getElementById('editSupplier').value = product.SupplierName || 'Không có thông tin';
+          document.getElementById('editSupplierId').value = product.Supplier_id;
 
           const currentImage = document.getElementById('currentImage');
           currentImage.src = '../../' + product.ImageURL;
@@ -625,6 +1165,164 @@ global $mysqli;
           alert('Có lỗi khi tải thông tin sản phẩm!');
         });
     }
+
+    function viewProduct(productId) {
+      console.log('viewProduct called with ID:', productId);
+
+      const overlay = document.getElementById('productDetailsOverlay');
+      const content = document.getElementById('productDetailsContent');
+
+      if (!overlay || !content) {
+        console.error('Không tìm thấy overlay hoặc content element');
+        alert('Lỗi: Không tìm thấy modal!');
+        return;
+      }
+
+      // Hiển thị loading
+      content.innerHTML = `
+    <div class="loading-spinner">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <p style="margin-top: 15px; font-size: 16px;">Đang tải...</p>
+    </div>
+  `;
+      overlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden'; // Prevent body scroll
+
+      console.log('Fetching product detail...');
+
+      fetch(`../php/getProductDetail.php?id=${productId}`)
+        .then(response => {
+          console.log('Response status:', response.status);
+          if (!response.ok) throw new Error('Network response was not ok');
+          return response.json();
+        })
+        .then(data => {
+          console.log('Data received:', data);
+
+          if (data.success && data.product) {
+            const p = data.product;
+
+            // Fix đường dẫn ảnh
+            let imagePath = p.ImageURL;
+            if (imagePath.startsWith('/')) {
+              imagePath = imagePath.substring(1);
+            }
+            if (!imagePath.startsWith('assets/')) {
+              imagePath = 'assets/' + imagePath;
+            }
+
+            console.log('Image path:', imagePath);
+
+            // Status formatting
+            let statusText = '';
+            let statusClass = '';
+            if (p.Status === 'appear') {
+              statusText = '✓ Đang hiện';
+              statusClass = 'status-appear';
+            } else if (p.Status === 'hidden') {
+              statusText = '✗ Đã ẩn';
+              statusClass = 'status-hidden';
+            } else {
+              statusText = '⚠ Hết hàng';
+              statusClass = 'status-out';
+            }
+
+            content.innerHTML = `
+          <div class="product-detail-layout">
+            <div class="product-image-section">
+              <img src="../../${imagePath}" 
+                   alt="${p.ProductName}" 
+                   onerror="this.src='../../assets/images/no-image.png'; console.error('Image load failed');">
+            </div>
+            
+            <div class="product-info-section">
+              <h4>${p.ProductName}</h4>
+              
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Danh mục</span>
+                  <p class="info-value">${p.CategoryName || 'N/A'}</p>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">Nhà cung cấp</span>
+                  <p class="info-value">${p.SupplierName || 'N/A'}</p>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">Giá bán</span>
+                  <p class="info-value price">${Number(p.Price).toLocaleString('vi-VN')} VND</p>
+                </div>
+                
+                <div class="info-item">
+                  <span class="info-label">Trạng thái</span>
+                  <p class="info-value ${statusClass}">${statusText}</p>
+                </div>
+              </div>
+              
+              <div class="description-section">
+                <span class="info-label">Mô tả sản phẩm</span>
+                <p class="description-text">${p.Description || 'Không có mô tả'}</p>
+              </div>
+              
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <span class="stat-label">Số lượng tồn</span>
+                  <p class="stat-value">${p.quantity_in_stock || 0}</p>
+                </div>
+                
+                <div class="stat-item">
+                  <span class="stat-label">Đã nhập</span>
+                  <p class="stat-value">${p.total_imported || 0}</p>
+                </div>
+                
+                <div class="stat-item">
+                  <span class="stat-label">Đã bán</span>
+                  <p class="stat-value">${p.total_sold || 0}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+          } else {
+            content.innerHTML = `
+          <div class="error-message">
+            <i class="fa-solid fa-exclamation-triangle"></i>
+            <p>${data.message || 'Không tìm thấy sản phẩm'}</p>
+          </div>
+        `;
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          content.innerHTML = `
+        <div class="error-message">
+          <i class="fa-solid fa-exclamation-circle"></i>
+          <p>Lỗi tải dữ liệu: ${error.message}</p>
+        </div>
+      `;
+        });
+    }
+
+    function closeProductDetail() {
+      const overlay = document.getElementById('productDetailsOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Enable body scroll
+      }
+    }
+
+    // Đóng modal khi click outside
+    document.addEventListener('DOMContentLoaded', function() {
+      const overlay = document.getElementById('productDetailsOverlay');
+      if (overlay) {
+        overlay.addEventListener('click', function(e) {
+          if (e.target === this) {
+            closeProductDetail();
+          }
+        });
+      }
+    });
 
     function closeEditOverlay() {
       document.getElementById('editProductOverlay').style.display = 'none';
@@ -649,7 +1347,7 @@ global $mysqli;
       reader.readAsDataURL(file);
     });
 
-    // Handle edit product form submission safely (prevent default and use AJAX)
+    // Xử lí form chỉnh sửa sản phẩm 
     (function() {
       const editForm = document.getElementById('editProductForm');
       if (!editForm) return;
@@ -767,6 +1465,9 @@ global $mysqli;
                 <td style="text-align: center;">${p.CategoryName}</td>
                 <td style="text-align: center;">${Number(p.Price).toLocaleString('vi-VN')}</td>
                 <td class="actions d-flex" style="text-align: center;">
+                  <button class="btn btn-success btn-sm me-2" onclick="viewProduct(${p.ProductID})" title="Xem chi tiết">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
                   <button class="btn btn-primary btn-sm me-2" onclick="editProduct(${p.ProductID})" style="margin-right: 8px;">
                     <i class="fa-solid fa-pen-to-square"></i>
                   </button>
@@ -774,7 +1475,7 @@ global $mysqli;
                     <i class="fa-solid fa-trash"></i>
                   </button>
                 </td>
-          `;
+                `;
               tbody.appendChild(tr);
             });
           } else {
@@ -961,7 +1662,66 @@ global $mysqli;
       }
     })();
     // Load lần đầu (respect currentPage)
+    // Thêm vào cuối phần script, trước dòng loadProducts(currentPage);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Lấy parameter từ URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const editProductId = urlParams.get('edit');
+
+      if (editProductId) {
+        editProduct(editProductId);
+        // Xóa parameter edit khỏi URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+
+      // Lấy parameter status từ URL
+      const statusParam = urlParams.get('status');
+      if (statusParam) {
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+          statusFilter.value = statusParam;
+          currentPage = 1;
+          loadProducts(1);
+          return; // Dừng ở đây để không load 2 lần
+        }
+      }
+    });
     loadProducts(currentPage);
+  </script>
+
+  <script>
+    // Kiểm tra nếu có parameter edit trong URL
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const editProductId = urlParams.get('edit');
+
+      if (editProductId) {
+        // Tự động mở popup chỉnh sửa với productId từ URL
+        editProduct(editProductId);
+
+        // Xóa parameter khỏi URL để tránh mở lại khi refresh
+        const newUrl = window.location.pathname + window.location.search.replace(/[?&]edit=\d+/, '');
+        window.history.replaceState({}, document.title, newUrl);
+      }
+
+      // Phần code xử lý status filter hiện tại
+      const statusParam = urlParams.get('status');
+      if (statusParam) {
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+          statusFilter.value = statusParam;
+          currentPage = 1;
+          loadProducts(1);
+        }
+      }
+
+      // Load products nếu không có filter nào
+      if (!editProductId && !statusParam) {
+        loadProducts(currentPage);
+      }
+    });
   </script>
 </body>
 

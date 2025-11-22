@@ -9,23 +9,17 @@
   <link href="../icon/css/all.css" rel="stylesheet">
   <link href="../style/generall.css" rel="stylesheet">
   <link href="../style/main1.css" rel="stylesheet">
-  <link href="../style/customer1.css" rel="stylesheet">
   <link href="../style/LogInfo.css" rel="stylesheet">
   <link href="asset/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="../style/customer-table.css" rel="stylesheet">
   <link href="../style/customer-search.css" rel="stylesheet">
   <link rel="stylesheet" href="../style/responsiveCustomer.css">
   <link rel="stylesheet" href="../style/add-user-modal.css">
+  <!-- Customer table CSS loaded last - contains all customer page styles -->
+  <link href="../style/customer-table.css" rel="stylesheet">
   <script src="../js/customer-search.js" defer></script>
   <script src="../js/add-user.js" defer></script>
   <script src="../js/edit-user.js" defer></script>
-  <style>
-    .loading {
-      background-image: url('data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==');
-      background-repeat: no-repeat;
-      background-position: right 45px center;
-    }
-  </style>
+  <script src="../js/delete-user.js" defer></script>
 </head>
 
 <body>
@@ -118,26 +112,36 @@ require_once '../php/User.php';
           <th>Họ và tên</th>
           <th>Số điện thoại</th>
           <th>Vai trò</th>
+          <th>Trạng thái</th>
           <th>Thao tác</th>
         </tr>
       </thead>
       <tbody>
         <?php if (!empty($users)): ?>
           <?php foreach ($users as $user): ?>
-            <tr class="user-row" data-user-id="<?php echo (int)$user->getId(); ?>" data-username="<?php echo htmlspecialchars($user->getUsername()); ?>" style="cursor:pointer;">
+            <tr class="user-row" data-user-id="<?php echo (int)$user->getId(); ?>" data-username="<?php echo htmlspecialchars($user->getUsername()); ?>" data-user-status="<?php echo htmlspecialchars($user->getStatus()); ?>" style="cursor:pointer;">
               <td><?php echo htmlspecialchars($user->getFullname()); ?></td>
               <td><?php echo htmlspecialchars($user->getPhone()); ?></td>
               <td><span class="role-badge"><?php echo $user->getRoleText(); ?></span></td>
+              <td>
+                <span class="status-badge <?php echo $user->isActive() ? 'status-active' : 'status-blocked'; ?>">
+                  <?php echo $user->getStatusText(); ?>
+                </span>
+              </td>
               <td class="action-buttons">
                 <button class="btn-edit" onclick="(function(btn){ var tr=btn.closest('tr'); var un=tr?tr.getAttribute('data-username'):''; var uid=tr?parseInt(tr.getAttribute('data-user-id')||'0',10):0; showEditUserPopup(un, uid); })(this)">
                   <i class="fas fa-edit"></i> Sửa
+                </button>
+                <button class="btn-toggle-status">
+                  <i class="fas <?php echo $user->isActive() ? 'fa-lock' : 'fa-unlock'; ?>"></i>
+                  <?php echo $user->isActive() ? 'Khóa' : 'Mở khóa'; ?>
                 </button>
               </td>
             </tr>
           <?php endforeach; ?>
         <?php else: ?>
           <tr>
-            <td colspan="4" class="text-center">Không có dữ liệu người dùng</td>
+            <td colspan="5" class="text-center">Không có dữ liệu người dùng</td>
           </tr>
         <?php endif; ?>
       </tbody>
@@ -189,7 +193,7 @@ require_once '../php/User.php';
     document.addEventListener('DOMContentLoaded', function(){
       document.querySelectorAll('tr.user-row').forEach(function(tr){
         tr.addEventListener('click', function(e){
-          if (e.target.closest('.btn-edit')) return; // don't navigate when clicking edit
+          if (e.target.closest('.btn-edit') || e.target.closest('.btn-toggle-status')) return; // don't navigate when clicking edit/toggle
           const userId = this.getAttribute('data-user-id');
           const username = this.getAttribute('data-username');
           

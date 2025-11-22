@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
   <!-- Shared CSS needed for header + sidebar to render correctly -->
   <link rel="stylesheet" href="../style/header.css">
@@ -14,8 +15,9 @@
   <link href="asset/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../style/responsiveHomePage.css">
 </head>
+
 <body>
-      <div class="header">
+  <div class="header">
     <div class="index-menu">
       <i class="fa-solid fa-bars" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button"
         aria-controls="offcanvasExample"></i>
@@ -58,12 +60,36 @@
               <p style="color:black">Đơn hàng</p>
             </div>
           </a>
+          <a href="importReceipt.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Nhập hàng</p>
+            </div>
+          </a>
           <a href="analyzePage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
               <button class="button-function-selection">
                 <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
               </button>
               <p>Thống kê</p>
+            </div>
+          </a>
+          <a href="supplierManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Nhà cung cấp</p>
+            </div>
+          </a>
+          <a href="voucherManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection">
+                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Mã giảm giá</p>
             </div>
           </a>
           <a href="accountPage.php" style="text-decoration: none; color: black;">
@@ -168,12 +194,36 @@
         <p>Đơn hàng</p>
       </div>
     </a>
+    <a href="importReceipt.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Nhập hàng</p>
+      </div>
+    </a>
     <a href="analyzePage.php" style="text-decoration: none; color: black;">
       <div class="container-function-selection">
         <button class="button-function-selection">
           <i class="fa-solid fa-chart-simple" style="font-size: 20px; color: #FAD4AE;"></i>
         </button>
         <p>Thống kê</p>
+      </div>
+    </a>
+    <a href="supplierManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Nhà cung cấp</p>
+      </div>
+    </a>
+    <a href="voucherManage.php" style="text-decoration: none; color: black;">
+      <div class="container-function-selection">
+        <button class="button-function-selection">
+          <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+        </button>
+        <p>Mã giảm giá</p>
       </div>
     </a>
     <a href="accountPage.php" style="text-decoration: none; color: black;">
@@ -186,4 +236,5 @@
     </a>
   </div>
 </body>
+
 </html>

@@ -1,46 +1,18 @@
 <?php
-require_once './connect.php';
-
-// Kết nối database
-$db = new DatabaseConnection();
-$db->connect();
-$conn = $db->getConnection();
+require_once './VoucherManager.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $manager = new VoucherManager();
+
     $id = $_POST['id'] ?? '';
 
-    if (empty($id) || !is_numeric($id)) {
-        echo "ID voucher không hợp lệ!";
-        exit;
-    }
+    $result = $manager->deleteVoucher($id);
 
-    // Kiểm tra voucher có tồn tại
-    $check_sql = "SELECT * FROM vouchers WHERE id = ?";
-    $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("i", $id);
-    $check_stmt->execute();
-    $result = $check_stmt->get_result();
+    echo $result['message'];
 
-    if ($result->num_rows === 0) {
-        echo "Voucher không tồn tại hoặc đã bị xóa!";
-        exit;
-    }
-
-    // Tiến hành xóa
-    $delete_sql = "DELETE FROM vouchers WHERE id = ?";
-    $delete_stmt = $conn->prepare($delete_sql);
-    $delete_stmt->bind_param("i", $id);
-
-    if ($delete_stmt->execute()) {
-        echo "Xóa voucher thành công!";
-    } else {
-        echo "Xóa voucher thất bại!";
-    }
-
-    $delete_stmt->close();
-    $check_stmt->close();
+    // Nếu muốn return JSON:
+    // header('Content-Type: application/json');
+    // echo json_encode($result);
 } else {
     echo "Phương thức không hợp lệ!";
 }
-
-$db->close();

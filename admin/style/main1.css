@@ -188,7 +188,7 @@
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.2s ease;
-  width: 85px;
+  width: 100px;
 }
 
 .button-handle:hover {

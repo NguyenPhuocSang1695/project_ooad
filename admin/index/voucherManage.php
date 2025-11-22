@@ -18,7 +18,7 @@ $voucherResult = $myconn->query($sqlVouchers);
 <html lang="en">
 
 <head>
-  <title>Tài khoản</title>
+  <title>Mã giảm giá</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -103,17 +103,26 @@ $voucherResult = $myconn->query($sqlVouchers);
               <p>Thống kê</p>
             </div>
           </a>
-          <a href="voucherManage.php" style="text-decoration: none; color: black;">
+
+          <a href="supplierManage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
               <button class="button-function-selection">
-                <i class="fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
+                <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+              </button>
+              <p>Nhà cung cấp</p>
+            </div>
+          </a>
+          <a href="voucherManage.php" style="text-decoration: none; color: black;">
+            <div class="container-function-selection">
+              <button class="button-function-selection" style="background-color: #6aa173;">
+                <i class=" fa-solid fa-ticket" style="font-size: 20px; color: #FAD4AE;"></i>
               </button>
               <p>Mã giảm giá</p>
             </div>
           </a>
           <a href="accountPage.php" style="text-decoration: none; color: black;">
             <div class="container-function-selection">
-              <button class="button-function-selection" style="background-color: #6aa173;">
+              <button class="button-function-selection">
                 <i class="fa-solid fa-circle-user" style="
                            font-size: 20px;
                            color: #FAD4AE;
@@ -126,7 +135,7 @@ $voucherResult = $myconn->query($sqlVouchers);
       </div>
     </div>
     <div class="header-left-section">
-      <p class="header-left-title">Tài khoản</p>
+      <p class="header-left-title">Mã giảm giá</p>
     </div>
     <div class="header-middle-section">
       <img class="logo-store" src="../../assets/images/LOGO-2.jpg">
@@ -234,6 +243,14 @@ $voucherResult = $myconn->query($sqlVouchers);
           <p>Đơn hàng</p>
         </div>
       </a>
+      <a href="importReceipt.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection">
+            <i class="fa-solid fa-file-import" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Nhập hàng</p>
+        </div>
+      </a>
       <a href="analyzePage.php" style="text-decoration: none; color: black;">
         <div class="container-function-selection">
           <button class="button-function-selection">
@@ -243,6 +260,14 @@ $voucherResult = $myconn->query($sqlVouchers);
                 "></i>
           </button>
           <p>Thống kê</p>
+        </div>
+      </a>
+      <a href="supplierManage.php" style="text-decoration: none; color: black;">
+        <div class="container-function-selection">
+          <button class="button-function-selection">
+            <i class="fa-solid fa-truck-field" style="font-size: 20px; color: #FAD4AE;"></i>
+          </button>
+          <p>Nhà cung cấp</p>
         </div>
       </a>
       <a href="voucherManage.php" style="text-decoration: none; color: black;">
@@ -272,10 +297,10 @@ $voucherResult = $myconn->query($sqlVouchers);
     <div class="voucher-wrapper">
       <!-- FORM THÊM VOUCHER -->
       <div class="voucher-form-container">
-        <h2>🎟️ Thêm Voucher Mới</h2>
+        <h2>🎟️ Thêm Mã Giảm Giá Mới</h2>
         <form class="voucher-form">
           <div class="form-group">
-            <label for="name">Tên voucher:</label>
+            <label for="name">Tên mã giảm giá:</label>
             <input type="text" id="name" name="name" required placeholder="VD: GiamGia20">
           </div>
 
@@ -285,7 +310,7 @@ $voucherResult = $myconn->query($sqlVouchers);
           </div>
 
           <div class="form-group">
-            <label for="condition">Điều kiện (VNĐ):</label>
+            <label for="condition">Điều kiện: Khách hàng thân thiết có tổng số tiền đã mua hàng lớn hơn hoặc bằng (VND)</label>
             <input type="number" id="condition" name="condition" min="0" required placeholder="VD: 500000">
           </div>
 
@@ -299,7 +324,7 @@ $voucherResult = $myconn->query($sqlVouchers);
 
           <div class="form-btns">
             <button type="submit" class="btn-submit">
-              <i class="fa-solid fa-plus"></i> Thêm Voucher
+              <i class="fa-solid fa-plus"></i> Thêm mã giảm giá
             </button>
           </div>
         </form>
@@ -314,6 +339,20 @@ $voucherResult = $myconn->query($sqlVouchers);
             <i class="fa-solid fa-search"></i>
             <input type="text" id="searchVoucher" placeholder="Tìm kiếm voucher...">
           </div>
+          <p id="noResults">
+            Không tìm thấy phiếu nhập nào.
+          </p>
+          <style>
+            #noResults {
+              padding: 10px;
+              background: #ffe1e1;
+              border: 1px solid #ff7b7b;
+              border-radius: 5px;
+              color: #c40000;
+              display: none;
+            }
+          </style>
+
         </div>
 
         <div class="voucher-list">
@@ -321,13 +360,19 @@ $voucherResult = $myconn->query($sqlVouchers);
             <?php while ($voucher = $voucherResult->fetch_assoc()): ?>
               <div class="voucher-card" data-id="<?php echo $voucher['id']; ?>">
                 <div class="voucher-header">
-                  <div class="voucher-name">
+                  <div class="voucher-id">
                     <i class="fa-solid fa-ticket"></i>
-                    <strong><?php echo htmlspecialchars($voucher['name']); ?></strong>
+                    <strong>MGG<?php echo htmlspecialchars($voucher['id']); ?></strong>
                   </div>
                   <span class="voucher-status <?php echo $voucher['status'] === 'active' ? 'status-active' : 'status-inactive'; ?>">
                     <?php echo $voucher['status'] === 'active' ? '✓ Hoạt động' : '✕ Tạm dừng'; ?>
                   </span>
+                </div>
+
+                <div class="voucher-name" style="margin-bottom: 10px;">
+                  <!-- <i class="fa-solid fa-tag"></i> -->
+                  <p>Tên: </p>
+                  <strong><?php echo htmlspecialchars($voucher['name']); ?></strong>
                 </div>
 
                 <div class="voucher-details">
@@ -336,8 +381,8 @@ $voucherResult = $myconn->query($sqlVouchers);
                     <span class="detail-value discount"><?php echo $voucher['percen_decrease']; ?>%</span>
                   </div>
                   <div class="detail-item">
-                    <span class="detail-label">Điều kiện:</span>
-                    <span class="detail-value">≥ <?php echo number_format($voucher['conditions'], 0, ',', '.'); ?>đ</span>
+                    <span class="detail-label">Điều kiện: Khách hàng thân thiết có tổng số tiền đã mua hàng lớn hơn hoặc bằng </span>
+                    <span class="detail-value"><?php echo number_format($voucher['conditions'], 0, ',', '.'); ?> VND</span>
                   </div>
                 </div>
 
@@ -354,10 +399,11 @@ $voucherResult = $myconn->query($sqlVouchers);
           <?php else: ?>
             <div class="empty-state">
               <i class="fa-solid fa-inbox"></i>
-              <p>Chưa có voucher nào</p>
+              <p>Chưa có mã giảm giá nào</p>
             </div>
           <?php endif; ?>
         </div>
+
       </div>
     </div>
 
@@ -547,7 +593,7 @@ $voucherResult = $myconn->query($sqlVouchers);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
+      margin-bottom: 0px;
     }
 
     .voucher-name {
@@ -677,6 +723,14 @@ $voucherResult = $myconn->query($sqlVouchers);
       }
     }
 
+    @media (min-width: 426px) and (max-width: 768px) {
+
+      .voucher-form-container,
+      .voucher-list-container {
+        margin: 0 0 0 65px;
+      }
+    }
+
     @media (max-width: 768px) {
       .voucher-wrapper {
         padding: 20px;
@@ -687,6 +741,14 @@ $voucherResult = $myconn->query($sqlVouchers);
         grid-template-columns: 1fr;
       }
     }
+
+    @media (min-width: 1024px) {
+
+      .voucher-form-container,
+      .voucher-list-container {
+        margin: 0 0 0 60px
+      }
+    }
   </style>
 
 
@@ -694,12 +756,12 @@ $voucherResult = $myconn->query($sqlVouchers);
   <!-- POPUP CHỈNH SỬA VOUCHER -->
   <div id="editVoucherModal" class="modal_voucher" style="display:none;">
     <div class="modal-content">
-      <h2>✏️ Chỉnh sửa Voucher</h2>
+      <h2>✏️ Chỉnh sửa mã giảm giá</h2>
       <form id="editVoucherForm">
         <input type="hidden" id="edit_id" name="id">
 
         <div class="form-group">
-          <label for="edit_name">Tên voucher:</label>
+          <label for="edit_name">Tên mã giảm giá:</label>
           <input type="text" id="edit_name" name="name" required>
         </div>
 
@@ -709,7 +771,7 @@ $voucherResult = $myconn->query($sqlVouchers);
         </div>
 
         <div class="form-group">
-          <label for="edit_condition">Điều kiện (VNĐ):</label>
+          <label for="edit_condition">Điều kiện: Khách hàng thân thiết có tổng số tiền đã mua hàng lớn hơn hoặc bằng (VND)</label>
           <input type="number" id="edit_condition" name="condition" min="0" required>
         </div>
 
@@ -802,120 +864,6 @@ $voucherResult = $myconn->query($sqlVouchers);
   </style>
 
 
-  <script>
-    // Add voucher 
-    document.addEventListener("DOMContentLoaded", () => {
-      const addForm = document.querySelector(".voucher-form");
-
-      if (addForm) {
-        addForm.addEventListener("submit", async function(e) {
-          e.preventDefault();
-
-          const formData = new FormData(this);
-
-          try {
-            const response = await fetch("../php/addVoucher.php", {
-              method: "POST",
-              body: formData
-            });
-
-            const result = await response.text();
-            alert(result.trim());
-
-            // Xóa nội dung form sau khi thêm
-            this.reset();
-
-            // Reload nhẹ danh sách voucher (nếu có)
-            if (typeof loadVoucherList === "function") {
-              loadVoucherList(); // nếu bạn có hàm load lại danh sách
-            } else {
-              location.reload();
-            }
-          } catch (error) {
-            alert("Lỗi khi thêm voucher!");
-            console.error(error);
-          }
-        });
-      }
-    });
-
-    // --- Tìm kiếm voucher ---
-    const searchInput = document.getElementById('searchVoucher');
-    if (searchInput) {
-      searchInput.addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        const cards = document.querySelectorAll('.voucher-card');
-        cards.forEach(card => {
-          const name = card.querySelector('.voucher-name strong').textContent.toLowerCase();
-          card.style.display = name.includes(searchTerm) ? 'block' : 'none';
-        });
-      });
-    }
-
-    // --- Mở popup chỉnh sửa ---
-    function editVoucher(id) {
-      const card = document.querySelector(`.voucher-card[data-id="${id}"]`);
-      if (!card) return;
-
-      const name = card.querySelector('.voucher-name strong').textContent.trim();
-      const discount = card.querySelector('.discount').textContent.replace('%', '').trim();
-      const condition = card.querySelector('.detail-value:not(.discount)').textContent.replace(/[^\d]/g, '');
-      const status = card.querySelector('.voucher-status').classList.contains('status-active') ? 'active' : 'inactive';
-
-      document.getElementById('edit_id').value = id;
-      document.getElementById('edit_name').value = name;
-      document.getElementById('edit_percen_decrease').value = discount;
-      document.getElementById('edit_condition').value = condition;
-      document.getElementById('edit_status').value = status;
-      document.getElementById('editVoucherModal').style.display = 'flex';
-    }
-
-    // --- Đóng popup ---
-    function closeEditModal() {
-      const modal = document.getElementById('editVoucherModal');
-      if (modal) modal.style.display = 'none';
-    }
-
-    // --- Gửi form AJAX ---
-    const editForm = document.getElementById('editVoucherForm');
-    if (editForm) {
-      editForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const formData = new FormData(this);
-        const response = await fetch('../php/editVoucher.php', {
-          method: 'POST',
-          body: formData
-        });
-        const result = await response.text();
-
-        alert(result);
-        location.reload();
-      });
-    }
-
-    // --- Xóa voucher ---
-    // --- Xóa voucher ---
-    async function deleteVoucher(id, name) {
-      if (confirm(`Bạn có chắc chắn muốn xóa voucher "${name}" không?`)) {
-        try {
-          const formData = new FormData();
-          formData.append('id', id);
-
-          const response = await fetch('../php/deleteVoucher.php', {
-            method: 'POST',
-            body: formData
-          });
-
-          const result = await response.text();
-          alert(result.trim());
-          location.reload(); // reload lại trang để cập nhật danh sách
-        } catch (error) {
-          alert('Lỗi khi xóa voucher!');
-          console.error(error);
-        }
-      }
-    }
-  </script>
+  <script src="../js/VoucherManage.js"></script>
 
 </body>

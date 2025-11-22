@@ -1,0 +1,109 @@
+/* Product Details Modal Styles */
+.product-details-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow: hidden;
+}
+
+.product-details-overlay.show {
+    display: flex !important;
+}
+
+/* Khi modal mở, overflow-y: auto cho phép scroll trong modal content */
+.product-details-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 900px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #f0f0f0;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.close-btn:hover {
+    background: #e0e0e0;
+    color: #d9534f;
+}
+
+.product-detail-header {
+    padding: 20px;
+    border-bottom: 2px solid #f5f5f5;
+    background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+}
+
+.product-detail-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.product-details-body {
+    padding: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .product-details-content {
+        max-height: 90vh;
+    }
+
+    .product-details-overlay {
+        padding: 10px;
+    }
+
+    .product-detail-header h3 {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 600px) {
+    .product-details-content {
+        max-height: 95vh;
+        border-radius: 8px;
+    }
+
+    .product-detail-header {
+        padding: 15px;
+    }
+}

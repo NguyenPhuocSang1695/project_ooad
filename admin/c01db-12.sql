@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 30, 2025 at 09:01 AM
+-- Generation Time: Nov 19, 2025 at 08:02 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -52,7 +52,20 @@ INSERT INTO `address` (`address_id`, `ward_id`, `address_detail`) VALUES
 (12, 730, '30/4 giải phóng miền Nam'),
 (13, 731, '30/4 giải phóng miền Nam'),
 (14, 691, '30/4 giải phóng miền Nam'),
-(15, 750, '30/4 giải phóng miền Nam');
+(15, 750, '30/4 giải phóng miền Nam'),
+(16, 2731, '100 Bình Thới'),
+(17, 9876, '100 Bình Thới'),
+(18, 7338, '120 Yên Lãng'),
+(19, 832, '1202 Yên Lãng'),
+(20, 726, '103a Bình Thới'),
+(21, 7571, '120 Yên Lãng 2332'),
+(22, 666, '120 Yên Lãng'),
+(23, 70, '120 Yên Lãng'),
+(24, 4301, '120 Yên Lãng'),
+(25, 7536, 'sa'),
+(26, 7536, 'sa'),
+(27, 62, '1223'),
+(28, 4257, '12');
 
 -- --------------------------------------------------------
 
@@ -802,6 +815,49 @@ INSERT INTO `district` (`district_id`, `name`, `province_id`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `import_receipt`
+--
+
+CREATE TABLE `import_receipt` (
+  `receipt_id` int(11) NOT NULL,
+  `import_date` datetime DEFAULT current_timestamp(),
+  `total_amount` decimal(15,2) DEFAULT 0.00,
+  `note` text DEFAULT NULL,
+  `supplier_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `import_receipt`
+--
+
+INSERT INTO `import_receipt` (`receipt_id`, `import_date`, `total_amount`, `note`, `supplier_id`) VALUES
+(4, '2025-11-18 17:21:00', 1650000.00, '', 3);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `import_receipt_detail`
+--
+
+CREATE TABLE `import_receipt_detail` (
+  `receipt_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `import_price` decimal(15,2) NOT NULL,
+  `subtotal` decimal(15,2) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `import_receipt_detail`
+--
+
+INSERT INTO `import_receipt_detail` (`receipt_id`, `product_id`, `quantity`, `import_price`, `subtotal`) VALUES
+(4, 23, 10, 100000.00, 1000000.00),
+(4, 27, 13, 50000.00, 650000.00);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `orderdetails`
 --
 
@@ -818,46 +874,8 @@ CREATE TABLE `orderdetails` (
 --
 
 INSERT INTO `orderdetails` (`OrderID`, `ProductID`, `Quantity`, `UnitPrice`, `TotalPrice`) VALUES
-(1, 1, 2, 160000, 320000),
-(1, 6, 1, 100000, 100000),
-(2, 2, 3, 85000, 255000),
-(2, 8, 2, 35000, 70000),
-(3, 5, 1, 1950000, 1950000),
-(4, 4, 2, 180000, 360000),
-(4, 7, 1, 200000, 200000),
-(5, 9, 1, 300000, 300000),
-(6, 6, 3, 100000, 300000),
-(7, 12, 2, 200000, 400000),
-(7, 14, 1, 220000, 220000),
-(8, 10, 3, 200000, 600000),
-(9, 16, 2, 300000, 600000),
-(10, 11, 1, 1000000, 1000000),
-(10, 17, 1, 180000, 180000),
-(11, 18, 4, 45000, 180000),
-(11, 44, 1, 180000, 180000),
-(12, 19, 2, 250000, 500000),
-(12, 45, 1, 220000, 220000),
-(13, 20, 3, 100000, 300000),
-(13, 22, 1, 250000, 250000),
-(13, 46, 1, 1500000, 1500000),
-(14, 23, 1, 650000, 650000),
-(14, 47, 1, 200000, 200000),
-(15, 24, 2, 450000, 900000),
-(15, 25, 1, 300000, 300000),
-(15, 48, 1, 235000, 235000),
-(16, 13, 1, 500000, 500000),
-(16, 26, 2, 90000, 180000),
-(16, 29, 3, 140000, 420000),
-(17, 30, 2, 100000, 200000),
-(17, 32, 1, 320000, 320000),
-(18, 33, 2, 250000, 500000),
-(18, 34, 2, 90000, 180000),
-(19, 37, 1, 270000, 270000),
-(19, 38, 1, 400000, 400000),
-(19, 39, 1, 350000, 350000),
-(20, 40, 2, 200000, 400000),
-(20, 42, 1, 250000, 250000),
-(20, 43, 2, 90000, 180000);
+(1, 37, 10, 270000, 2700000),
+(2, 46, 7, 1500000, 10500000);
 
 -- --------------------------------------------------------
 
@@ -868,12 +886,11 @@ INSERT INTO `orderdetails` (`OrderID`, `ProductID`, `Quantity`, `UnitPrice`, `To
 CREATE TABLE `orders` (
   `OrderID` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `Status` enum('execute','ship','success','fail','confirmed') NOT NULL DEFAULT 'execute',
   `PaymentMethod` varchar(50) DEFAULT NULL,
   `CustomerName` varchar(255) DEFAULT NULL,
   `Phone` varchar(100) NOT NULL,
   `DateGeneration` datetime DEFAULT current_timestamp(),
-  `TotalAmount` decimal(10,2) NOT NULL,
+  `TotalAmount` decimal(15,2) NOT NULL,
   `address_id` int(11) DEFAULT NULL,
   `voucher_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -882,27 +899,9 @@ CREATE TABLE `orders` (
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`OrderID`, `user_id`, `Status`, `PaymentMethod`, `CustomerName`, `Phone`, `DateGeneration`, `TotalAmount`, `address_id`, `voucher_id`) VALUES
-(1, 2, 'execute', 'Cash', 'Nguyễn Văn A', '0901111222', '2025-10-25 09:10:00', 250000.00, NULL, NULL),
-(2, 3, 'ship', 'Momo', 'Trần Thị B', '0902222333', '2025-10-25 10:00:00', 320000.00, NULL, NULL),
-(3, 4, 'confirmed', 'Credit Card', 'Lê Văn C', '0903333444', '2025-10-25 10:20:00', 1800000.00, NULL, NULL),
-(4, 5, 'success', 'Bank', 'Phạm Thị D', '0904444555', '2025-10-26 11:00:00', 590000.00, NULL, NULL),
-(5, 6, 'fail', 'Cash', 'Hoàng Văn E', '0905555666', '2025-10-26 12:00:00', 760000.00, NULL, NULL),
-(6, 7, 'execute', 'Momo', 'Đỗ Thị F', '0906666777', '2025-10-26 12:30:00', 210000.00, NULL, NULL),
-(7, 8, 'confirmed', 'Bank', 'Bùi Văn G', '0907777888', '2025-10-27 08:10:00', 980000.00, NULL, NULL),
-(8, 9, 'ship', 'Credit Card', 'Võ Thị H', '0908888999', '2025-10-27 09:40:00', 1250000.00, NULL, NULL),
-(9, 10, 'success', 'Cash', 'Huỳnh Văn I', '0909999000', '2025-10-27 11:30:00', 450000.00, NULL, NULL),
-(10, 11, 'fail', 'Momo', 'Ngô Thị K', '0910000111', '2025-10-27 13:15:00', 1950000.00, NULL, NULL),
-(11, 2, 'ship', 'Bank', 'Nguyễn Văn A', '0901111222', '2025-10-28 09:00:00', 365000.00, NULL, NULL),
-(12, 3, 'execute', 'Cash', 'Trần Thị B', '0902222333', '2025-10-28 09:30:00', 670000.00, NULL, NULL),
-(13, 4, 'confirmed', 'Momo', 'Lê Văn C', '0903333444', '2025-10-28 10:10:00', 845000.00, NULL, NULL),
-(14, 5, 'success', 'Cash', 'Phạm Thị D', '0904444555', '2025-10-28 10:45:00', 275000.00, NULL, NULL),
-(15, 6, 'fail', 'Credit Card', 'Hoàng Văn E', '0905555666', '2025-10-29 08:30:00', 1290000.00, NULL, NULL),
-(16, 7, 'execute', 'Bank', 'Đỗ Thị F', '0906666777', '2025-10-29 09:00:00', 950000.00, NULL, NULL),
-(17, 8, 'confirmed', 'Momo', 'Bùi Văn G', '0907777888', '2025-10-29 09:40:00', 1790000.00, NULL, NULL),
-(18, 9, 'ship', 'Credit Card', 'Võ Thị H', '0908888999', '2025-10-29 10:00:00', 990000.00, NULL, NULL),
-(19, 10, 'success', 'Cash', 'Huỳnh Văn I', '0909999000', '2025-10-29 11:00:00', 410000.00, NULL, NULL),
-(20, 11, 'fail', 'Bank', 'Ngô Thị K', '0910000111', '2025-10-29 11:20:00', 2150000.00, NULL, NULL);
+INSERT INTO `orders` (`OrderID`, `user_id`, `PaymentMethod`, `CustomerName`, `Phone`, `DateGeneration`, `TotalAmount`, `address_id`, `voucher_id`) VALUES
+(1, 12, 'CASH', 'Sang Phước', '0377788890', '2025-11-17 23:01:25', 2700000.00, NULL, NULL),
+(2, 12, 'CASH', 'Sang Phước', '0377788890', '2025-11-17 23:01:41', 10500000.00, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -930,12 +929,12 @@ INSERT INTO `products` (`ProductID`, `ProductName`, `CategoryID`, `Price`, `Desc
 (1, 'Cây thường xuân', 2, 160000, 'Cây thường xuân là loại cây leo dễ chăm sóc...', '/assets/images/CAY1.jpg', 'appear', 1, 50),
 (2, 'Cây lá sọc dưa hấu', 2, 85000, 'Cây lá sọc dưa hấu nổi bật...', '/assets/images/CAY2.jpg', 'appear', 1, 45),
 (3, 'Cây cẩm nhung', 4, 150000, 'Cây cẩm nhung có lá mềm mại...', '/assets/images/CAY3.jpg', 'hidden', 1, 60),
-(4, 'Cây lan ý', 1, 180000, 'Cây lan ý nổi tiếng...', '/assets/images/CAY4.jpg', 'appear', 1, 40),
-(5, 'Cây phát tài núi', 1, 1950000, 'Cây phát tài núi có dáng cao...', '/assets/images/CAY5.jpg', 'hidden', 1, 25),
-(6, 'Cây kim ngân', 4, 100000, 'Cây kim ngân với thân đan xen...', '/assets/images/CAY6.jpg', 'appear', 1, 55),
-(7, 'Trầu bà lá xanh', 1, 200000, 'Trầu bà lá xanh là cây leo...', '/assets/images/CAY7.jpg', 'appear', 1, 48),
-(8, 'Cây dây nhện', 3, 35000, 'Cây dây nhện có lá dài...', '/assets/images/CAY8.jpg', 'appear', 1, 60),
-(9, 'Cây trầu bà đỏ', 2, 300000, 'Cây trầu bà đỏ nổi bật...', '/assets/images/CAY9.jpg', 'appear', 1, 52),
+(4, 'Cây lan ý', 1, 180000, 'Cây lan ý nổi tiếng...', '/assets/images/CAY4.jpg', 'appear', 1, 42),
+(5, 'Cây phát tài núi', 1, 1950000, 'Cây phát tài núi có dáng cao...', '/assets/images/CAY5.jpg', 'hidden', 1, 24),
+(6, 'Cây kim ngân', 4, 100000, 'Cây kim ngân với thân đan xen...', '/assets/images/CAY6.jpg', 'appear', 1, 50),
+(7, 'Trầu bà lá xanh', 1, 200000, 'Trầu bà lá xanh là cây leo...', '/assets/images/CAY7.jpg', 'appear', 1, 43),
+(8, 'Cây dây nhện', 3, 35000, 'Cây dây nhện có lá dài...', '/assets/images/CAY8.jpg', 'appear', 1, 70),
+(9, 'Cây trầu bà đỏ', 2, 300000, 'Cây trầu bà đỏ nổi bật...', '/assets/images/CAY9.jpg', 'appear', 1, 47),
 (10, 'Lưỡi hổ vàng', 3, 200000, 'Lưỡi hổ vàng có lá dài...', '/assets/images/CAY10.jpg', 'appear', 1, 47),
 (11, 'Cây Thiết Mộc Lan', 1, 1000000, 'Cây Thiết Mộc Lan cao lớn...', '/assets/images/CAY11.jpg', 'appear', 2, 40),
 (12, 'Cây trầu bà vàng', 2, 200000, 'Cây trầu bà vàng có lá...', '/assets/images/CAY12.jpg', 'appear', 2, 38),
@@ -947,32 +946,30 @@ INSERT INTO `products` (`ProductID`, `ProductName`, `CategoryID`, `Price`, `Desc
 (19, 'Cây Pachira aquatica', 4, 250000, 'Cây Pachira aquatica...', '/assets/images/CAY19.jpg', 'appear', 2, 65),
 (20, 'Cây môn Hồng', 4, 100000, 'Cây môn Hồng có lá...', '/assets/images/CAY20.jpg', 'appear', 2, 55),
 (22, 'Cây trúc Nhật', 1, 250000, 'Cây trúc Nhật có dáng...', '/assets/images/CAY22.jpg', 'appear', 3, 48),
-(23, 'Cây cọ Nhật', 1, 650000, 'Cây cọ Nhật có lá...', '/assets/images/CAY23.jpg', 'appear', 3, 40),
+(23, 'Cây cọ Nhật', 1, 650000, 'Cây cọ Nhật có lá...', '/assets/images/CAY23.jpg', 'appear', 3, 55),
 (24, 'Cây kim tiền', 1, 450000, 'Cây kim tiền có lá...', '/assets/images/CAY24.jpg', 'appear', 3, 45),
 (25, 'Cây ngọc ngân', 1, 300000, 'Cây ngọc ngân có lá...', '/assets/images/CAY25.jpg', 'appear', 3, 38),
-(26, 'Cây rong la hán', 2, 90000, 'Cây rong la hán là cây...', '/assets/images/CAY26.jpg', 'appear', 3, 60),
-(27, 'Cây bèo Nhật', 2, 75000, 'Cây bèo Nhật là cây...', '/assets/images/CAY27.jpg', 'hidden', 3, 55),
+(26, 'Cây rong la hán', 2, 90000, 'Cây rong la hán là cây...', '/assets/images/CAY26.jpg', 'appear', 3, 72),
+(27, 'Cây bèo Nhật', 2, 75000, 'Cây bèo Nhật là cây...', '/assets/images/CAY27.jpg', 'hidden', 3, 68),
 (28, 'Cây dương xỉ nước', 2, 110000, 'Cây dương xỉ nước là cây...', '/assets/images/CAY28.jpg', 'hidden', 3, 50),
 (29, 'Cây thủy sinh cỏ thìa', 2, 140000, 'Cây thủy sinh cỏ thìa...', '/assets/images/CAY29.jpg', 'appear', 3, 70),
 (30, 'Cây thủy cúc', 2, 100000, 'Cây thủy cúc có lá...', '/assets/images/CAY30.jpg', 'appear', 3, 58),
 (31, 'Cây cau tiểu trâm', 3, 70000, 'Cây cau tiểu trâm có dáng...', '/assets/images/CAY31.jpg', 'hidden', 4, 42),
 (32, 'Cây phú quý', 3, 320000, 'Cây phú quý có lá...', '/assets/images/CAY32.jpg', 'appear', 4, 48),
-(33, 'Cây vạn niên thanh', 3, 250000, 'Cây vạn niên thanh có lá...', '/assets/images/CAY33.jpg', 'appear', 4, 65),
-(34, 'Cây sen đá', 3, 90000, 'Cây sen đá có lá...', '/assets/images/CAY34.jpg', 'appear', 4, 55),
-(35, 'Cây cỏ lan chi', 3, 50000, 'Cây cỏ lan chi có lá...', '/assets/images/CAY35.jpg', 'hidden', 4, 62),
-(36, 'Cây bonsai sam hương', 4, 700000, 'Cây bonsai sam hương...', '/assets/images/CAY36.jpg', 'hidden', 4, 38),
-(37, 'Cây bạch mã hoàng tử', 4, 270000, 'Cây bạch mã hoàng tử...', '/assets/images/CAY37.jpg', 'appear', 4, 40),
-(38, 'Cây hạnh phúc mini', 4, 400000, 'Cây hạnh phúc mini có lá...', '/assets/images/CAY38.jpg', 'appear', 4, 52),
+(33, 'Cây vạn niên thanh', 3, 250000, 'Cây vạn niên thanh có lá...', '/assets/images/CAY33.jpg', 'appear', 4, 4),
+(34, 'Cây sen đá', 3, 90000, 'Cây sen đá có lá...', '/assets/images/CAY34.jpg', 'appear', 4, 3),
+(35, 'Cây cỏ lan chi', 3, 50000, 'Cây cỏ lan chi có lá...', '/assets/images/CAY35.jpg', 'hidden', 4, 2),
+(36, 'Cây bonsai sam hương', 4, 700000, 'Cây bonsai sam hương...', '/assets/images/CAY36.jpg', 'hidden', 4, 4),
+(37, 'Cây bạch mã hoàng tử', 4, 270000, 'Cây bạch mã hoàng tử...', '/assets/images/CAY37.jpg', 'appear', 4, 25),
+(38, 'Cây hạnh phúc mini', 4, 400000, 'Cây hạnh phúc mini có lá...', '/assets/images/CAY38.jpg', 'appear', 4, 64),
 (39, 'Cây tùng bồng lai', 4, 350000, 'Cây tùng bồng lai...', '/assets/images/CAY39.jpg', 'appear', 4, 60),
 (40, 'Cây trường sinh', 4, 200000, 'Cây trường sinh có lá...', '/assets/images/CAY40.jpg', 'appear', 4, 55),
-(41, 'Cây bàng Singapore', 1, 400000, 'Cây bàng Singapore có lá...', '/assets/images/CAY41.jpg', 'hidden', 5, 60),
-(42, 'Cây ngũ gia bì', 1, 250000, 'Cây Ngũ Gia Bì...', '/assets/images/CAY42.jpg', 'appear', 5, 45),
-(43, 'Cây đuôi công', 2, 90000, 'Cây đuôi công nổi bật...', '/assets/images/CAY43.jpg', 'appear', 5, 50),
-(44, 'Cây huyết phất dụ', 4, 180000, 'Cây huyết phất dụ nổi bật...', '/assets/images/CAY44.jpg', 'appear', 5, 40),
-(45, 'Cây đại phú gia', 1, 220000, 'Cây đại phú gia có lá...', '/assets/images/CAY45.jpg', 'appear', 5, 55),
-(46, 'Cây cau Hawaii', 1, 1500000, 'Cây cau Hawaii có lá...', '/assets/images/CAY46.jpg', 'appear', 5, 42),
-(47, 'Cây hồng môn', 2, 200000, 'Cây hồng môn có lá...', '/assets/images/CAY47.jpg', 'hidden', 5, 38),
-(48, 'Cây chuối rẻ quạt', 1, 235000, 'Cây chuối rẻ quạt có lá...', '/assets/images/product_68f89a5d3e081.jpg', 'hidden', 2, 122);
+(41, 'Cây bàng Singapore', 1, 400000, 'Cây bàng Singapore có lá...', '/assets/images/CAY41.jpg', 'hidden', 5, 61),
+(42, 'Cây ngũ gia bì', 1, 250000, 'Cây Ngũ Gia Bì...', '/assets/images/CAY42.jpg', 'appear', 5, 0),
+(43, 'Cây đuôi công', 2, 90000, 'Cây đuôi công nổi bật...', '/assets/images/CAY43.jpg', 'appear', 5, 2),
+(44, 'Cây huyết phất dụ', 4, 180000, 'Cây huyết phất dụ nổi bật...', '/assets/images/CAY44.jpg', 'appear', 5, 0),
+(45, 'Cây đại phú gia', 1, 220000, 'Cây đại phú gia có lá...', '/assets/images/CAY45.jpg', 'appear', 5, 12),
+(46, 'Cây cau Hawaii', 1, 1500000, 'Cây cau Hawaii có lá...', '/assets/images/product_691d208b2cdd8.jpg', 'appear', 1, 48);
 
 -- --------------------------------------------------------
 
@@ -1102,8 +1099,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `FullName`, `PasswordHash`, `Role`, `Phone`, `Status`, `DateGeneration`, `Username`) VALUES
-(1, 'An Trần Một Trâm', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'admin', '0123456788', 'Active', '2025-10-29 21:31:31', 'antran100'),
-(2, 'Nguyễn Văn A', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'customer', '0901111222', 'Active', '2025-10-30 10:00:00', 'nguyenvana'),
+(1, 'Trần Quốc An', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'admin', '0982338472', 'Active', '2025-10-29 21:31:31', 'antran100'),
 (3, 'Trần Thị B', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'customer', '0902222333', 'Active', '2025-10-30 10:05:00', 'tranthib'),
 (4, 'Lê Văn C', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'customer', '0903333444', 'Active', '2025-10-30 10:10:00', 'levanc'),
 (5, 'Phạm Thị D', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'customer', '0904444555', 'Active', '2025-10-30 10:15:00', 'phamthid'),
@@ -1112,7 +1108,8 @@ INSERT INTO `users` (`user_id`, `FullName`, `PasswordHash`, `Role`, `Phone`, `St
 (8, 'Bùi Văn G', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'customer', '0907777888', 'Active', '2025-10-30 10:30:00', 'buivang'),
 (9, 'Võ Thị H', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'customer', '0908888999', 'Active', '2025-10-30 10:35:00', 'vothih'),
 (10, 'Huỳnh Văn I', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'customer', '0909999000', 'Active', '2025-10-30 10:40:00', 'huynhvani'),
-(11, 'Ngô Thị K', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'customer', '0910000111', 'Active', '2025-10-30 10:45:00', 'ngothik');
+(11, 'An yêu Trâm', '$2y$10$zC2M.NlGGMtAbKUW4x8Eeu1vl/jlN1iEKD7Xe41QX0GXhseTe8UQS', 'customer', '098', 'Active', '2025-10-30 10:45:00', 'ngothik'),
+(12, 'Phước Sang', NULL, 'customer', '0377788890', 'Active', '2025-11-12 07:27:04', NULL);
 
 -- --------------------------------------------------------
 
@@ -1133,8 +1130,10 @@ CREATE TABLE `vouchers` (
 --
 
 INSERT INTO `vouchers` (`id`, `name`, `percen_decrease`, `conditions`, `status`) VALUES
-(4, 'Chương yêu Đào vãi lồn', 36, 3600000, 'active'),
-(5, 'An Trần 100', 36, 180000, 'active');
+(1, 'Black Friday', 23, 222222, 'active'),
+(2, 'Giảm 12%', 12, 2, 'inactive'),
+(3, 'Khách hàng mua đầu tiên', 22, 300000, 'inactive'),
+(4, 'Khách hàng thân thiết', 23, 122222, 'active');
 
 -- --------------------------------------------------------
 
@@ -11769,6 +11768,20 @@ ALTER TABLE `district`
   ADD KEY `province_id` (`province_id`);
 
 --
+-- Indexes for table `import_receipt`
+--
+ALTER TABLE `import_receipt`
+  ADD PRIMARY KEY (`receipt_id`),
+  ADD KEY `supplier_id` (`supplier_id`);
+
+--
+-- Indexes for table `import_receipt_detail`
+--
+ALTER TABLE `import_receipt_detail`
+  ADD PRIMARY KEY (`receipt_id`,`product_id`),
+  ADD KEY `product_id` (`product_id`);
+
+--
 -- Indexes for table `orderdetails`
 --
 ALTER TABLE `orderdetails`
@@ -11836,7 +11849,7 @@ ALTER TABLE `ward`
 -- AUTO_INCREMENT for table `address`
 --
 ALTER TABLE `address`
-  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `categories`
@@ -11845,28 +11858,34 @@ ALTER TABLE `categories`
   MODIFY `CategoryID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT for table `import_receipt`
+--
+ALTER TABLE `import_receipt`
+  MODIFY `receipt_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `OrderID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `OrderID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `ProductID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `ProductID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
 
 --
 -- AUTO_INCREMENT for table `suppliers`
 --
 ALTER TABLE `suppliers`
-  MODIFY `supplier_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `supplier_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `vouchers`
@@ -11889,6 +11908,19 @@ ALTER TABLE `address`
 --
 ALTER TABLE `district`
   ADD CONSTRAINT `district_ibfk_1` FOREIGN KEY (`province_id`) REFERENCES `province` (`province_id`);
+
+--
+-- Constraints for table `import_receipt`
+--
+ALTER TABLE `import_receipt`
+  ADD CONSTRAINT `import_receipt_ibfk_1` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`supplier_id`);
+
+--
+-- Constraints for table `import_receipt_detail`
+--
+ALTER TABLE `import_receipt_detail`
+  ADD CONSTRAINT `import_receipt_detail_ibfk_1` FOREIGN KEY (`receipt_id`) REFERENCES `import_receipt` (`receipt_id`),
+  ADD CONSTRAINT `import_receipt_detail_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`ProductID`);
 
 --
 -- Constraints for table `orderdetails`

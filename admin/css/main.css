@@ -421,3 +421,70 @@ iframe {
     opacity: 1;
   }
 }
+
+/* Banking Payment QR Code Styles */
+#banking-info-section {
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+#banking-info-section h6 {
+  margin-bottom: 15px;
+  font-weight: bold;
+  color: #333;
+}
+
+.banking-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+.banking-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.banking-details p {
+  margin: 0;
+  padding: 10px;
+  background: white;
+  border-radius: 5px;
+  border-left: 3px solid #57b846;
+  font-size: 14px;
+}
+
+.banking-details p strong {
+  color: #333;
+  margin-right: 8px;
+}
+
+.qr-code-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+#admin-qr-code {
+  max-width: 280px;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+#admin-qr-code:hover {
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .banking-info {
+    grid-template-columns: 1fr;
+  }
+
+  #admin-qr-code {
+    max-width: 200px;
+  }
+}

@@ -46,7 +46,7 @@ if (isset($_POST['submit'])) {
             } elseif (password_verify($password, $user['PasswordHash'])) {
                 $_SESSION['Username'] = $user['Username'];
                 $_SESSION['FullName'] = $user['FullName'];
-                $_SESSION['Role'] = 'Nhân viên';
+                $_SESSION['Role'] = "Nhân viên"; // Hiển thị role tiếng Việt
 
                 echo "<script>
                     document.addEventListener('DOMContentLoaded', function() {
