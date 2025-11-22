@@ -1041,7 +1041,7 @@ function showOrderDetailModal(orderId) {
             
             <!-- Customer Info Section -->
             <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
-              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">👤 Thông tin khách hàng</h5>
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">👤 Thông tin khách hàng: </h5>
               ${
                 (order.customerName && String(order.customerName).trim() !== 'Không có') || 
                 (order.customerPhone && String(order.customerPhone).trim() !== 'Không có' && String(order.customerPhone).trim() !== '0000000000')
