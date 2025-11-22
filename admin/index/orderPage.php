@@ -1028,10 +1028,9 @@ $orders = [];
             <thead>
               <tr>
                 <th>Mã đơn hàng</th>
-                <th class="hide-index-tablet ">Tên khách hàng</th>
                 <th>Ngày tạo</th>
+                <th>Phương thức thanh toán</th>
                 <th class="hide-index-mobile">Giá tiền (VND)</th>
-                <th>Số điện thoại</th>
               </tr>
             </thead>
             <tbody id="order-table-body">
@@ -1040,14 +1039,13 @@ $orders = [];
                 foreach ($orders as $o) {
                   echo '<tr>';
                   echo '<td>#' . htmlspecialchars($o['OrderID']) . '</td>';
-                  echo '<td class="hide-index-tablet">' . htmlspecialchars($o['CustomerName']) . '</td>';
                   echo '<td>' . htmlspecialchars($o['DateGeneration']) . '</td>';
+                  echo '<td>' . htmlspecialchars($o['PaymentMethod'] ?? 'N/A') . '</td>';
                   echo '<td class="hide-index-mobile">' . number_format($o['TotalAmount']) . '</td>';
-                  echo '<td>' . htmlspecialchars($o['Phone']) . '</td>';
                   echo '</tr>';
                 }
               } else {
-                echo '<tr><td colspan="5">Không có đơn hàng</td></tr>';
+                echo '<tr><td colspan="4">Không có đơn hàng</td></tr>';
               }
               ?>
             </tbody>

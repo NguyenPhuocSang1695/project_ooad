@@ -717,6 +717,7 @@ class OrderManager extends BaseOrderEntity {
                     'madonhang' => $order->getOrderId(),
                     'ngaytao' => $order->getDateGeneration(),
                     'giatien' => $order->getTotalAmount(),
+                    'pthanhtoan' => (!empty($order->getPaymentMethod()) && trim($order->getPaymentMethod()) !== '') ? $order->getPaymentMethod() : 'Không rõ',
                     'receiver_name' => (!empty($order->getCustomerName()) && trim($order->getCustomerName()) !== '') ? $order->getCustomerName() : 'Không rõ',
                     'receiver_phone' => (!empty($order->getPhone()) && trim($order->getPhone()) !== '') ? $order->getPhone() : 'Không rõ',
                     'receiver_address' => $fullAddress,

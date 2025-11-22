@@ -210,20 +210,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
             row.innerHTML = `
               <td>${order.madonhang || ""}</td>
-              <td class="hide-index-tablet" title="${
-                order.receiver_name
-              }">${truncateText(order.receiver_name)}</td>
               <td>${formatDate(order.ngaytao) || ""}</td>
+              <td>${formatPaymentMethod(order.pthanhtoan) || ""}</td>
               <td class="hide-index-mobile">${formatCurrency(
                 order.giatien || 0
               )}</td>
-              <td>${order.receiver_phone || ""}</td>
             `;
             orderTableBody.appendChild(row);
           });
         } else {
           orderTableBody.innerHTML =
-            '<tr><td colspan="5" class="no-data">Không có đơn hàng nào phù hợp</td></tr>';
+            '<tr><td colspan="4" class="no-data">Không có đơn hàng nào phù hợp</td></tr>';
         }
         const totalPages =
           data.total_pages !== undefined ? data.total_pages : 1;
@@ -232,7 +229,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch((error) => {
         console.error("Error fetching orders:", error);
         if (orderTableBody) {
-          orderTableBody.innerHTML = `<tr><td colspan="5" class="error-message">Đã xảy ra lỗi: ${error.message}</td></tr>`;
+          orderTableBody.innerHTML = `<tr><td colspan="4" class="error-message">Đã xảy ra lỗi: ${error.message}</td></tr>`;
         }
       });
   };
@@ -1045,20 +1042,27 @@ function showOrderDetailModal(orderId) {
             <!-- Customer Info Section -->
             <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
               <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">👤 Thông tin khách hàng</h5>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                ${(order.customerName && String(order.customerName).trim() !== 'Không có ') ? `
-                  <div>
-                    <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên: </label>
-                    <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerName}</p>
+              ${
+                (order.customerName && String(order.customerName).trim() !== 'Không có') || 
+                (order.customerPhone && String(order.customerPhone).trim() !== 'Không có' && String(order.customerPhone).trim() !== '0000000000')
+                ? `
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    ${(order.customerName && String(order.customerName).trim() !== 'Không có ') ? `
+                      <div>
+                        <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên: </label>
+                        <p style="margin: 5px 0; font-weight: 600; color: #000000ff;">${order.customerName}</p>
+                      </div>
+                    ` : ''}
+                    ${(order.customerPhone && String(order.customerPhone).trim() !== 'Không có' && String(order.customerPhone).trim() !== '0000000000') ? `
+                      <div>
+                        <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại: </label>
+                        <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerPhone}</p>
+                      </div>
+                    ` : ''}
                   </div>
-                ` : ''}
-                ${(order.customerPhone && String(order.customerPhone).trim() !== 'Không có' && String(order.customerPhone).trim() !== '0000000000') ? `
-                  <div>
-                    <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại: </label>
-                    <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerPhone}</p>
-                  </div>
-                ` : ''}
-              </div>
+                `
+                : `<p >Không có</p>`
+              }
             </div>
             
             <!-- Address Section -->
@@ -1118,10 +1122,10 @@ function showOrderDetailModal(orderId) {
             ` : ''}
             
             <!-- Total Section -->
-            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 16px; font-weight: 600; color: #333;">Thành tiền: </span>
-                <span style="font-size: 24px; font-weight: 700; color: #667eea;">${parseInt(order.totalAmount).toLocaleString('vi-VN')} VND</span>
+                <span style="font-size: 24px; font-weight: 700; color: #27ae60;">${parseInt(order.totalAmount).toLocaleString('vi-VN')} VND</span>
               </div>
             </div>
           </div>
