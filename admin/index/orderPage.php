@@ -189,8 +189,13 @@ $orders = [];
     }
 
     @keyframes progress {
-      from { width: 100%; }
-      to { width: 0%; }
+      from {
+        width: 100%;
+      }
+
+      to {
+        width: 0%;
+      }
     }
 
     /* Enhanced Success Notification */
@@ -260,9 +265,11 @@ $orders = [];
         opacity: 0;
         transform: scale(0.5);
       }
+
       50% {
         opacity: 1;
       }
+
       100% {
         stroke-dashoffset: 0;
         opacity: 1;
@@ -819,7 +826,7 @@ $orders = [];
                       <div class="col-md-6 form-check">
                         <input class="form-check-input" type="radio" name="delivery_type" id="delivery_address" value="address">
                         <label class="form-check-label" for="delivery_address">
-                          Giao hàng 
+                          Giao hàng
                         </label>
                       </div>
                     </div>
@@ -854,7 +861,7 @@ $orders = [];
                     <div class="col-md-6 mb-3">
                       <label for="payment-method" class="form-label">Phương thức thanh toán:</label>
                       <select class="form-control" id="payment-method" name="payment_method" required>
-    
+
                         <option value="CASH">Thanh toán tại quầy</option>
                         <option value="COD">Thanh toán khi nhận hàng (COD)</option>
                         <option value="BANKING">Chuyển khoản ngân hàng</option>
@@ -882,7 +889,7 @@ $orders = [];
                         <p style="margin: 8px 0; padding: 8px;  border-radius: 5px;">
                           <strong>Nội dung chuyển khoản:</strong> Mua hàng
                         </p>
-             
+
                       </div>
                       <div style="display: flex; justify-content: center; align-items: center;">
                         <div id="qr-container" style="text-align: center;">
@@ -898,7 +905,7 @@ $orders = [];
                       <option value="">-- Không dùng voucher --</option>
                     </select>
                     <small id="voucher-message" class="form-text" style="margin-top: 5px;"></small>
-                    <small id="voucher-note" class="form-text" style="margin-top: 5px; color: #ff9800; display: none;"><i class="fas fa-info-circle"></i>  Chương trình voucher hiện chưa áp dụng cho lần mua đầu tiên.</small>
+                    <small id="voucher-note" class="form-text" style="margin-top: 5px; color: #ff9800; display: none;"><i class="fas fa-info-circle"></i> Chương trình voucher hiện chưa áp dụng cho lần mua đầu tiên.</small>
                   </div>
 
                   <div class="row">
@@ -1028,10 +1035,9 @@ $orders = [];
             <thead>
               <tr>
                 <th>Mã đơn hàng</th>
-                <th class="hide-index-tablet ">Tên khách hàng</th>
                 <th>Ngày tạo</th>
-                <th class="hide-index-mobile">Giá tiền (VND)</th>
-                <th>Số điện thoại</th>
+                <th>Phương thức thanh toán</th>
+                <th class="hide-index-mobile">Tổng tiền (VND)</th>
               </tr>
             </thead>
             <tbody id="order-table-body">
@@ -1040,14 +1046,13 @@ $orders = [];
                 foreach ($orders as $o) {
                   echo '<tr>';
                   echo '<td>#' . htmlspecialchars($o['OrderID']) . '</td>';
-                  echo '<td class="hide-index-tablet">' . htmlspecialchars($o['CustomerName']) . '</td>';
                   echo '<td>' . htmlspecialchars($o['DateGeneration']) . '</td>';
+                  echo '<td>' . htmlspecialchars($o['PaymentMethod'] ?? 'N/A') . '</td>';
                   echo '<td class="hide-index-mobile">' . number_format($o['TotalAmount']) . '</td>';
-                  echo '<td>' . htmlspecialchars($o['Phone']) . '</td>';
                   echo '</tr>';
                 }
               } else {
-                echo '<tr><td colspan="5">Không có đơn hàng</td></tr>';
+                echo '<tr><td colspan="4">Không có đơn hàng</td></tr>';
               }
               ?>
             </tbody>
