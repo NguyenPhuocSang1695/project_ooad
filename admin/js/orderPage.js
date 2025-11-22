@@ -3,17 +3,17 @@ let currentPage = 1;
 
 // Hàm chuyển đổi phương thức thanh toán sang Tiếng Việt
 function formatPaymentMethod(method) {
-  if (!method) return 'Không rõ';
-  
+  if (!method) return "Không rõ";
+
   // Normalize method to lowercase for comparison
   const normalizedMethod = method.toLowerCase().trim();
-  
+
   const paymentMethods = {
-    'cod': 'Thanh toán khi nhận hàng',
-    'banking': 'Chuyển khoản ngân hàng',
-    'cash': 'Thanh toán tại quầy'
+    cod: "Thanh toán khi nhận hàng",
+    banking: "Chuyển khoản ngân hàng",
+    cash: "Thanh toán tại quầy",
   };
-  
+
   return paymentMethods[normalizedMethod] || method;
 }
 
@@ -25,7 +25,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Load danh sách voucher khi modal filter mở
   const voucherFilterSelect = document.getElementById("voucher-filter");
-  const specificVoucherContainer = document.getElementById("specific-voucher-container");
+  const specificVoucherContainer = document.getElementById(
+    "specific-voucher-container"
+  );
   const specificVoucherSelect = document.getElementById("specific-voucher");
 
   // Hàm load danh sách voucher
@@ -35,7 +37,8 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((data) => {
         console.log("Vouchers data:", data);
         if (data.success && data.data && data.data.length > 0) {
-          specificVoucherSelect.innerHTML = '<option value="">-- Tất cả voucher --</option>';
+          specificVoucherSelect.innerHTML =
+            '<option value="">-- Tất cả voucher --</option>';
           data.data.forEach((voucher) => {
             const option = document.createElement("option");
             option.value = voucher.id;
@@ -45,16 +48,19 @@ document.addEventListener("DOMContentLoaded", function () {
           });
         } else {
           console.warn("No vouchers found or data.success is false");
-          specificVoucherSelect.innerHTML = '<option value="">-- Không có voucher nào --</option>';
+          specificVoucherSelect.innerHTML =
+            '<option value="">-- Không có voucher nào --</option>';
         }
       })
       .catch((error) => console.error("Error loading vouchers:", error));
   };
 
   // Load vouchers khi filter modal mở
-  document.getElementById("filterModal").addEventListener("show.bs.modal", function () {
-    window.loadVouchersList();
-  });
+  document
+    .getElementById("filterModal")
+    .addEventListener("show.bs.modal", function () {
+      window.loadVouchersList();
+    });
 
   // Event listener khi thay đổi voucher-filter select
   if (voucherFilterSelect) {
@@ -75,7 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const row = e.target.closest("tr");
       const orderId = row?.querySelector("td:first-child")?.textContent?.trim();
       if (orderId) {
-        console.log('[VIEW_ORDER] Order ID:', orderId);
+        console.log("[VIEW_ORDER] Order ID:", orderId);
         showOrderDetailModal(orderId);
       }
     }
@@ -91,17 +97,17 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Search input event listener for real-time search
-  const searchInput = document.getElementById('search-input');
+  const searchInput = document.getElementById("search-input");
   if (searchInput) {
-    searchInput.addEventListener('input', function() {
-      console.log('[SEARCH] Input:', this.value);
+    searchInput.addEventListener("input", function () {
+      console.log("[SEARCH] Input:", this.value);
       currentPage = 1;
       filterOrders();
     });
-    
+
     // Prevent form submission on Enter key
-    searchInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
+    searchInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
         e.preventDefault();
       }
     });
@@ -154,8 +160,7 @@ document.addEventListener("DOMContentLoaded", function () {
       formData?.get("specific_voucher") ||
       document.getElementById("specific-voucher")?.value ||
       "";
-    const searchValue =
-      document.getElementById("search-input")?.value || "";
+    const searchValue = document.getElementById("search-input")?.value || "";
 
     const params = new URLSearchParams({
       page: currentPage,
@@ -170,7 +175,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (priceMin) params.set("price_min", priceMin);
     if (priceMax) params.set("price_max", priceMax);
     if (voucherFilter) params.set("voucher_filter", voucherFilter);
-    if (specificVoucher && voucherFilter === "has_voucher") params.set("specific_voucher", specificVoucher);
+    if (specificVoucher && voucherFilter === "has_voucher")
+      params.set("specific_voucher", specificVoucher);
 
     window.history.pushState(
       {},
@@ -536,11 +542,11 @@ document.addEventListener("DOMContentLoaded", function () {
     document.body.appendChild(confirmOverlay);
 
     // Thêm event listeners cho các nút
-    document.getElementById('cancelNoBtn').addEventListener('click', () => {
+    document.getElementById("cancelNoBtn").addEventListener("click", () => {
       confirmOverlay.remove();
     });
 
-    document.getElementById('cancelYesBtn').addEventListener('click', () => {
+    document.getElementById("cancelYesBtn").addEventListener("click", () => {
       confirmOverlay.remove();
       updateOrderStatus(orderId, status);
     });
@@ -802,54 +808,54 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Hàm load districts riêng cho bộ lọc
 window.loadDistrictsForFilter = function (provinceId) {
-  console.log('[LOAD_DISTRICTS_FILTER] For province:', provinceId);
-  
-  const districtSelect = document.getElementById('district-select');
-  
+  console.log("[LOAD_DISTRICTS_FILTER] For province:", provinceId);
+
+  const districtSelect = document.getElementById("district-select");
+
   if (!districtSelect) {
-    console.error('[LOAD_DISTRICTS_FILTER] district-select not found');
+    console.error("[LOAD_DISTRICTS_FILTER] district-select not found");
     return;
   }
-  
+
   districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
-  
+
   if (!provinceId) {
-    console.log('[LOAD_DISTRICTS_FILTER] No province ID');
+    console.log("[LOAD_DISTRICTS_FILTER] No province ID");
     return;
   }
-  
+
   fetch(`../php/get_District.php?province_id=${encodeURIComponent(provinceId)}`)
-    .then(res => {
-      console.log('[LOAD_DISTRICTS_FILTER] Response status:', res.status);
+    .then((res) => {
+      console.log("[LOAD_DISTRICTS_FILTER] Response status:", res.status);
       if (!res.ok) {
         throw new Error(`HTTP error! Status: ${res.status}`);
       }
       return res.json();
     })
-    .then(data => {
-      console.log('[LOAD_DISTRICTS_FILTER] Data:', data);
-      
+    .then((data) => {
+      console.log("[LOAD_DISTRICTS_FILTER] Data:", data);
+
       if (data.success && data.data && Array.isArray(data.data)) {
-        console.log('[LOAD_DISTRICTS_FILTER] Got', data.data.length, 'items');
-        data.data.forEach(district => {
-          const option = document.createElement('option');
+        console.log("[LOAD_DISTRICTS_FILTER] Got", data.data.length, "items");
+        data.data.forEach((district) => {
+          const option = document.createElement("option");
           option.value = district.id;
           option.textContent = district.name;
           districtSelect.appendChild(option);
         });
-        console.log('[LOAD_DISTRICTS_FILTER] Loaded successfully');
+        console.log("[LOAD_DISTRICTS_FILTER] Loaded successfully");
       } else {
-        console.warn('[LOAD_DISTRICTS_FILTER] No data:', data);
+        console.warn("[LOAD_DISTRICTS_FILTER] No data:", data);
       }
     })
-    .catch(err => {
-      console.error('[LOAD_DISTRICTS_FILTER] Error:', err);
+    .catch((err) => {
+      console.error("[LOAD_DISTRICTS_FILTER] Error:", err);
     });
 };
 
 window.loadCities = function () {
   console.log("[LOAD_CITIES] Starting to load cities...");
-  
+
   fetch("../php/get_Cities.php")
     .then((response) => {
       console.log("[LOAD_CITIES] Response status:", response.status);
@@ -860,19 +866,23 @@ window.loadCities = function () {
     })
     .then((data) => {
       console.log("[LOAD_CITIES] Data received:", data);
-      
+
       if (!data.success) {
         throw new Error(data.error || "Unknown error");
       }
-      
+
       const citySelect = document.getElementById("city-select");
       if (!citySelect) {
         console.error("[LOAD_CITIES] Element city-select not found");
         return;
       }
-      
-      console.log("[LOAD_CITIES] Found city-select, populating with", data.data.length, "cities");
-      
+
+      console.log(
+        "[LOAD_CITIES] Found city-select, populating with",
+        data.data.length,
+        "cities"
+      );
+
       citySelect.innerHTML = '<option value="">Chọn thành phố</option>';
       data.data.forEach((city) => {
         const option = document.createElement("option");
@@ -880,7 +890,7 @@ window.loadCities = function () {
         option.textContent = city.name;
         citySelect.appendChild(option);
       });
-      
+
       console.log("[LOAD_CITIES] Cities loaded successfully");
     })
     .catch((error) => {
@@ -978,46 +988,48 @@ document.addEventListener("DOMContentLoaded", function () {
   initFilters();
 });
 
-
 function showOrderDetailModal(orderId) {
-  console.log('[SHOW_DETAIL] Loading order:', orderId);
-  
+  console.log("[SHOW_DETAIL] Loading order:", orderId);
+
   // Fetch order details from API
   fetch(`../php/get_order_detail.php?orderId=${encodeURIComponent(orderId)}`)
-    .then(response => response.json())
-    .then(data => {
-      console.log('[ORDER_DETAIL] Data:', data);
-      
+    .then((response) => response.json())
+    .then((data) => {
+      console.log("[ORDER_DETAIL] Data:", data);
+
       if (!data.success) {
-        throw new Error(data.error || 'Không thể tải chi tiết đơn hàng');
+        throw new Error(data.error || "Không thể tải chi tiết đơn hàng");
       }
-      
+
       const order = data.order;
-      console.log('[ORDER_DETAIL] Voucher:', order.voucher);
-      console.log('[ORDER_DETAIL] Full order:', order);
-      
+      console.log("[ORDER_DETAIL] Voucher:", order.voucher);
+      console.log("[ORDER_DETAIL] Full order:", order);
+
       // Build products table HTML
-      let productsHTML = '';
+      let productsHTML = "";
       order.products.forEach((product, index) => {
         productsHTML += `
           <tr>
             <td style="text-align: center;">${index + 1}</td>
             <td>${product.productName}</td>
             <td style="text-align: center;">${product.quantity}</td>
-            <td style="text-align: right;">${parseInt(product.unitPrice).toLocaleString('vi-VN')} VND</td>
-            <td style="text-align: right;">${parseInt(product.totalPrice).toLocaleString('vi-VN')} VND</td>
+            <td style="text-align: right;">${parseInt(
+              product.unitPrice
+            ).toLocaleString("vi-VN")} VND</td>
+            <td style="text-align: right;">${parseInt(
+              product.totalPrice
+            ).toLocaleString("vi-VN")} VND</td>
           </tr>
         `;
       });
-      
+
       // Determine address display text
-      const hasNoAddress = !order.address || order.address.trim() === '';
-      const addressDisplay = hasNoAddress ? 'Không có' : order.address;
-      
+      const hasNoAddress = !order.address || order.address.trim() === "";
+      const addressDisplay = hasNoAddress ? "Không có" : order.address;
+
       // Update modal content
-      const modalBody = document.querySelector('#orderDetailModal .modal-body');
+      const modalBody = document.querySelector("#orderDetailModal .modal-body");
       if (modalBody) {
-        
         modalBody.innerHTML = `
           <div style="padding: 20px;">
             <!-- Order Info Section -->
@@ -1026,15 +1038,21 @@ function showOrderDetailModal(orderId) {
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
                   <label style="color: #666; font-size: 12px; text-transform: uppercase;">Mã đơn hàng</label>
-                  <p style="margin: 5px 0; font-weight: 600; color: #333;">#${order.orderId}</p>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">#${
+                    order.orderId
+                  }</p>
                 </div>
                 <div>
                   <label style="color: #666; font-size: 12px; text-transform: uppercase;">Ngày tạo</label>
-                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${new Date(order.orderDate).toLocaleString('vi-VN')}</p>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${new Date(
+                    order.orderDate
+                  ).toLocaleString("vi-VN")}</p>
                 </div>
                 <div>
                   <label style="color: #666; font-size: 12px; text-transform: uppercase;">Phương thức thanh toán: </label>
-                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${formatPaymentMethod(order.paymentMethod)}</p>
+                  <p style="margin: 5px 0; font-weight: 600; color: #333;">${formatPaymentMethod(
+                    order.paymentMethod
+                  )}</p>
                 </div>
               </div>
             </div>
@@ -1043,25 +1061,39 @@ function showOrderDetailModal(orderId) {
             <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
               <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">👤 Thông tin khách hàng: </h5>
               ${
-                (order.customerName && String(order.customerName).trim() !== 'Không có') || 
-                (order.customerPhone && String(order.customerPhone).trim() !== 'Không có' && String(order.customerPhone).trim() !== '0000000000')
-                ? `
+                (order.customerName &&
+                  String(order.customerName).trim() !== "Không có") ||
+                (order.customerPhone &&
+                  String(order.customerPhone).trim() !== "Không có" &&
+                  String(order.customerPhone).trim() !== "0000000000")
+                  ? `
                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    ${(order.customerName && String(order.customerName).trim() !== 'Không có ') ? `
+                    ${
+                      order.customerName &&
+                      String(order.customerName).trim() !== "Không có "
+                        ? `
                       <div>
                         <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên: </label>
                         <p style="margin: 5px 0; font-weight: 600; color: #000000ff;">${order.customerName}</p>
                       </div>
-                    ` : ''}
-                    ${(order.customerPhone && String(order.customerPhone).trim() !== 'Không có' && String(order.customerPhone).trim() !== '0000000000') ? `
+                    `
+                        : ""
+                    }
+                    ${
+                      order.customerPhone &&
+                      String(order.customerPhone).trim() !== "Không có" &&
+                      String(order.customerPhone).trim() !== "0000000000"
+                        ? `
                       <div>
                         <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại: </label>
                         <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerPhone}</p>
                       </div>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                   </div>
                 `
-                : `<p >Không có</p>`
+                  : `<p >Không có</p>`
               }
             </div>
             
@@ -1073,7 +1105,9 @@ function showOrderDetailModal(orderId) {
             
             <!-- Products Section -->
             <div style="margin-bottom: 30px;">
-              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📦 Sản phẩm (${order.productCount})</h5>
+              <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📦 Sản phẩm (${
+                order.productCount
+              })</h5>
               <table style="width: 100%; border-collapse: collapse;">
                 <thead style="background-color: #f8f9fa; border-bottom: 2px solid #ddd;">
                   <tr>
@@ -1091,7 +1125,9 @@ function showOrderDetailModal(orderId) {
             </div>
             
             <!-- Voucher Section (if exists) -->
-            ${order.voucher ? `
+            ${
+              order.voucher
+                ? `
               <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #d4edda 100%); border-radius: 10px; border-left: 5px solid #6de323ff; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
                   <span style="font-size: 24px;">🎁</span>
@@ -1101,45 +1137,61 @@ function showOrderDetailModal(orderId) {
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                   <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
                     <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Mã voucher</label>
-                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #2c3e50; font-size: 15px;">${order.voucher.name}</p>
+                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #2c3e50; font-size: 15px;">${
+                      order.voucher.name
+                    }</p>
                   </div>
                   <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
                     <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Tỷ lệ giảm</label>
-                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #e74c3c; font-size: 15px;">${order.voucher.discountPercent}%</p>
+                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #e74c3c; font-size: 15px;">${
+                      order.voucher.discountPercent
+                    }%</p>
                   </div>
                   <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
                     <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Số tiền giảm</label>
-                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #27ae60; font-size: 15px;">-${parseInt(order.voucher.discountAmount).toLocaleString('vi-VN')} VND</p>
+                    <p style="margin: 8px 0 0 0; font-weight: 700; color: #27ae60; font-size: 15px;">-${parseInt(
+                      order.voucher.discountAmount
+                    ).toLocaleString("vi-VN")} VND</p>
                   </div>
                 </div>
-                ${order.voucher.conditions ? `
+                ${
+                  order.voucher.conditions
+                    ? `
                   <div style="margin-top: 12px; padding: 10px; background-color: rgba(100,150,200,0.1); border-radius: 6px; border-left: 3px solid #3498db;">
                     <label style="color: #2c3e50; font-size: 11px; text-transform: uppercase; font-weight: 600;">Điều kiện áp dụng</label>
                     <p style="margin: 6px 0 0 0; color: #555; font-size: 13px;">${order.voucher.conditions}</p>
                   </div>
-                ` : ''}
+                `
+                    : ""
+                }
               </div>
-            ` : ''}
+            `
+                : ""
+            }
             
             <!-- Total Section -->
             <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 16px; font-weight: 600; color: #333;">Thành tiền: </span>
-                <span style="font-size: 24px; font-weight: 700; color: #27ae60;">${parseInt(order.totalAmount).toLocaleString('vi-VN')} VND</span>
+                <span style="font-size: 16px; font-weight: 600; color: #333;">Tổng tiền: </span>
+                <span style="font-size: 24px; font-weight: 700; color: #27ae60;">${parseInt(
+                  order.totalAmount
+                ).toLocaleString("vi-VN")} VND</span>
               </div>
             </div>
           </div>
         `;
       }
-      
+
       // Show modal
-      const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+      const modal = new bootstrap.Modal(
+        document.getElementById("orderDetailModal")
+      );
       modal.show();
-      
-      console.log('[ORDER_DETAIL] Modal displayed successfully');
+
+      console.log("[ORDER_DETAIL] Modal displayed successfully");
     })
-    .catch(error => {
-      console.error('[ERROR_DETAIL]', error);
-      alert('Lỗi khi tải chi tiết đơn hàng: ' + error.message);
+    .catch((error) => {
+      console.error("[ERROR_DETAIL]", error);
+      alert("Lỗi khi tải chi tiết đơn hàng: " + error.message);
     });
 }
