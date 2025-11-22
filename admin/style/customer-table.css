@@ -209,6 +209,7 @@
     margin: 10px 0 20px;
     font-size: 14px;
     font-weight: 500;
+    width: 100%;
 }
 
 /* Pagination */
@@ -233,4 +234,24 @@
 .page-btn.active {
     background-color: #35635A;
     color: white;
+}
+
+/* Mobile Small (320px - 479px) */
+@media only screen and (max-width: 479px) {
+    .customer-container {
+        margin-left: 20px !important;
+        margin-right: 20px !important;
+        width: calc(100% - 40px) !important;
+        padding: 10px !important;
+    }
+}
+
+/* Mobile Extra Small (specifically 320px) */
+@media only screen and (max-width: 320px) {
+    .customer-container {
+        margin-left: 20px !important;
+        margin-right: 10px !important;
+        width: calc(100% - 30px) !important;
+        padding: 10px !important;
+    }
 }

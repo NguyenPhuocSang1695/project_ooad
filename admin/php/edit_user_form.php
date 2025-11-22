@@ -9,15 +9,14 @@
       </div>
       <div class="modal-body">
         <form id="editUserForm" action="../php/update_user.php" method="POST">
-          <!-- original username (readonly key) -->
+          <!-- Hidden fields to identify user -->
           <input type="hidden" id="edit_original_username" name="username" />
           <input type="hidden" id="edit_user_id" name="user_id" />
+          <input type="hidden" id="edit_role" name="role" />
+          
+          <!-- Only editable fields: Fullname and Phone -->
           <div class="row mb-3">
-            <div class="col-md-6" id="edit_username_col">
-              <label for="edit_username" class="form-label">Tên đăng nhập</label>
-              <input type="text" class="form-control" id="edit_username" name="new_username" readonly>
-            </div>
-            <div class="col-md-6">
+            <div class="col-md-12">
               <label for="edit_fullname" class="form-label">Họ và tên</label>
               <input type="text" class="form-control" id="edit_fullname" name="fullname" required>
             </div>
@@ -25,29 +24,8 @@
           <div class="row mb-3">
             <div class="col-md-12">
               <label for="edit_phone" class="form-label">Số điện thoại</label>
-              <input type="text" class="form-control" id="edit_phone" name="phone" required>
+              <input type="text" class="form-control" id="edit_phone" name="phone" required pattern="^0\d{9}$" placeholder="Nhập 10 số, bắt đầu bằng 0">
             </div>
-          </div>
-          <!-- Password section (only visible when admin edits own account) -->
-          <div class="row mb-3" id="edit_password_row" style="display:none;">
-            <div class="col-md-6">
-              <label for="edit_password" class="form-label">Mật khẩu mới</label>
-              <input type="password" class="form-control" id="edit_password" name="password" minlength="6">
-            </div>
-            <div class="col-md-6">
-              <label for="edit_confirm_password" class="form-label">Xác nhận mật khẩu</label>
-              <input type="password" class="form-control" id="edit_confirm_password" name="confirm_password" minlength="6">
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label for="edit_role" class="form-label">Vai trò</label>
-              <select class="form-select" id="edit_role" name="role">
-                <option value="customer">Khách hàng</option>
-                <option value="admin">Quản trị viên</option>
-              </select>
-            </div>
-            <!-- Status editing removed -->
           </div>
         </form>
       </div>

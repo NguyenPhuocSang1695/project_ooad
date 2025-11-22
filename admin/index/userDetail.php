@@ -113,10 +113,13 @@
                     <span class="info-label">Họ và tên:</span>
                     <span class="info-value"><?php echo htmlspecialchars($userData['fullname']); ?></span>
                 </div>
+                <?php if($userData['role'] === 'admin'): ?>
                 <div class="info-row">
                     <span class="info-label">Username:</span>
                     <span class="info-value"><?php echo htmlspecialchars($userData['username']); ?></span>
                 </div>
+                <?php endif; ?>
+                
                 <div class="info-row">
                     <span class="info-label">Số điện thoại:</span>
                     <span class="info-value"><?php echo htmlspecialchars($userData['phone']); ?></span>
@@ -155,7 +158,7 @@
                 </div>
                 <div class="stat-info">
                     <div class="stat-label">Tổng chi tiêu</div>
-                    <div class="stat-value"><?php echo number_format($total_amount_all, 0, ',', '.'); ?> VNĐ</div>
+                    <div class="stat-value"><?php echo number_format($total_amount_all, 0, ',', '.'); ?> VND</div>
                 </div>
             </div>
         </div>
@@ -171,7 +174,6 @@
                             <th>Mã đơn</th>
                             <th>Tên khách hàng</th>
                             <th>Ngày tạo</th>
-                            <th>Thanh toán</th>
                             <th>Phương thức thanh toán</th>
                             <th>Tổng tiền</th>
                         </tr>
@@ -182,8 +184,25 @@
                                 <td data-label="Mã đơn">#<?php echo htmlspecialchars($order['OrderID']); ?></td>
                                 <td data-label="Tên khách hàng"><?php echo htmlspecialchars($order['CustomerName'] ?? 'N/A'); ?></td>
                                 <td data-label="Ngày tạo"><?php echo htmlspecialchars($order['DateGeneration'] ?? 'N/A'); ?></td>
-                                <td data-label="Thanh toán"><?php echo htmlspecialchars($order['PaymentMethod'] ?? 'N/A'); ?></td>
-                                <td data-label="Tổng tiền"><?php echo number_format($order['TotalAmount'] ?? 0, 0, ',', '.'); ?> VNĐ</td>
+                                <td data-label="Thanh toán">
+                                    <?php 
+                                    $paymentMethod = $order['PaymentMethod'] ?? 'N/A';
+                                    switch($paymentMethod) {
+                                        case 'CASH':
+                                            echo 'Tiền mặt';
+                                            break;
+                                        case 'COD':
+                                            echo 'Thanh toán khi nhận hàng';
+                                            break;
+                                        case 'BANK':
+                                            echo 'Chuyển khoản ngân hàng';
+                                            break;
+                                        default:
+                                            echo htmlspecialchars($paymentMethod);
+                                    }
+                                    ?>
+                                </td>
+                                <td data-label="Tổng tiền"><?php echo number_format($order['TotalAmount'] ?? 0, 0, ',', '.'); ?> VND</td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
