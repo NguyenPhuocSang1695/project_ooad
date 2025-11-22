@@ -455,7 +455,27 @@ function refreshProductSelects() {
                 });
                 
                 optionDiv.addEventListener('click', function() {
-                    select.value = this.dataset.productId;
+                    const selectedProductId = this.dataset.productId;
+                    
+                    // Check for duplicate products in other rows
+                    const existingRows = document.querySelectorAll('.product-item');
+                    let isDuplicate = false;
+                    
+                    existingRows.forEach(row => {
+                        if (row !== item) { // Skip current row
+                            const otherSelect = row.querySelector('.product-select');
+                            if (otherSelect && otherSelect.value === selectedProductId) {
+                                isDuplicate = true;
+                            }
+                        }
+                    });
+                    
+                    if (isDuplicate) {
+                        showNotification('warning', 'Vui lòng chọn sản phẩm khác.');
+                        return;
+                    }
+                    
+                    select.value = selectedProductId;
                     searchInput.value = this.textContent;
                     optionsDiv.style.display = 'none';
                     
