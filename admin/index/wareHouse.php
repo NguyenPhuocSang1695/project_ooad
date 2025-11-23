@@ -1467,34 +1467,53 @@ if (!isset($_GET['sort_by']) && !isset($_GET['page'])) {
       const priceMax = document.getElementById('priceMax').value;
       const sortBy = getCurrentSortBy();
 
-      // Fetch với limit cao để lấy tất cả sản phẩm, rồi phân trang client-side
-      let url = `../php/filter-sort-product.php?page=1&limit=10000`;
-      if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
-      if (category && category !== 'all') url += `&category=${category}`;
-      if (status && status !== 'all') url += `&status=${status}`;
-      if (priceMin) url += `&price_min=${priceMin}`;
-      if (priceMax) url += `&price_max=${priceMax}`;
-      url += `&sort_by=${sortBy}`;
+      // Bước 1: Fetch chỉ để lấy tổng số lượng sản phẩm
+      let countUrl = `../php/filter-sort-product.php?page=1&limit=1`;
+      if (keyword) countUrl += `&keyword=${encodeURIComponent(keyword)}`;
+      if (category && category !== 'all') countUrl += `&category=${category}`;
+      if (status && status !== 'all') countUrl += `&status=${status}`;
+      if (priceMin) countUrl += `&price_min=${priceMin}`;
+      if (priceMax) countUrl += `&price_max=${priceMax}`;
+      countUrl += `&sort_by=${sortBy}`;
 
-      // Build URL parameters
-      const urlParams = new URLSearchParams();
-      urlParams.set('page', page);
-
-      if (keyword) urlParams.set('keyword', keyword);
-      if (category && category !== 'all') urlParams.set('category', category);
-      if (status && status !== 'all') urlParams.set('status', status);
-      if (priceMin) urlParams.set('price_min', priceMin);
-      if (priceMax) urlParams.set('price_max', priceMax);
-      urlParams.set('sort_by', sortBy);
-
-      // Update URL without reloading page
-      const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-      window.history.pushState({
-        path: newUrl
-      }, '', newUrl);
-
-      fetch(url)
+      // Lấy tổng số lượng sản phẩm từ response đầu tiên
+      fetch(countUrl)
         .then(res => res.json())
+        .then(countData => {
+          if (countData.success) {
+            const totalItems = countData.pagination.totalItems;
+
+            // Bước 2: Fetch lại với limit = tổng số lượng sản phẩm
+            let url = `../php/filter-sort-product.php?page=1&limit=${totalItems}`;
+            if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+            if (category && category !== 'all') url += `&category=${category}`;
+            if (status && status !== 'all') url += `&status=${status}`;
+            if (priceMin) url += `&price_min=${priceMin}`;
+            if (priceMax) url += `&price_max=${priceMax}`;
+            url += `&sort_by=${sortBy}`;
+
+            // Build URL parameters
+            const urlParams = new URLSearchParams();
+            urlParams.set('page', page);
+
+            if (keyword) urlParams.set('keyword', keyword);
+            if (category && category !== 'all') urlParams.set('category', category);
+            if (status && status !== 'all') urlParams.set('status', status);
+            if (priceMin) urlParams.set('price_min', priceMin);
+            if (priceMax) urlParams.set('price_max', priceMax);
+            urlParams.set('sort_by', sortBy);
+
+            // Update URL without reloading page
+            const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+            window.history.pushState({
+              path: newUrl
+            }, '', newUrl);
+
+            return fetch(url).then(res => res.json());
+          } else {
+            throw new Error('Failed to get product count');
+          }
+        })
         .then(data => {
           if (data.success && data.products) {
             // Lưu tất cả products để phân trang client-side
