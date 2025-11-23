@@ -33,12 +33,7 @@
       if (!modalEl){ alert('Không tìm thấy form sửa người dùng'); return; }
       modalCtrl.open();
 
-      const passRow = document.getElementById('edit_password_row');
-      const passInput = document.getElementById('edit_password');
-      const passConfirm = document.getElementById('edit_confirm_password');
-      const usernameInput = document.getElementById('edit_username');
       const originalUsernameInput = document.getElementById('edit_original_username');
-      const usernameCol = document.getElementById('edit_username_col');
 
       let query = '';
       if (username && username.trim() !== '') {
@@ -50,61 +45,19 @@
       if (!resp.success){ alert(resp.message || 'Không tải được thông tin người dùng'); modalCtrl.close(); return; }
       const u = resp.data || {};
 
-      // Fill basics
-      // Set hidden keys
+      // Fill hidden fields and editable fields
       if (document.getElementById('edit_user_id')) {
         document.getElementById('edit_user_id').value = (u.user_id || '');
       }
-      originalUsernameInput && (originalUsernameInput.value = u.username || '');
-      usernameInput && (usernameInput.value = u.username || '');
+      if (originalUsernameInput) {
+        originalUsernameInput.value = u.username || '';
+      }
       
       var el;
       if ((el = document.getElementById('edit_fullname'))) el.value = u.fullname || '';
       if ((el = document.getElementById('edit_phone'))) el.value = u.phone || '';
-  if ((el = document.getElementById('edit_role'))) el.value = u.role || 'customer';
+      if ((el = document.getElementById('edit_role'))) el.value = u.role || 'customer';
 
-      // Determine session and permissions
-      let canEditSelf = false;
-      let isTargetAdmin = (String(u.role||'').toLowerCase() === 'admin');
-      try {
-        const sess = await fetchJSON('../php/sessionHandler.php');
-        if (sess && sess.status === 'success'){
-          const currentUser = String(sess.username || '');
-          const currentRole = String(sess.role || '');
-          // Admin can edit own username/password only
-          canEditSelf = (currentRole === 'admin' && currentUser === (u.username||''));
-        }
-      } catch(e){ /* ignore session fetch errors */ }
-
-      // Show/hide username + password sections based on target role
-      if (!isTargetAdmin){
-        // Hide username and password sections entirely for non-admin users
-        if (usernameCol) usernameCol.style.display = 'none';
-        if (passRow) {
-          passRow.style.display = 'none';
-          if (passInput) passInput.value = '';
-          if (passConfirm) passConfirm.value = '';
-        }
-      } else {
-        // Target is admin: show sections
-        if (usernameCol) usernameCol.style.display = '';
-        if (passRow) passRow.style.display = '';
-
-        // Only self-admin can actually change
-        if (usernameInput){
-          if (canEditSelf){
-            usernameInput.removeAttribute('readonly');
-          } else {
-            usernameInput.setAttribute('readonly', 'readonly');
-          }
-        }
-        if (passInput && passConfirm){
-          const disabled = !canEditSelf;
-          passInput.disabled = disabled;
-          passConfirm.disabled = disabled;
-          if (disabled){ passInput.value = ''; passConfirm.value = ''; }
-        }
-      }
     } catch (e){
       console.error(e); alert(e.message || 'Lỗi mở form sửa người dùng'); modalCtrl.close();
     }
