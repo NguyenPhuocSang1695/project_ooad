@@ -10,7 +10,7 @@ session_start();
 
 // Nếu đã đăng nhập rồi thì chuyển sang trang chính
 if (isset($_SESSION['Username'])) {
-    header("Location: ../admin/index/homePage.php");
+    header("Location: ./admin/index/homePage.php");
     exit();
 }
 

@@ -5,7 +5,7 @@ $myconn = new DatabaseConnection();
 $myconn->connect();
 
 if (!isset($_SESSION['Username'])) {
-  header('Location: ../index.php');
+  header('Location: ../../index.php');
   exit();
 }
 
