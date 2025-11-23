@@ -863,7 +863,7 @@ $orders = [];
                       <select class="form-control" id="payment-method" name="payment_method" required>
 
                         <option value="CASH">Thanh toán tại quầy</option>
-                        <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+                        <option value="COD">Thanh toán khi nhận hàng</option>
                         <option value="BANKING">Chuyển khoản ngân hàng</option>
                       </select>
                     </div>
