@@ -449,6 +449,9 @@ class UserManager
         $username = $rowUser['Username'] ?? $username; // normalize current username from DB
         $userId = (int)($rowUser['user_id'] ?? $userId);
 
+        // Keep existing role from database - don't allow role changes via this update
+        $role = $targetRole;
+
         // Check if phone number is already used by another user using OOP method
         try {
             $resPhone = $this->dbConnection->queryPrepared(
@@ -469,49 +472,14 @@ class UserManager
 
         // Permission rules - accept both 'admin' from DB and 'nhân viên' from session
         $isSelfAdmin = (($currentRole === 'admin' || $currentRole === 'nhân viên') && $currentUser !== '' && strcasecmp($currentUser, $username) === 0);
-        $isEditingAnotherAdmin = ($targetRole === 'admin' && !$isSelfAdmin);        // Username change validation
-        $willChangeUsername = ($newUsername !== '' && strcasecmp($newUsername, $username) !== 0);
-        if ($willChangeUsername) {
-            if (!$isSelfAdmin) {
-                return ['success' => false, 'message' => 'Chỉ admin được đổi username của chính mình'];
-            }
-            // Validate new username pattern
-            if (!preg_match('/^[A-Za-z0-9_\-.]{3,32}$/', $newUsername)) {
-                return ['success' => false, 'message' => 'Tên đăng nhập mới không hợp lệ'];
-            }
-            // Check duplicate username using OOP method
-            try {
-                $resC = $this->dbConnection->queryPrepared(
-                    'SELECT 1 FROM users WHERE Username = ? LIMIT 1',
-                    [$newUsername],
-                    's'
-                );
-                $dupe = (bool)$resC->fetch_row();
-                $resC->free();
-                
-                if ($dupe) {
-                    return ['success' => false, 'message' => 'Tên đăng nhập mới đã tồn tại'];
-                }
-            } catch (Exception $e) {
-                return ['success' => false, 'message' => 'Lỗi kiểm tra username: ' . $e->getMessage()];
-            }
-        } else {
-            $newUsername = $username; // no change
-        }
-
-        // Password change validation: only admin editing self
-        $willChangePassword = ($password !== '' || $confirm !== '');
-        if ($willChangePassword) {
-            if (!$isSelfAdmin) {
-                return ['success' => false, 'message' => 'Chỉ admin được đổi mật khẩu của chính mình'];
-            }
-            if ($password !== $confirm) {
-                return ['success' => false, 'message' => 'Xác nhận mật khẩu không khớp'];
-            }
-            if (strlen($password) < 6) {
-                return ['success' => false, 'message' => 'Mật khẩu phải có ít nhất 6 ký tự'];
-            }
-        }
+        $isEditingAnotherAdmin = ($targetRole === 'admin' && !$isSelfAdmin);
+        
+        // Simplify: Don't allow username changes at all
+        // Always keep the existing username
+        $newUsername = $username;
+        
+        // Don't allow password changes through this form
+        $willChangePassword = false;
 
         // Get mysqli connection for transaction
         $conn = $this->dbConnection->getConnection();
@@ -519,35 +487,15 @@ class UserManager
         // Begin transaction
         $conn->begin_transaction();
         try {
-            // Update user basic fields only (no address)
-            if ($status === null) {
-                // Do not change Status column
-                $this->dbConnection->queryPrepared(
-                    'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Username = ? WHERE user_id = ?',
-                    [$fullname, $phone, $role, $newUsername, $userId],
-                    'ssssi'
-                );
-            } else {
-                // Include Status in update
-                $this->dbConnection->queryPrepared(
-                    'UPDATE users SET FullName = ?, Phone = ?, Role = ?, Status = ?, Username = ? WHERE user_id = ?',
-                    [$fullname, $phone, $role, $status, $newUsername, $userId],
-                    'sssssi'
-                );
-            }
-
-            // Update password if required
-            if ($willChangePassword) {
-                $hash = password_hash($password, PASSWORD_BCRYPT);
-                $this->dbConnection->queryPrepared(
-                    'UPDATE users SET PasswordHash = ? WHERE user_id = ?',
-                    [$hash, $userId],
-                    'si'
-                );
-            }
+            // Update ONLY FullName and Phone - keep Username, Role, Status unchanged
+            $this->dbConnection->queryPrepared(
+                'UPDATE users SET FullName = ?, Phone = ? WHERE user_id = ?',
+                [$fullname, $phone, $userId],
+                'ssi'
+            );
 
             $conn->commit();
-            return ['success' => true, 'message' => 'Cập nhật người dùng thành công'];
+            return ['success' => true, 'message' => 'Cập nhật thông tin thành công'];
         } catch (Exception $ex) {
             $conn->rollback();
             return ['success' => false, 'message' => $ex->getMessage()];
