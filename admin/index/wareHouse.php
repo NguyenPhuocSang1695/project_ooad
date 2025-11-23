@@ -827,7 +827,7 @@ global $mysqli;
           <!-- Nút reset -->
           <div class="filter-group">
             <button id="resetFilters" class="btn-reset-filters">
-              <i class="fa-solid fa-rotate-right"></i> Reset
+              <i class="fa-solid fa-rotate-right"></i> Đặt lại
             </button>
           </div>
         </div>
