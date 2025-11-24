@@ -15,15 +15,15 @@
       .header-right-section {
         margin-right: 32px;
         position: relative;
-        left: -3px;
-        top: 15px;
+        /* left: -3px;
+        top: 15px; */
         z-index: 1;
       }
 
       .header-left-section {
         position: relative;
         left: clamp(49px, 51px, 100px);
-        top: 30px;
+        top: 40px;
         z-index: 1;
       }
 
@@ -59,10 +59,10 @@
         max-width: 100%;
       }
 
-      .avatar {
+      /* .avatar {
         width: 65px;
         height: 65px;
-      }
+      } */
 
       .offcanvas.offcanvas-start {
         background-color: #35635A;
@@ -132,6 +132,29 @@
 
       .hide-index-smartphone {
         display: none;
+      }
+
+      /* Banking info responsive - stack layout vertically */
+      #banking-info-section > div {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 15px !important;
+      }
+
+      /* QR Code responsive on small screens */
+      #qr-container {
+        order: 2;
+        width: 100%;
+      }
+
+      #qr-container img {
+        max-width: 150px !important;
+        width: 100%;
+      }
+
+      #banking-info-section > div > div:first-child {
+        order: 1;
+        width: 100%;
       }
      
     }
