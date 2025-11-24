@@ -7,6 +7,16 @@ global $db;
 $mysqli = $db->getConnection();
 global $mysqli;
 
+// Chỉ auto set sort_by=newest khi load TRANG ĐẦU TIÊN
+if (!isset($_GET['sort_by']) && !isset($_GET['page'])) {
+  $params = $_GET;
+  $params['sort_by'] = 'newest';
+  $params['page'] = 1;
+
+  header("Location: ?" . http_build_query($params));
+  exit;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -815,11 +825,11 @@ global $mysqli;
           <div class="filter-group">
             <label for="sortBy">Sắp xếp:</label>
             <select id="sortBy" class="filter-select">
+              <option value="newest">Mới nhất</option>
               <option value="name_asc">Tên A-Z</option>
               <option value="name_desc">Tên Z-A</option>
               <option value="price_asc">Giá tăng dần</option>
               <option value="price_desc">Giá giảm dần</option>
-              <option value="newest">Mới nhất</option>
               <option value="oldest">Cũ nhất</option>
             </select>
           </div>
@@ -827,7 +837,7 @@ global $mysqli;
           <!-- Nút reset -->
           <div class="filter-group">
             <button id="resetFilters" class="btn-reset-filters">
-              <i class="fa-solid fa-rotate-right"></i> Reset
+              <i class="fa-solid fa-rotate-right"></i> Đặt lại
             </button>
           </div>
         </div>
@@ -855,22 +865,13 @@ global $mysqli;
               </tr>
             </thead>
 
-            <!-- Body + pagination do renderProducts() xuất ra -->
-            <?php
-            $controller = new ProductManager();
-            $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-            echo $controller->renderProducts($page);
-            ?>
-
             <tbody id="productsBody">
               <!-- Nội dung được load bằng JS -->
             </tbody>
           </table>
 
-          <!-- <div id="pagination" class="pagination" style="display: none"></div> -->
-
-          <!-- Main pagination (server-rendered by ProductManager->renderProducts) -->
-          <div id="pagination-search" style="text-align:center; margin-top:20px;"></div>
+          <!-- Pagination được render bằng JS -->
+          <div id="pagination-container" style="text-align:center; margin-top:20px;"></div>
 
         </div>
       </div>
@@ -1180,11 +1181,11 @@ global $mysqli;
 
       // Hiển thị loading
       content.innerHTML = `
-    <div class="loading-spinner">
-      <i class="fa-solid fa-spinner fa-spin"></i>
-      <p style="margin-top: 15px; font-size: 16px;">Đang tải...</p>
-    </div>
-  `;
+          <div class="loading-spinner">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p style="margin-top: 15px; font-size: 16px;">Đang tải...</p>
+          </div>
+        `;
       overlay.style.display = 'flex';
       document.body.style.overflow = 'hidden'; // Prevent body scroll
 
@@ -1420,6 +1421,41 @@ global $mysqli;
       }
     });
 
+
+
+
+    // Restore filter values từ URL parameters khi load trang
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // Restore các giá trị filter từ URL
+      const category = urlParams.get('category');
+      const status = urlParams.get('status');
+      const priceMin = urlParams.get('price_min');
+      const priceMax = urlParams.get('price_max');
+      const sortBy = urlParams.get('sort_by');
+      const keyword = urlParams.get('keyword');
+
+      if (category) document.getElementById('categoryFilter').value = category;
+      if (status) document.getElementById('statusFilter').value = status;
+      if (priceMin) document.getElementById('priceMin').value = priceMin;
+      if (priceMax) document.getElementById('priceMax').value = priceMax;
+      if (sortBy) document.getElementById('sortBy').value = sortBy;
+      if (keyword) document.getElementById('search-input').value = keyword;
+
+      // Nếu có bất kỳ filter nào, load products với filter đó
+      if (category || status || priceMin || priceMax || sortBy || keyword) {
+        const page = parseInt(urlParams.get('page')) || 1;
+        currentPage = page;
+        loadProducts(page);
+      }
+    });
+
+    function getCurrentSortBy() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('sort_by') || document.getElementById('sortBy').value || 'newest';
+    }
+
     // Initialize currentPage from server (so server-side ?page=X is respected)
     function loadProducts(page = 1) {
       const keyword = (document.getElementById('search-input') || {
@@ -1429,70 +1465,70 @@ global $mysqli;
       const status = document.getElementById('statusFilter').value;
       const priceMin = document.getElementById('priceMin').value;
       const priceMax = document.getElementById('priceMax').value;
-      const sortBy = document.getElementById('sortBy').value;
+      const sortBy = getCurrentSortBy();
 
-      let url = `../php/filter-sort-product.php?page=${page}`;
-      if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
-      if (category && category !== 'all') url += `&category=${category}`;
-      if (status && status !== 'all') url += `&status=${status}`;
-      if (priceMin) url += `&price_min=${priceMin}`;
-      if (priceMax) url += `&price_max=${priceMax}`;
-      url += `&sort_by=${sortBy}`;
+      // Bước 1: Fetch chỉ để lấy tổng số lượng sản phẩm
+      let countUrl = `../php/filter-sort-product.php?page=1&limit=1`;
+      if (keyword) countUrl += `&keyword=${encodeURIComponent(keyword)}`;
+      if (category && category !== 'all') countUrl += `&category=${category}`;
+      if (status && status !== 'all') countUrl += `&status=${status}`;
+      if (priceMin) countUrl += `&price_min=${priceMin}`;
+      if (priceMax) countUrl += `&price_max=${priceMax}`;
+      countUrl += `&sort_by=${sortBy}`;
 
-      const hasFilters = keyword || (category && category !== 'all') ||
-        (status && status !== 'all') || priceMin || priceMax;
-
-      // Ẩn server-side pagination khi có filter
-      const tfoot = document.querySelector('#productsTable tfoot');
-      if (tfoot) {
-        tfoot.style.display = hasFilters ? 'none' : '';
-      }
-
-      fetch(url)
+      // Lấy tổng số lượng sản phẩm từ response đầu tiên
+      fetch(countUrl)
         .then(res => res.json())
-        .then(data => {
-          const tbody = document.getElementById('productsBody');
-          tbody.innerHTML = '';
+        .then(countData => {
+          if (countData.success) {
+            const totalItems = countData.pagination.totalItems;
 
-          if (data.success && data.products && data.products.length > 0) {
-            data.products.forEach(p => {
+            // Bước 2: Fetch lại với limit = tổng số lượng sản phẩm
+            let url = `../php/filter-sort-product.php?page=1&limit=${totalItems}`;
+            if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+            if (category && category !== 'all') url += `&category=${category}`;
+            if (status && status !== 'all') url += `&status=${status}`;
+            if (priceMin) url += `&price_min=${priceMin}`;
+            if (priceMax) url += `&price_max=${priceMax}`;
+            url += `&sort_by=${sortBy}`;
 
+            // Build URL parameters
+            const urlParams = new URLSearchParams();
+            urlParams.set('page', page);
 
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <td><img src="../..${p.ImageURL}" alt="${p.ProductName}" style="width:100px;height:100px;object-fit:cover;"></td>
-                <td style="text-align: center;">${p.ProductName}</td>
-                <td style="text-align: center;">${p.CategoryName}</td>
-                <td style="text-align: center;">${Number(p.Price).toLocaleString('vi-VN')}</td>
-                <td class="actions d-flex" style="text-align: center;">
-                  <button class="btn btn-success btn-sm me-2" onclick="viewProduct(${p.ProductID})" title="Xem chi tiết">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                  <button class="btn btn-primary btn-sm me-2" onclick="editProduct(${p.ProductID})" style="margin-right: 8px;">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                  </button>
-                  <button type="button" class="btn btn-danger btn-sm me-2" onclick="confirmDelete(${p.ProductID})">
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
-                </td>
-                `;
-              tbody.appendChild(tr);
-            });
+            if (keyword) urlParams.set('keyword', keyword);
+            if (category && category !== 'all') urlParams.set('category', category);
+            if (status && status !== 'all') urlParams.set('status', status);
+            if (priceMin) urlParams.set('price_min', priceMin);
+            if (priceMax) urlParams.set('price_max', priceMax);
+            urlParams.set('sort_by', sortBy);
+
+            // Update URL without reloading page
+            const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+            window.history.pushState({
+              path: newUrl
+            }, '', newUrl);
+
+            return fetch(url).then(res => res.json());
           } else {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;">
-          <i class="fa-solid fa-box-open" style="font-size:48px;color:#ccc;margin-bottom:10px;"></i>
-          <p>Không tìm thấy sản phẩm nào</p>
-        </td></tr>`;
+            throw new Error('Failed to get product count');
           }
+        })
+        .then(data => {
+          if (data.success && data.products) {
+            // Lưu tất cả products để phân trang client-side
+            window.allProducts = data.products;
+            window.totalProducts = data.pagination.totalItems;
 
-          // Chỉ render pagination khi có filter
-          const paginationSearch = document.getElementById('pagination-search');
-          if (paginationSearch) {
-            paginationSearch.innerHTML = '';
-
-            if (hasFilters && data.pagination && data.pagination.totalPages > 1) {
-              renderPagination(paginationSearch, data.pagination);
-            }
+            // Render products cho trang hiện tại
+            renderProductsForPage(page);
+          } else {
+            const tbody = document.getElementById('productsBody');
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;">
+              <i class="fa-solid fa-box-open" style="font-size:48px;color:#ccc;margin-bottom:10px;"></i>
+              <p>Không tìm thấy sản phẩm nào</p>
+            </td></tr>`;
+            document.getElementById('pagination-container').innerHTML = '';
           }
         })
         .catch(err => {
@@ -1501,94 +1537,159 @@ global $mysqli;
         });
     }
 
-    // Tách hàm render pagination ra để code gọn hơn
-    function renderPagination(container, pagination) {
+    // Render products cho trang cụ thể (client-side pagination)
+    function renderProductsForPage(page = 1) {
+      const itemsPerPage = 5;
+      const products = window.allProducts || [];
+      const totalProducts = window.totalProducts || 0;
+      const totalPages = Math.ceil(totalProducts / itemsPerPage);
+
+      // Validate page
+      if (page < 1) page = 1;
+      if (page > totalPages && totalPages > 0) page = totalPages;
+
+      const startIdx = (page - 1) * itemsPerPage;
+      const endIdx = startIdx + itemsPerPage;
+      const pageProducts = products.slice(startIdx, endIdx);
+
+      const tbody = document.getElementById('productsBody');
+      tbody.innerHTML = '';
+
+      if (pageProducts.length > 0) {
+        pageProducts.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><img src="../..${p.ImageURL}" alt="${p.ProductName}" style="width:100px;height:100px;object-fit:cover;"></td>
+            <td style="text-align: center;">${p.ProductName}</td>
+            <td style="text-align: center;">${p.CategoryName}</td>
+            <td style="text-align: center;">${Number(p.Price).toLocaleString('vi-VN')}</td>
+            <td class="actions d-flex" style="text-align: center;">
+              <button class="btn btn-success btn-sm me-2" onclick="viewProduct(${p.ProductID})" title="Xem chi tiết">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+              <button class="btn btn-primary btn-sm me-2" onclick="editProduct(${p.ProductID})" style="margin-right: 8px;">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button type="button" class="btn btn-danger btn-sm me-2" onclick="confirmDelete(${p.ProductID})">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } else {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;">
+          <i class="fa-solid fa-box-open" style="font-size:48px;color:#ccc;margin-bottom:10px;"></i>
+          <p>Không tìm thấy sản phẩm nào</p>
+        </td></tr>`;
+      }
+
+      // Render pagination
+      renderPaginationControls(page, totalPages);
+    }
+
+    // Render pagination controls
+    function renderPaginationControls(currentPage, totalPages) {
+      const container = document.getElementById('pagination-container');
+      container.innerHTML = '';
+
+      if (totalPages <= 1) return;
+
+      const html = document.createElement('ul');
+      html.className = 'pagination justify-content-center';
+      html.style.cssText = 'display:inline-flex; padding-left:0; list-style:none;';
+
       // Previous button
-      const prevBtn = document.createElement('a');
-      prevBtn.href = '#';
-      prevBtn.className = `pagination-item ${pagination.currentPage === 1 ? 'disabled' : ''}`;
-      prevBtn.innerHTML = '&lt;';
-      prevBtn.onclick = (e) => {
-        e.preventDefault();
-        if (pagination.currentPage > 1) {
-          currentPage = pagination.currentPage - 1;
-          loadProducts(currentPage);
-        }
-      };
-      container.appendChild(prevBtn);
-
-      // First page
-      if (pagination.currentPage > 2) {
-        const firstBtn = document.createElement('a');
-        firstBtn.href = '#';
-        firstBtn.className = 'pagination-item';
-        firstBtn.textContent = '1';
-        firstBtn.onclick = (e) => {
+      if (currentPage > 1) {
+        const li = document.createElement('li');
+        li.className = 'page-item';
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.innerHTML = '&lt;';
+        a.onclick = (e) => {
           e.preventDefault();
-          currentPage = 1;
-          loadProducts(1);
+          loadProducts(currentPage - 1);
         };
-        container.appendChild(firstBtn);
-
-        if (pagination.currentPage > 3) {
-          const ellipsis = document.createElement('span');
-          ellipsis.className = 'pagination-ellipsis';
-          ellipsis.textContent = '...';
-          container.appendChild(ellipsis);
-        }
+        li.appendChild(a);
+        html.appendChild(li);
       }
 
       // Page numbers
-      for (let i = Math.max(1, pagination.currentPage - 1); i <= Math.min(pagination.totalPages, pagination.currentPage + 1); i++) {
-        const btn = document.createElement('a');
-        btn.href = '#';
-        btn.className = `pagination-item ${i === pagination.currentPage ? 'active' : ''}`;
-        btn.textContent = i;
-        btn.onclick = (e) => {
+      const range = 2;
+      if (currentPage > range + 2) {
+        const li = document.createElement('li');
+        li.className = 'page-item';
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.textContent = '1';
+        a.onclick = (e) => {
           e.preventDefault();
-          currentPage = i;
-          loadProducts(i);
+          loadProducts(1);
         };
-        container.appendChild(btn);
+        li.appendChild(a);
+        html.appendChild(li);
+
+        const liDots = document.createElement('li');
+        liDots.className = 'page-item disabled';
+        liDots.innerHTML = '<span class="page-link">...</span>';
+        html.appendChild(liDots);
       }
 
-      // Last page
-      if (pagination.currentPage < pagination.totalPages - 1) {
-        if (pagination.currentPage < pagination.totalPages - 2) {
-          const ellipsis = document.createElement('span');
-          ellipsis.className = 'pagination-ellipsis';
-          ellipsis.textContent = '...';
-          container.appendChild(ellipsis);
-        }
-
-        const lastBtn = document.createElement('a');
-        lastBtn.href = '#';
-        lastBtn.className = 'pagination-item';
-        lastBtn.textContent = pagination.totalPages;
-        lastBtn.onclick = (e) => {
+      for (let i = Math.max(1, currentPage - range); i <= Math.min(totalPages, currentPage + range); i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.textContent = i;
+        a.onclick = (e) => {
           e.preventDefault();
-          currentPage = pagination.totalPages;
-          loadProducts(pagination.totalPages);
+          loadProducts(i);
         };
-        container.appendChild(lastBtn);
+        li.appendChild(a);
+        html.appendChild(li);
+      }
+
+      if (currentPage < totalPages - range - 1) {
+        const liDots = document.createElement('li');
+        liDots.className = 'page-item disabled';
+        liDots.innerHTML = '<span class="page-link">...</span>';
+        html.appendChild(liDots);
+
+        const li = document.createElement('li');
+        li.className = 'page-item';
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.textContent = totalPages;
+        a.onclick = (e) => {
+          e.preventDefault();
+          loadProducts(totalPages);
+        };
+        li.appendChild(a);
+        html.appendChild(li);
       }
 
       // Next button
-      const nextBtn = document.createElement('a');
-      nextBtn.href = '#';
-      nextBtn.className = `pagination-item ${pagination.currentPage === pagination.totalPages ? 'disabled' : ''}`;
-      nextBtn.innerHTML = '&gt;';
-      nextBtn.onclick = (e) => {
-        e.preventDefault();
-        if (pagination.currentPage < pagination.totalPages) {
-          currentPage = pagination.currentPage + 1;
-          loadProducts(currentPage);
-        }
-      };
-      container.appendChild(nextBtn);
+      if (currentPage < totalPages) {
+        const li = document.createElement('li');
+        li.className = 'page-item';
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.innerHTML = '&gt;';
+        a.onclick = (e) => {
+          e.preventDefault();
+          loadProducts(currentPage + 1);
+        };
+        li.appendChild(a);
+        html.appendChild(li);
+      }
+
+      container.appendChild(html);
     }
-
-
 
     // Event listeners cho các bộ lọc
     document.getElementById('categoryFilter').addEventListener('change', () => {
@@ -1612,9 +1713,17 @@ global $mysqli;
     });
 
     document.getElementById('sortBy').addEventListener('change', () => {
-      currentPage = 1;
+      const sortValue = document.getElementById('sortBy').value;
+
+      const params = new URLSearchParams(window.location.search);
+      params.set('sort_by', sortValue);
+      params.set('page', 1);
+
+      window.history.pushState({}, '', window.location.pathname + '?' + params.toString());
+
       loadProducts(1);
     });
+
 
     // Reset filters
     document.getElementById('resetFilters').addEventListener('click', () => {
@@ -1624,8 +1733,12 @@ global $mysqli;
       document.getElementById('priceMin').value = '';
       document.getElementById('priceMax').value = '';
       document.getElementById('sortBy').value = 'newest';
+      // Reset URL về trang 1 không có parameters
+      window.history.pushState({}, '', window.location.pathname + '?page=1');
       currentPage = 1;
       loadProducts(1);
+      // Reload trang về page 1
+
     });
 
     // Prevent the search form from performing a full page submit and wire up search
