@@ -15,8 +15,9 @@ $priceMin = isset($_GET['price_min']) ? (float)$_GET['price_min'] : 0;
 $priceMax = isset($_GET['price_max']) ? (float)$_GET['price_max'] : 0;
 $sortBy = isset($_GET['sort_by']) ? trim($_GET['sort_by']) : 'name_asc';
 $statusFilter = isset($_GET['status']) ? trim($_GET['status']) : '';
+$customLimit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 10;
 
-$itemsPerPage = 10;
+$itemsPerPage = $customLimit;
 $offset = ($page - 1) * $itemsPerPage;
 
 // Build WHERE clause

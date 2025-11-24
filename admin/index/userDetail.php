@@ -39,7 +39,7 @@
 
     try {
         $userManager = new UserManager($myconn);
-        
+
         // Get user details
         if ($userId > 0) {
             $result = $userManager->getUserDetailsById($userId);
@@ -81,7 +81,6 @@
         $totalRow = $totalResult->fetch_assoc();
         $total_amount_all = $totalRow['total'];
         $stmt->close();
-
     } catch (Exception $e) {
         echo "<div class='alert alert-danger'>Lỗi: " . htmlspecialchars($e->getMessage()) . "</div>";
         exit;
@@ -113,13 +112,13 @@
                     <span class="info-label">Họ và tên:</span>
                     <span class="info-value"><?php echo htmlspecialchars($userData['fullname']); ?></span>
                 </div>
-                <?php if($userData['role'] === 'admin'): ?>
-                <div class="info-row">
-                    <span class="info-label">Username:</span>
-                    <span class="info-value"><?php echo htmlspecialchars($userData['username']); ?></span>
-                </div>
+                <?php if ($userData['role'] === 'admin'): ?>
+                    <div class="info-row">
+                        <span class="info-label">Username:</span>
+                        <span class="info-value"><?php echo htmlspecialchars($userData['username']); ?></span>
+                    </div>
                 <?php endif; ?>
-                
+
                 <div class="info-row">
                     <span class="info-label">Số điện thoại:</span>
                     <span class="info-value"><?php echo htmlspecialchars($userData['phone']); ?></span>
@@ -185,11 +184,11 @@
                                 <td data-label="Tên khách hàng"><?php echo htmlspecialchars($order['CustomerName'] ?? 'N/A'); ?></td>
                                 <td data-label="Ngày tạo"><?php echo htmlspecialchars($order['DateGeneration'] ?? 'N/A'); ?></td>
                                 <td data-label="Thanh toán">
-                                    <?php 
+                                    <?php
                                     $paymentMethod = $order['PaymentMethod'] ?? 'N/A';
-                                    switch($paymentMethod) {
+                                    switch ($paymentMethod) {
                                         case 'CASH':
-                                            echo 'Tiền mặt';
+                                            echo 'Thanh toán tại quầy';
                                             break;
                                         case 'COD':
                                             echo 'Thanh toán khi nhận hàng';
