@@ -925,6 +925,7 @@ $orders = [];
                       <div class="product-item row mb-2">
                         <div class="col-md-5">
                           <div style="position: relative;">
+                            <label for="" style="font-weight: bold;">Tên sản phẩm</label>
                             <input type="text" class="form-control product-search" placeholder="🔍 Tìm kiếm sản phẩm..." style="margin-bottom: 5px;">
                             <select class="form-control product-select" name="products[]" required style="display: none;">
                               <option value="">Chọn sản phẩm</option>
@@ -934,13 +935,16 @@ $orders = [];
                           </div>
                         </div>
                         <div class="col-md-3">
+                          <label for="" style="font-weight: bold;">Số lượng</label>
                           <input type="number" class="form-control product-quantity" name="quantities[]"
                             placeholder="Số lượng" min="1" required>
                         </div>
                         <div class="col-md-3">
+                          <label for="" style="font-weight: bold;">Đơn giá</label>
                           <input type="text" class="form-control product-price" readonly>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-1 d-flex justify-content-center align-items-center">
+                          <label for=""></label>
                           <button type="button" class="btn btn-danger btn-sm remove-product">
                             <i class="fas fa-times"></i>
                           </button>
