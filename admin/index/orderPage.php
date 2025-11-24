@@ -921,11 +921,17 @@ $orders = [];
 
                   <div class="products-section mb-3">
                     <h6 class="mb-3">Sản phẩm</h6>
+                    <div style="display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 0.8fr; gap: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 4px; font-weight: bold; margin-bottom: 10px; font-size: 14px;">
+                      <div>Tên sản phẩm</div>
+                      <div style="text-align: center;">Số lượng</div>
+                      <div style="text-align: center;">Đơn giá</div>
+                      <div style="text-align: center;"></div>
+                    </div>
                     <div id="product-list">
                       <div class="product-item row mb-2">
                         <div class="col-md-5">
                           <div style="position: relative;">
-                            <label for="" style="font-weight: bold;">Tên sản phẩm</label>
+                            <!-- <label for="" style="font-weight: bold;">Tên sản phẩm</label> -->
                             <input type="text" class="form-control product-search" placeholder="🔍 Tìm kiếm sản phẩm..." style="margin-bottom: 5px;">
                             <select class="form-control product-select" name="products[]" required style="display: none;">
                               <option value="">Chọn sản phẩm</option>
@@ -935,12 +941,12 @@ $orders = [];
                           </div>
                         </div>
                         <div class="col-md-3">
-                          <label for="" style="font-weight: bold;">Số lượng</label>
+                          <!-- <label for="" style="font-weight: bold;">Số lượng</label> -->
                           <input type="number" class="form-control product-quantity" name="quantities[]"
                             placeholder="Số lượng" min="1" required>
                         </div>
                         <div class="col-md-3">
-                          <label for="" style="font-weight: bold;">Đơn giá</label>
+                          <!-- <label for="" style="font-weight: bold;">Đơn giá</label> -->
                           <input type="text" class="form-control product-price" readonly>
                         </div>
                         <div class="col-md-1 d-flex justify-content-center align-items-center">
