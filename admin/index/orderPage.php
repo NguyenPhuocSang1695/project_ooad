@@ -893,7 +893,7 @@ $orders = [];
                       </div>
                       <div style="display: flex; justify-content: center; align-items: center;">
                         <div id="qr-container" style="text-align: center;">
-                          <img id="admin-qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=Vietcombank|1028974123|0|Mua%20hang" alt="QR Code" style="max-width: 280px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                          <img id="admin-qr-code" src="../../assets/images/qrcode.png" alt="QR Code" style="max-width: 280px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                         </div>
                       </div>
                     </div>
