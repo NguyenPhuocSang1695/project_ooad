@@ -1173,7 +1173,7 @@ function showOrderDetailModal(orderId) {
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                   <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
-                    <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Mã voucher</label>
+                    <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Mã giảm giá: </label>
                     <p style="margin: 8px 0 0 0; font-weight: 700; color: #2c3e50; font-size: 15px;">${
                       order.voucher.name
                     }</p>
