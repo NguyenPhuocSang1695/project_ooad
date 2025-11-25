@@ -1,8 +1,8 @@
 <?php
 // Prevent direct access to this file
 if (!defined('INCLUDE_CHECK')) {
-    http_response_code(403);
-    die('Forbidden');
+  http_response_code(403);
+  die('Forbidden');
 }
 ?>
 <div class="modal" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
@@ -44,14 +44,13 @@ if (!defined('INCLUDE_CHECK')) {
             <div class="col-md-12">
               <label for="role" class="form-label">Vai trò</label>
               <select class="form-select" id="role" name="role" required>
-                <option value="">Chọn vai trò</option>
-                <option value="admin">Admin</option>
                 <option value="customer">Khách hàng</option>
+                <option value="admin">Quản trị viên</option>
               </select>
               <div class="form-text">Mật khẩu chỉ bắt buộc khi vai trò là Admin</div>
             </div>
           </div>
-  </form>
+        </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>

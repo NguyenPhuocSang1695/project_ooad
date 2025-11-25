@@ -333,7 +333,6 @@ $myconn = $connectDb->getConnection();
         while ($row = $result->fetch_assoc()) {
           echo "<div class='overview-order'>
               <div class='info-overview-order'>
-                <p>{$row['FullName']} <span class='label customer'>Khách hàng</span></p>
                 <p>Mã đơn hàng: {$row['OrderID']}</p>
                 <p> | </p>
                 <p>Ngày đặt hàng: " . date('d/m/Y', strtotime($row['DateGeneration'])) . "</p>
