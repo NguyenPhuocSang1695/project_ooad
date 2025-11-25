@@ -193,7 +193,7 @@
                                         case 'COD':
                                             echo 'Thanh toán khi nhận hàng';
                                             break;
-                                        case 'BANK':
+                                        case 'BANKING':
                                             echo 'Chuyển khoản ngân hàng';
                                             break;
                                         default:
