@@ -193,7 +193,7 @@
                                         case 'COD':
                                             echo 'Thanh toán khi nhận hàng';
                                             break;
-                                        case 'BANK':
+                                        case 'BANKING':
                                             echo 'Chuyển khoản ngân hàng';
                                             break;
                                         default:
@@ -240,18 +240,216 @@
         </div>
     </div>
 
+    <!-- Modal Chi tiết đơn hàng -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: #6aa173; color: white; border-radius: 12px 12px 0 0; border: none; padding: 20px;">
+                    <h5 class="modal-title" id="orderDetailLabel" style="font-weight: 700; font-size: 18px;">Chi tiết đơn hàng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="orderDetailContent" style="max-height: 600px; overflow-y: auto;">
+                        <!-- Chi tiết sẽ được load bằng JavaScript -->
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #eee; padding: 15px 20px;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="asset/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="../js/checklog.js"></script>
     <script src="../js/main.js"></script>
 
     <script>
+        // Hàm chuyển đổi phương thức thanh toán sang Tiếng Việt
+        function formatPaymentMethod(method) {
+            if (!method) return "Không rõ";
+
+            const normalizedMethod = method.toLowerCase().trim();
+            const paymentMethods = {
+                cod: "Thanh toán khi nhận hàng",
+                banking: "Chuyển khoản ngân hàng",
+                cash: "Thanh toán tại quầy",
+            };
+
+            return paymentMethods[normalizedMethod] || method;
+        }
+
+        // Hàm hiển thị chi tiết đơn hàng trong modal
+        function showOrderDetailModal(orderId) {
+            console.log("[SHOW_DETAIL] Loading order:", orderId);
+
+            // Fetch order details from API
+            fetch(`../php/get_order_detail.php?orderId=${encodeURIComponent(orderId)}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log("[ORDER_DETAIL] Data:", data);
+
+                    if (!data.success) {
+                        throw new Error(data.error || "Không thể tải chi tiết đơn hàng");
+                    }
+
+                    const order = data.order;
+
+                    // Build products table HTML
+                    let productsHTML = "";
+                    order.products.forEach((product, index) => {
+                        productsHTML += `
+                            <tr>
+                                <td style="text-align: center;">${index + 1}</td>
+                                <td>${product.productName}</td>
+                                <td style="text-align: center;">${product.quantity}</td>
+                                <td style="text-align: right;">${parseInt(product.unitPrice).toLocaleString("vi-VN")} VND</td>
+                                <td style="text-align: right;">${parseInt(product.totalPrice).toLocaleString("vi-VN")} VND</td>
+                            </tr>
+                        `;
+                    });
+
+                    // Determine address display text
+                    const hasNoAddress = !order.address || order.address.trim() === "";
+                    const addressDisplay = hasNoAddress ? "Không có" : order.address;
+
+                    // Update modal content
+                    const modalBody = document.querySelector("#orderDetailModal .modal-body");
+                    if (modalBody) {
+                        modalBody.innerHTML = `
+                            <div style="padding: 20px;">
+                                <!-- Order Info Section -->
+                                <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
+                                    <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📋 Thông tin đơn hàng</h5>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                        <div>
+                                            <label style="color: #666; font-size: 12px; text-transform: uppercase;">Mã đơn hàng</label>
+                                            <p style="margin: 5px 0; font-weight: 600; color: #333;">#${order.orderId}</p>
+                                        </div>
+                                        <div>
+                                            <label style="color: #666; font-size: 12px; text-transform: uppercase;">Ngày tạo</label>
+                                            <p style="margin: 5px 0; font-weight: 600; color: #333;">${new Date(order.orderDate).toLocaleString("vi-VN")}</p>
+                                        </div>
+                                        <div>
+                                            <label style="color: #666; font-size: 12px; text-transform: uppercase;">Phương thức thanh toán: </label>
+                                            <p style="margin: 5px 0; font-weight: 600; color: #333;">${formatPaymentMethod(order.paymentMethod)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Customer Info Section -->
+                                <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
+                                    <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">👤 Thông tin khách hàng: </h5>
+                                    ${
+                                        (order.customerName && String(order.customerName).trim() !== "Không có") ||
+                                        (order.customerPhone && String(order.customerPhone).trim() !== "Không có" && String(order.customerPhone).trim() !== "0000000000")
+                                            ? `
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                            ${order.customerName && String(order.customerName).trim() !== "Không có " ? `
+                                            <div>
+                                                <label style="color: #666; font-size: 12px; text-transform: uppercase;">Họ tên: </label>
+                                                <p style="margin: 5px 0; font-weight: 600; color: #000000ff;">${order.customerName}</p>
+                                            </div>
+                                            ` : ""}
+                                            ${order.customerPhone && String(order.customerPhone).trim() !== "Không có" && String(order.customerPhone).trim() !== "0000000000" ? `
+                                            <div>
+                                                <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại: </label>
+                                                <p style="margin: 5px 0; font-weight: 600; color: #333;">${order.customerPhone}</p>
+                                            </div>
+                                            ` : ""}
+                                        </div>
+                                        `
+                                            : `<p>Không có</p>`
+                                    }
+                                </div>
+                                
+                                <!-- Address Section -->
+                                <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
+                                    <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📍 Địa chỉ giao hàng: </h5>
+                                    <p style="margin: 0; color: #333; line-height: 1.6;">${addressDisplay}</p>
+                                </div>
+                                
+                                <!-- Products Section -->
+                                <div style="margin-bottom: 30px;">
+                                    <h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📦 Sản phẩm (${order.productCount})</h5>
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <thead style="background-color: #f8f9fa; border-bottom: 2px solid #ddd;">
+                                            <tr>
+                                                <th style="padding: 12px; text-align: center; color: #666; font-weight: 600;">STT</th>
+                                                <th style="padding: 12px; text-align: left; color: #666; font-weight: 600;">Sản phẩm</th>
+                                                <th style="padding: 12px; text-align: center; color: #666; font-weight: 600;">Số lượng</th>
+                                                <th style="padding: 12px; text-align: right; color: #666; font-weight: 600;">Đơn giá</th>
+                                                <th style="padding: 12px; text-align: right; color: #666; font-weight: 600;">Thành tiền</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${productsHTML}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <!-- Voucher Section (if exists) -->
+                                ${order.voucher ? `
+                                <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #d4edda 100%); border-radius: 10px; border-left: 5px solid #6de323ff; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                                        <span style="font-size: 24px;">🎁</span>
+                                        <h5 style="margin: 0; color: #2c3e50; font-weight: 700; font-size: 16px;">Mã giảm giá đã áp dụng</h5>
+                                        <span style="display: inline-block; padding: 4px 10px; background-color: #4bec32ff; color: white; border-radius: 20px; font-size: 11px; font-weight: 600;">Đã dùng</span>
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                                        <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
+                                            <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Mã voucher</label>
+                                            <p style="margin: 8px 0 0 0; font-weight: 700; color: #2c3e50; font-size: 15px;">${order.voucher.name}</p>
+                                        </div>
+                                        <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
+                                            <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Tỷ lệ giảm</label>
+                                            <p style="margin: 8px 0 0 0; font-weight: 700; color: #e74c3c; font-size: 15px;">${order.voucher.discountPercent}%</p>
+                                        </div>
+                                        <div style="padding: 10px; background-color: rgba(255,255,255,0.8); border-radius: 6px;">
+                                            <label style="color: #7f8c8d; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Số tiền giảm</label>
+                                            <p style="margin: 8px 0 0 0; font-weight: 700; color: #27ae60; font-size: 15px;">-${parseInt(order.voucher.discountAmount).toLocaleString("vi-VN")} VND</p>
+                                        </div>
+                                    </div>
+                                    ${order.voucher.conditions ? `
+                                    <div style="margin-top: 12px; padding: 10px; background-color: rgba(100,150,200,0.1); border-radius: 6px; border-left: 3px solid #3498db;">
+                                        <label style="color: #2c3e50; font-size: 11px; text-transform: uppercase; font-weight: 600;">Điều kiện áp dụng</label>
+                                        <p style="margin: 6px 0 0 0; color: #555; font-size: 13px;">${order.voucher.conditions}</p>
+                                    </div>
+                                    ` : ""}
+                                </div>
+                                ` : ""}
+                                
+                                <!-- Total Section -->
+                                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 16px; font-weight: 600; color: #333;">Tổng tiền: </span>
+                                        <span style="font-size: 24px; font-weight: 700; color: #27ae60;">${parseInt(order.totalAmount).toLocaleString("vi-VN")} VND</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Show modal
+                    const modal = new bootstrap.Modal(document.getElementById("orderDetailModal"));
+                    modal.show();
+
+                    console.log("[ORDER_DETAIL] Modal displayed successfully");
+                })
+                .catch((error) => {
+                    console.error("[ERROR_DETAIL]", error);
+                    alert("Lỗi khi tải chi tiết đơn hàng: " + error.message);
+                });
+        }
+
         // Click on order row to view order details
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.order-row').forEach(function(row) {
-                row.addEventListener('click', function() {
+                row.addEventListener('click', function(e) {
+                    e.preventDefault();
                     const orderId = this.getAttribute('data-order-id');
                     if (orderId) {
-                        window.location.href = 'orderPage.php?order_id=' + orderId;
+                        showOrderDetailModal(orderId);
                     }
                 });
             });
