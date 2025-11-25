@@ -77,7 +77,7 @@ try {
             'username' => $order->getUsername(),
             'orderDate' => $order->getDateGeneration(),
             'customerName' => $order->getCustomerName(),
-            'customerPhone' => $order->getPhone(),
+            'customerPhone' => (string)$order->getPhone(), // Ép kiểu về string để giữ số 0 đầu tiên
             'address' => $order->getFullAddress(),
             'paymentMethod' => $order->getPaymentMethod(),
             'totalAmount' => floatval($order->getTotalAmount()),
@@ -87,7 +87,7 @@ try {
         ]
     ];
 
-    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
+    echo json_encode($response, JSON_UNESCAPED_UNICODE);
 
 } catch (Exception $e) {
     http_response_code(400);

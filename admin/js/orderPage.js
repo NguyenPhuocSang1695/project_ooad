@@ -1082,7 +1082,7 @@ function showOrderDetailModal(orderId) {
                     ${
                       order.customerPhone &&
                       String(order.customerPhone).trim() !== "Không có" &&
-                      String(order.customerPhone).trim() !== "0000000000"
+                      String(order.customerPhone).trim() !== "00000000000"
                         ? `
                       <div>
                         <label style="color: #666; font-size: 12px; text-transform: uppercase;">Số điện thoại: </label>
