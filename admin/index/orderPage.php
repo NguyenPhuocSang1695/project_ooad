@@ -798,7 +798,8 @@ $orders = [];
                   <div class="row">
                     <div class="col-md-6 mb-3">
                       <label for="customer-phone" class="form-label">Số điện thoại:</label>
-                      <input type="tel" class="form-control" id="customer-phone" name="customer_phone" pattern="[0-9]*" maxlength="10">
+                      <input type="text" class="form-control" id="customer-phone" name="customer_phone"  inputmode="numeric">
+                      <small id="phone-error" class="form-text text-danger" style="display: none; margin-top: 5px;">Số điện thoại phải gồm 10 chữ số</small>
                     </div>
                     <div class="col-md-6 mb-3">
                       <label for="customer-name" class="form-label">Tên khách hàng:</label>
