@@ -1,6 +1,7 @@
 // Fresh Add Order Handler - Clean Start
 
 let allProducts = [];
+let isCustomerBlocked = false;  // Biến để theo dõi nếu khách hàng bị khóa
 
 // Beautiful Notification System
 function showNotification(type, message) {
@@ -16,7 +17,7 @@ function showNotification(type, message) {
     let icon = '✓';
     let title = 'Thành công!';
     if (type === 'error') {
-        icon = '✕';
+        icon = '';
         title = 'Có lỗi xảy ra!';
     }
     if (type === 'info') {
@@ -94,13 +95,13 @@ function showEnhancedSuccessNotification(orderId, totalAmount, productCount) {
         notification.classList.add('show');
     }, 10);
     
-    // Auto remove
+    // Auto remove after 3 seconds
     setTimeout(() => {
         if (notification.parentElement) {
             notification.classList.remove('show');
             setTimeout(() => notification.remove(), 500);
         }
-    }, 5000);
+    }, 3000);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -181,10 +182,49 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Customer phone change 
+    document.getElementById('customer-phone')?.addEventListener('input', function() {
+        console.log('[PHONE] Input:', this.value);
+        
+        // Xoá tất cả dấu cách để kiểm tra
+        let cleanPhone = this.value.trim().replace(/\s+/g, '');
+        const phoneError = document.getElementById('phone-error');
+        
+        // Nếu người dùng nhập dữ liệu
+        if (this.value.length > 0) {
+            // Kiểm tra xem có phải là số hay không (cho phép dấu cách)
+            if (!/^[\d\s]*$/.test(this.value)) {
+                // Nếu có ký tự không phải số, xoá nó
+                this.value = this.value.replace(/[^\d\s]/g, '');
+                cleanPhone = this.value.trim().replace(/\s+/g, '');
+            }
+            
+            // Nếu đã có đủ 10 chữ số, kiểm tra
+            if (cleanPhone.length === 10) {
+                const phoneRegex = /^0[0-9]{9}$/;
+                if (!phoneRegex.test(cleanPhone)) {
+                    phoneError.style.display = 'block';
+                } else {
+                    phoneError.style.display = 'none';
+                    // Fetch customer history nếu hợp lệ
+                    fetchCustomerHistory(cleanPhone);
+                }
+            } else if (cleanPhone.length > 0 && cleanPhone.length < 10) {
+                phoneError.style.display = 'none'; // Ẩn lỗi khi đang nhập
+            } else if (cleanPhone.length > 10) {
+                // Nếu nhập quá 10 chữ số, cắt bớt
+                this.value = this.value.substring(0, this.value.length - 1);
+            }
+        } else {
+            phoneError.style.display = 'none';
+        }
+    });
+
+    // Customer phone change (legacy)
     document.getElementById('customer-phone')?.addEventListener('change', function() {
         console.log('[PHONE] Changed:', this.value);
-        if (this.value.length === 10) {
-            fetchCustomerHistory(this.value);
+        let cleanPhone = this.value.trim().replace(/\s+/g, '');
+        if (cleanPhone.length === 10) {
+            fetchCustomerHistory(cleanPhone);
         }
     });
 
@@ -527,7 +567,50 @@ function addProductRow() {
     // Refresh product select for this row (including search functionality)
     refreshProductSelects();
     
-    console.log('[ADD_ROW] New product row added');
+    // Thêm event listener cho product-select trong row mới
+    const productSelect = row.querySelector('.product-select');
+    const priceInput = row.querySelector('.product-price');
+    const qtyInput = row.querySelector('.product-quantity');
+    
+    if (productSelect) {
+        productSelect.addEventListener('change', function() {
+            console.log('[SELECT_CHANGE] Product selected:', this.value);
+            // Khi chọn sản phẩm, lấy giá và tính thành tiền
+            if (this.value) {
+                const option = this.options[this.selectedIndex];
+                const price = parseFloat(option.dataset.price || 0);
+                const qty = parseInt(qtyInput.value) || 1;
+                
+                if (priceInput) {
+                    priceInput.value = (price * qty).toLocaleString('vi-VN');
+                }
+                console.log('[CALC] Price: ' + price + ' x Qty: ' + qty + ' = ' + (price * qty));
+            }
+            updateTotalAmount();
+        });
+    }
+    
+    // Thêm event listener cho quantity input trong row mới
+    if (qtyInput) {
+        qtyInput.addEventListener('input', function() {
+            console.log('[QTY_CHANGE] Quantity changed:', this.value);
+            // Khi thay đổi số lượng, tính lại thành tiền
+            const select = row.querySelector('.product-select');
+            if (select && select.value) {
+                const option = select.options[select.selectedIndex];
+                const price = parseFloat(option.dataset.price || 0);
+                const qty = parseInt(this.value) || 1;
+                
+                if (priceInput) {
+                    priceInput.value = (price * qty).toLocaleString('vi-VN');
+                }
+                console.log('[CALC] Price: ' + price + ' x Qty: ' + qty + ' = ' + (price * qty));
+            }
+            updateTotalAmount();
+        });
+    }
+    
+    console.log('[ADD_ROW] New product row added with event listeners');
 }
 
 // Update total amount
@@ -576,12 +659,22 @@ async function submitOrder() {
     console.log('[START] Submitting order...');
     
     try {
+        // Kiểm tra trạng thái user - nếu bị khóa (status = 'Block') thì không cho phép tạo order
+        if (isCustomerBlocked) {
+            showNotification('error', 'Số điện thoại này đã vi phạm chính sách đặt hàng của cửa hàng và tạm thời không thể tiếp tục mua hàng.');
+            console.log('[BLOCKED] Order submission blocked - customer status is Block');
+            return;
+        }
+        
         // Collect form data
         const customerName = document.getElementById('customer-name')?.value?.trim() || '';
-        const customerPhone = document.getElementById('customer-phone')?.value?.trim() || '';
+        let customerPhone = document.getElementById('customer-phone')?.value?.trim() || '';
         const paymentMethod = document.getElementById('payment-method')?.value || '';
         const status = document.getElementById('add-order-status')?.value || 'execute';
         const deliveryType = document.querySelector('input[name="delivery_type"]:checked')?.value || 'pickup';
+        
+        // Xoá tất cả dấu cách trong số điện thoại
+        customerPhone = customerPhone.replace(/\s+/g, '');
         
         console.log('[FORM] Name:', customerName);
         console.log('[FORM] Phone:', customerPhone);
@@ -601,15 +694,21 @@ async function submitOrder() {
             }
             // Validate phone number (Vietnamese format: 10 digits starting with 0)
             const phoneRegex = /^0[0-9]{9}$/;
-            if (!phoneRegex.test(customerPhone) || customerPhone.length !== 10) {
+            if (!phoneRegex.test(customerPhone)) {
                 showNotification('warning', 'Số điện thoại không hợp lệ (phải là 10 chữ số, bắt đầu từ 0)');
+                document.getElementById('phone-error').style.display = 'block';
                 return;
+            } else {
+                document.getElementById('phone-error').style.display = 'none';
             }
         } else {
             // For pickup, only phone is optional but if provided, validate it
             if (customerPhone && !/^0[0-9]{9}$/.test(customerPhone)) {
                 showNotification('warning', 'Số điện thoại không hợp lệ (phải là 10 chữ số, bắt đầu từ 0)');
+                document.getElementById('phone-error').style.display = 'block';
                 return;
+            } else if (customerPhone) {
+                document.getElementById('phone-error').style.display = 'none';
             }
         }
         
@@ -733,57 +832,20 @@ async function submitOrder() {
         
         // Trường hợp 3: Success - Tất cả sản phẩm có đủ hàng
         console.log('[SUCCESS] Order created! ID:', result.order_id);
+        console.log('[SUCCESS] Final amount (with voucher):', result.total_amount);
         
-        const totalAmount = products.reduce((sum, p) => sum + (p.price * p.quantity), 0);
-        showEnhancedSuccessNotification(result.order_id, totalAmount, products.length);
+        // Hiển thị thông báo với tổng tiền đã áp dụng voucher
+        showEnhancedSuccessNotification(result.order_id, result.total_amount, products.length);
         
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('addOrderModal'));
         if (modal) modal.hide();
         
-        // Reset form
-        document.getElementById('add-order-form').reset();
-        
-        const productList = document.getElementById('product-list');
-        if (productList) {
-            productList.innerHTML = `
-                <div class="product-item row mb-2">
-                    <div class="col-md-5">
-                        <select class="form-control product-select" name="products[]" required>
-                            <option value="">Chọn sản phẩm</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="number" class="form-control product-quantity" name="quantities[]" 
-                               value="1" min="1" required>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control product-price" readonly>
-                    </div>
-                    <div class="col-md-1">
-                        <button type="button" class="btn btn-danger btn-sm remove-product" style="width:100%;">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            refreshProductSelects();
-        }
-        
-        // Reset total amount
-        const totalElement = document.getElementById('total-amount');
-        if (totalElement) totalElement.textContent = '0';
-        
-        const originalTotalElement = document.getElementById('original-total');
-        if (originalTotalElement) originalTotalElement.value = '0 VND';
-        
-        const discountElement = document.getElementById('discount-amount');
-        if (discountElement) discountElement.value = '0 VND';
-        
-        console.log('[RELOAD] Reloading page in 2 seconds...');
+        // Reload page ngay để refresh toàn bộ dữ liệu
+        console.log('[RELOAD] Reloading page immediately...');
         setTimeout(() => {
             window.location.reload();
-        }, 2000);
+        }, 2000);  
         
     } catch (error) {
         console.error('[EXCEPTION]', error);
@@ -803,6 +865,9 @@ async function fetchCustomerHistory(phone) {
     const messageElement = document.getElementById('history-message');
     const detailsElement = document.getElementById('history-details');
     const voucherSelect = document.getElementById('voucher-select');
+    
+    // Reset trạng thái khóa khi fetch lại
+    isCustomerBlocked = false;
     
     console.log('[FETCH_HISTORY] Elements found:', {
         historyDiv: !!historyDiv,
@@ -831,7 +896,26 @@ async function fetchCustomerHistory(phone) {
         const historyResult = await historyResponse.json();
         console.log('[HISTORY_RESULT]', historyResult);
         
-        // Get eligible vouchers
+        // Kiểm tra trạng thái user - nếu bị khóa (inactive) thì không cho phép tạo order
+        if (historyResult.success && historyResult.is_blocked) {
+            historyDiv.style.display = 'block';
+            if (messageElement) {
+                messageElement.textContent = 'X Số điện thoại này đã vi phạm chính sách đặt hàng của cửa hàng và tạm thời không thể tiếp tục mua hàng.';
+                messageElement.style.color = '#dc3545';
+            }
+            if (detailsElement) {
+                detailsElement.innerHTML = '';
+            }
+            isCustomerBlocked = true;  // Đánh dấu khách hàng bị khóa
+            console.log('[BLOCKED_USER] User with phone:', phone, 'is blocked (status: Block)');
+            // Reset voucher select
+            voucherSelect.innerHTML = '<option value="">-- Không dùng voucher --</option>';
+            return;  // Dừng lại, không load voucher
+        } else {
+            isCustomerBlocked = false;  // Khách hàng không bị khóa
+        }
+        
+        // Get eligible vouchers (chỉ gọi nếu user không bị khóa)
         const voucherResponse = await fetch('../php/get_eligible_vouchers.php', {
             method: 'POST',
             headers: {
@@ -850,17 +934,17 @@ async function fetchCustomerHistory(phone) {
             historyDiv.style.display = 'block';
             const customerNameDisplay = historyResult.customer_name ? `: ${historyResult.customer_name}` : '';
             if (messageElement) {
-                messageElement.textContent = `✓ Khách hàng thân thiết${customerNameDisplay} - Tổng tiền lịch sử: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VND`;
+                messageElement.textContent = `✓ Khách hàng thân thiết${customerNameDisplay} - Tổng tiền đã mua hàng: ${parseInt(historyResult.total_spent).toLocaleString('vi-VN')} VND`;
                 messageElement.style.color = '#28a745';
             }
             if (detailsElement) {
-                detailsElement.innerHTML = `${historyResult.order_count} đơn hàng thành công | Giá trị trung bình: ${Math.round(historyResult.total_spent / historyResult.order_count).toLocaleString('vi-VN')} VND/đơn`;
+                detailsElement.innerHTML = `- ${historyResult.order_count} đơn hàng`;
             }
         } else {
             historyDiv.style.display = 'block';
             const customerNameDisplay = historyResult.customer_name ? `: ${historyResult.customer_name}` : '';
             if (messageElement) {
-                messageElement.textContent = `⚠ Khách hàng mới${customerNameDisplay} - Chưa có lịch sử mua hàng`;
+                messageElement.textContent = `⚠ Khách hàng chưa từng mua hàng`;
                 messageElement.style.color = '#ff9800';
             }
             if (detailsElement) {
@@ -888,7 +972,7 @@ async function fetchCustomerHistory(phone) {
             voucherResult.eligible_vouchers.forEach(voucher => {
                 const option = document.createElement('option');
                 option.value = voucher.id;
-                option.textContent = `MGG${voucher.id} - ${voucher.name} - Giảm ${voucher.percen_decrease}% (Tối thiểu: ${voucher.conditions.toLocaleString('vi-VN')}đ)`;
+                option.textContent = `MGG${voucher.id} - ${voucher.name} - Giảm ${voucher.percen_decrease}% ( ${voucher.conditions.toLocaleString('vi-VN')}đ)`;
                 option.dataset.discount = voucher.percen_decrease;
                 voucherSelect.appendChild(option);
             });

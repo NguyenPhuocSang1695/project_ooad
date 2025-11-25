@@ -45,18 +45,20 @@ try {
     $db = new DatabaseConnection();
     $db->connect();
     
-    // Tìm FullName từ bảng users
+    // Tìm FullName và Status từ bảng users
     $userResult = $db->queryPrepared(
-        "SELECT FullName FROM users WHERE Phone = ? LIMIT 1",
+        "SELECT FullName, Status FROM users WHERE Phone = ? LIMIT 1",
         [$customerPhone]
     );
     
     $customerName = null;
+    $userStatus = null;
     $isInUserTable = false;
     
     if ($userResult && $userResult->num_rows > 0) {
         $userRow = $userResult->fetch_assoc();
         $customerName = $userRow['FullName'];
+        $userStatus = $userRow['Status'];  // Lấy trạng thái user
         $isInUserTable = true;  // Số điện thoại tồn tại trong bảng users
     }
     
@@ -78,9 +80,10 @@ try {
         }
     }
     
-    // hasPurchased dựa trên việc có tồn tại trong users table hay không
-    // Nếu không trong users thì dù có order cũng là khách hàng mới
-    $hasPurchased = $isInUserTable;
+    // hasPurchased dựa trên việc có tồn tại trong users table và KHÔNG BỊ KHÓA
+    // Nếu user bị khóa (status = 'Block') thì dù có order cũng không tính là khách hàng thân thiết
+    $isBlocked = ($userStatus === 'Block');
+    $hasPurchased = $isInUserTable && !$isBlocked;  // Chỉ true nếu có trong users AND không bị khóa
     
     echo json_encode([
         'success' => true,
@@ -88,6 +91,8 @@ try {
         'total_spent' => $totalSpent,
         'order_count' => count($orders),
         'customer_name' => $customerName,
+        'user_status' => $userStatus,
+        'is_blocked' => $isBlocked,
         'orders' => $orders
     ], JSON_UNESCAPED_UNICODE);
     

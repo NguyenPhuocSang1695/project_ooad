@@ -72,7 +72,7 @@ try {
         
         // Trường hợp 1: Sản phẩm hết hàng (quantity_in_stock = 0)
         if ($availableStock == 0) {
-            $outOfStockProducts[] = '';
+            $outOfStockProducts[] = "Sản phẩm: " . $productName. " đã hết hàng";
         }
         // Trường hợp 2: Số lượng mua vượt quá tồn kho nhưng còn hàng
         else if ($quantity > $availableStock) {
@@ -89,7 +89,7 @@ try {
             'success' => false,
             'warning' => true,
             'type' => 'out_of_stock',
-            'message' => 'Thông báo:  Sản phẩm đã hết hàng',
+            'message' => 'Thông báo: ',
             'details' => $outOfStockProducts
         ], JSON_UNESCAPED_UNICODE);
         exit;
