@@ -598,6 +598,27 @@ class OrderManager extends BaseOrderEntity {
             // Update total amount
             $this->updateOrderTotalAmount($orderId, intval(round($totalAmount)));
 
+            // Trừ số lượng sản phẩm trong database
+            foreach ($products as $product) {
+                $productId = intval($product['product_id']);
+                $quantity = intval($product['quantity']);
+                
+                // Update product quantity
+                $updateQuery = "UPDATE products SET quantity_in_stock = quantity_in_stock - ? WHERE ProductID = ?";
+                $updateStmt = $conn->prepare($updateQuery);
+                if (!$updateStmt) {
+                    throw new Exception("Prepare update failed: " . $conn->error);
+                }
+                
+                $updateStmt->bind_param("ii", $quantity, $productId);
+                if (!$updateStmt->execute()) {
+                    throw new Exception("Update product quantity failed: " . $updateStmt->error);
+                }
+                $updateStmt->close();
+                
+                error_log("[INVENTORY] Product ID: " . $productId . " - Quantity decreased by: " . $quantity);
+            }
+
             $conn->commit();
 
             return $orderId;

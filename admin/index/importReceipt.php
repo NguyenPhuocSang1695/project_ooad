@@ -1345,7 +1345,7 @@ $totalReceipts = $receiptManager->count();
                         <label>Thành tiền</label>
                         <input type="text" class="subtotal" readonly value="0">
                     </div>
-                    <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: none;">
+                    <button type="button" class="btn-remove-product" onclick="removeProduct(this)">
                         <i class="fa-solid fa-times"></i>
                     </button>
                 `;
@@ -1443,37 +1443,37 @@ $totalReceipts = $receiptManager->count();
             productCount = 1;
             const productList = document.getElementById('productList');
             productList.innerHTML = `
-        <div class="product-item">
-            <div class="form-group">
-                <label>Sản phẩm <span style="color: red;">*</span></label>
-                <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
-                    <option value="">Chọn sản phẩm</option>
-                    <?php
-                    $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName ASC";
-                    $result_products = $connectDb->query($sql_products);
-                    while ($product = $result_products->fetch_assoc()) {
-                        echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
-                    }
-                    ?>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Số lượng <span style="color: red;">*</span></label>
-                <input type="number" name="products[0][quantity]" required min="1" value="1" onchange="updateSubtotal(0)">
-            </div>
-            <div class="form-group">
-                <label>Giá nhập <span style="color: red;">*</span></label>
-                <input type="number" name="products[0][import_price]" required min="0" onchange="updateSubtotal(0)">
-            </div>
-            <div class="form-group">
-                <label>Thành tiền</label>
-                <input type="text" class="subtotal" readonly value="0">
-            </div>
-            <button type="button" class="btn-remove-product" onclick="removeProduct(this)" style="display: none;">
-                <i class="fa-solid fa-times"></i>
-            </button>
-        </div>
-    `;
+                <div class="product-item">
+                    <div class="form-group">
+                        <label>Sản phẩm <span style="color: red;">*</span></label>
+                        <select name="products[0][product_id]" required onchange="updateSubtotal(0)">
+                            <option value="">Chọn sản phẩm</option>
+                            <?php
+                            $sql_products = "SELECT ProductID, ProductName, Price FROM products ORDER BY ProductName ASC";
+                            $result_products = $connectDb->query($sql_products);
+                            while ($product = $result_products->fetch_assoc()) {
+                                echo "<option value='{$product['ProductID']}' data-price='{$product['Price']}'>{$product['ProductName']}</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Số lượng <span style="color: red;">*</span></label>
+                        <input type="number" name="products[0][quantity]" required min="1" value="1" onchange="updateSubtotal(0)">
+                    </div>
+                    <div class="form-group">
+                        <label>Giá nhập <span style="color: red;">*</span></label>
+                        <input type="number" name="products[0][import_price]" required min="0" onchange="updateSubtotal(0)">
+                    </div>
+                    <div class="form-group">
+                        <label>Thành tiền</label>
+                        <input type="text" class="subtotal" readonly value="0">
+                    </div>
+                    <button type="button" class="btn-remove-product" onclick="removeProduct(this)">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            `;
             updateTotalAmount();
         }
     </script>
