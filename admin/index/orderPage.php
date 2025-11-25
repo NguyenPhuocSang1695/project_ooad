@@ -837,24 +837,24 @@ $orders = [];
                     <label class="form-label">Địa chỉ giao hàng:</label>
                     <div class="row">
                       <div class="col-md-4 mb-2">
-                        <select id="add-province" name="province" class="form-control">
+                        <select id="add-province" name="province" class="form-control" required>
                           <option value="">Chọn tỉnh/thành</option>
                         </select>
                       </div>
                       <div class="col-md-4 mb-2">
-                        <select id="add-district" name="district" class="form-control">
+                        <select id="add-district" name="district" class="form-control" required>
                           <option value="">Chọn quận/huyện</option>
                         </select>
                       </div>
                       <div class="col-md-4 mb-2">
-                        <select id="add-ward" name="ward" class="form-control">
+                        <select id="add-ward" name="ward" class="form-control" required>
                           <option value="">Chọn phường/xã</option>
                         </select>
                       </div>
                     </div>
                     <div class="mt-2">
                       <input type="text" class="form-control" id="address-detail" name="address_detail"
-                        placeholder="Số nhà, tên đường...">
+                        placeholder="Số nhà, tên đường..." required>
                     </div>
                   </div>
 
@@ -933,7 +933,7 @@ $orders = [];
                         <div class="col-md-5">
                           <div style="position: relative;">
                             <!-- <label for="" style="font-weight: bold;">Tên sản phẩm</label> -->
-                            <input type="text" class="form-control product-search" placeholder="🔍 Tìm kiếm sản phẩm..." style="margin-bottom: 5px;">
+                            <input type="text" class="form-control product-search" placeholder="🔍 Tìm kiếm sản phẩm..." style="margin-bottom: 5px;" required>
                             <select class="form-control product-select" name="products[]" required style="display: none;">
                               <option value="">Chọn sản phẩm</option>
                             </select>
@@ -1003,17 +1003,17 @@ $orders = [];
                     <input type="number" id="price-max" name="price_max" class="form-control" placeholder="Ví dụ: 5000000" min="0" step="1000">
                   </div>
                   <div class="mb-3">
-                    <label for="voucher-filter" class="form-label">Lọc theo voucher:</label>
+                    <label for="voucher-filter" class="form-label">Lọc theo mã giảm giá:</label>
                     <select id="voucher-filter" name="voucher_filter" class="form-control">
                       <option value="">-- Tất cả đơn hàng --</option>
-                      <option value="has_voucher">Có sử dụng voucher</option>
-                      <option value="no_voucher">Không sử dụng voucher</option>
+                      <option value="has_voucher">Có sử dụng mã giảm giá</option>
+                      <option value="no_voucher">Không sử dụng mã giảm giá</option>
                     </select>
                   </div>
                   <div class="mb-3" id="specific-voucher-container" style="display: none;">
-                    <label for="specific-voucher" class="form-label">Chọn voucher cụ thể:</label>
+                    <label for="specific-voucher" class="form-label">Chọn mã giảm giá cụ thể:</label>
                     <select id="specific-voucher" name="specific_voucher" class="form-control">
-                      <option value="">-- Tất cả voucher --</option>
+                      <option value="">-- Tất cả mã giảm giá --</option>
                     </select>
                   </div>
                   <div class="modal-footer">
