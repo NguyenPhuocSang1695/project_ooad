@@ -901,12 +901,12 @@ $orders = [];
                   </div>
 
                   <div class="mb-3">
-                    <label for="voucher-select" class="form-label">Mã giảm giá (Voucher):</label>
+                    <label for="voucher-select" class="form-label">Mã giảm giá:</label>
                     <select class="form-control" id="voucher-select" name="voucher_id">
-                      <option value="">-- Không dùng voucher --</option>
+                      <option value="">-- Không dùng mã giảm giá--</option>
                     </select>
                     <small id="voucher-message" class="form-text" style="margin-top: 5px;"></small>
-                    <small id="voucher-note" class="form-text" style="margin-top: 5px; color: #ff9800; display: none;"><i class="fas fa-info-circle"></i> Chương trình voucher hiện chưa áp dụng cho lần mua đầu tiên.</small>
+                    <small id="voucher-note" class="form-text" style="margin-top: 5px; color: #ff9800; display: none;"><i class="fas fa-info-circle"></i> Mã giảm giá hiện chưa áp dụng cho lần mua đầu tiên.</small>
                   </div>
 
                   <div class="row">
