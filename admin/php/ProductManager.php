@@ -595,8 +595,19 @@ class ProductManager
                 p.quantity_in_stock,
                 c.CategoryName,
                 s.supplier_name AS SupplierName,
-                COALESCE(SUM(CASE WHEN ird.receipt_id IS NOT NULL THEN ird.quantity ELSE 0 END), 0) as total_imported,
-                COALESCE(SUM(CASE WHEN od.OrderID IS NOT NULL THEN od.Quantity ELSE 0 END), 0) as total_sold
+                -- Tổng nhập
+                (
+                    SELECT COALESCE(SUM(ird.quantity), 0)
+                    FROM import_receipt_detail ird
+                    WHERE ird.product_id = p.ProductID
+                ) AS total_imported,
+
+                -- Tổng bán
+                (
+                    SELECT COALESCE(SUM(od.Quantity), 0)
+                    FROM orderdetails od
+                    WHERE od.ProductID = p.ProductID
+                ) AS total_sold
             FROM products p
             LEFT JOIN categories c ON p.CategoryID = c.CategoryID
             LEFT JOIN suppliers s ON p.Supplier_id = s.supplier_id
