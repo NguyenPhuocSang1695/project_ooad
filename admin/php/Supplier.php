@@ -15,7 +15,7 @@ class Supplier
     private $provinceName;
     private $totalProducts = 0;
     private $totalAmount = 0;
-
+    private $createAt;
     public function __construct($data)
     {
         if (is_array($data)) {
@@ -33,6 +33,7 @@ class Supplier
             $this->provinceName = $data['province_name'] ?? '';
             $this->totalProducts = $data['total_products'] ?? $data['TotalProducts'] ?? 0;
             $this->totalAmount   = $data['total_amount']   ?? $data['TotalAmount']   ?? 0;
+            $this->createAt = $data['createAt'] ?? $data['create_at'] ?? null;
         } else {
             $this->supplierName = $data['supplier_name'] ?? '';
             $this->phone = $data['phone'] ?? '';
@@ -100,6 +101,11 @@ class Supplier
         return $this->totalAmount;
     }
 
+    public function getCreateAt()
+    {
+        return $this->createAt;
+    }
+
     public function getFullAddress()
     {
         $parts = array_filter([
@@ -127,7 +133,8 @@ class Supplier
             'province_id' => $this->provinceId ?? null,
             'province_name' => $this->provinceName,
             'TotalProducts' => $this->totalProducts,
-            'TotalAmount' => $this->totalAmount
+            'TotalAmount' => $this->totalAmount,
+            'create_at' => $this->createAt,
         ];
     }
 
