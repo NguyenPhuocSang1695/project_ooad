@@ -1263,6 +1263,10 @@ $totalAmount = $supplierManager->getTotalValue();
                     <p id="info_address"></p>
                 </div>
                 <div class="info-item">
+                    <label><i class="fa-solid fa-clock"></i> Ngày tạo</label>
+                    <p id="create_at"></p>
+                </div>
+                <div class="info-item">
                     <label><i class="fa-solid fa-box"></i> Tổng số sản phẩm</label>
                     <p id="info_total_products"></p>
                 </div>
@@ -1616,6 +1620,9 @@ $totalAmount = $supplierManager->getTotalValue();
 
             const fullAddress = `${data.address_detail}, ${data.ward_name}, ${data.district_name}, ${data.province_name}`;
             document.getElementById('info_address').textContent = fullAddress;
+
+
+            document.getElementById('create_at').textContent = data.create_at;
 
             document.getElementById('info_total_products').textContent = data.TotalProducts + ' sản phẩm';
             document.getElementById('info_total_amount').textContent = new Intl.NumberFormat('vi-VN').format(data.TotalAmount) + ' VND';
