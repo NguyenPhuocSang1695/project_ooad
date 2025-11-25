@@ -909,7 +909,7 @@ async function fetchCustomerHistory(phone) {
             isCustomerBlocked = true;  // Đánh dấu khách hàng bị khóa
             console.log('[BLOCKED_USER] User with phone:', phone, 'is blocked (status: Block)');
             // Reset voucher select
-            voucherSelect.innerHTML = '<option value="">-- Không dùng voucher --</option>';
+            voucherSelect.innerHTML = '<option value="">-- Không dùng mã giảm giá --</option>';
             return;  // Dừng lại, không load voucher
         } else {
             isCustomerBlocked = false;  // Khách hàng không bị khóa
@@ -980,7 +980,7 @@ async function fetchCustomerHistory(phone) {
             // Khách hàng mới
             const option = document.createElement('option');
             option.value = '';
-            option.textContent = '⚠ Khách hàng mới - Không được áp dụng voucher';
+            option.textContent = '⚠ Khách hàng mới - Không được áp dụng mã giảm giá';
             option.disabled = true;
             voucherSelect.appendChild(option);
         } else if (voucherResult.success && historyResult.has_purchased && voucherResult.eligible_vouchers.length === 0) {
@@ -995,7 +995,7 @@ async function fetchCustomerHistory(phone) {
     } catch (error) {
         console.error('[ERROR_FETCH_HISTORY]', error);
         historyDiv.style.display = 'none';
-        voucherSelect.innerHTML = '<option value="">-- Không dùng voucher --</option>';
+        voucherSelect.innerHTML = '<option value="">-- Không dùng mã giảm giá --</option>';
     }
 }
 
