@@ -90,6 +90,35 @@ document.addEventListener("DOMContentLoaded", function () {
   if (filterForm) {
     filterForm.addEventListener("submit", function (e) {
       e.preventDefault();
+      
+      // Validation: Kiểm tra ngày kết thúc >= ngày bắt đầu
+      const dateFrom = document.getElementById("date-from")?.value || "";
+      const dateTo = document.getElementById("date-to")?.value || "";
+      
+      if (dateFrom && dateTo) {
+        const fromDate = new Date(dateFrom);
+        const toDate = new Date(dateTo);
+        
+        if (toDate < fromDate) {
+          alert("❌ Lỗi: Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!");
+          return;
+        }
+      }
+      
+      // Validation: Kiểm tra giá tiền tối đa >= giá tiền tối thiểu
+      const priceMin = document.getElementById("price-min")?.value || "";
+      const priceMax = document.getElementById("price-max")?.value || "";
+      
+      if (priceMin && priceMax) {
+        const minPrice = parseFloat(priceMin);
+        const maxPrice = parseFloat(priceMax);
+        
+        if (maxPrice < minPrice) {
+          alert("❌ Lỗi: Giá tiền tối đa phải lớn hơn hoặc bằng giá tiền tối thiểu!");
+          return;
+        }
+      }
+      
       currentPage = 1; // Đặt lại về trang 1 khi submit form
       filterOrders(new FormData(filterForm)); // Chỉ gọi filterOrders khi submit form
       filterModal.hide(); // Đóng modal sau khi áp dụng bộ lọc
@@ -161,6 +190,14 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("specific-voucher")?.value ||
       "";
     const searchValue = document.getElementById("search-input")?.value || "";
+
+    // Log các filter để debug
+    console.log('[FILTER] Date from:', dateFrom);
+    console.log('[FILTER] Date to:', dateTo);
+    console.log('[FILTER] Price min:', priceMin);
+    console.log('[FILTER] Price max:', priceMax);
+    console.log('[FILTER] Voucher filter:', voucherFilter);
+    console.log('[FILTER] Specific voucher:', specificVoucher);
 
     const params = new URLSearchParams({
       page: currentPage,
