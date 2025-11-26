@@ -1259,7 +1259,7 @@ $totalAmount = $supplierManager->getTotalValue();
                     <p id="info_email"></p>
                 </div>
                 <div class="info-item info-full-width">
-                    <label><i class="fa-solid fa-location-dot"></i> Địa chỉ đầy đủ</label>
+                    <label><i class="fa-solid fa-location-dot"></i> Địa chỉ</label>
                     <p id="info_address"></p>
                 </div>
                 <div class="info-item">
